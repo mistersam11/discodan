@@ -305,6 +305,284 @@ input {
   overflow: hidden;
 }
 
+.disco-return-next-anchor {
+  position: absolute;
+  top: calc(50% + clamp(4.8rem, 8vw, 7rem));
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.disco-chrome-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 1.35rem;
+  color: #202124;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.08), transparent 28rem),
+    #0b0c10;
+}
+
+.disco-browser-window {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  width: min(74rem, calc(100vw - 2.7rem));
+  height: min(47rem, calc(100dvh - 2.7rem));
+  overflow: hidden;
+  border: 1px solid #2d3038;
+  border-radius: 0.55rem;
+  background: #ffffff;
+  box-shadow: 0 1.6rem 4rem rgba(0, 0, 0, 0.52);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.disco-browser-tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 16rem) 1fr;
+  align-items: end;
+  min-height: 2.6rem;
+  padding: 0.45rem 0.8rem 0;
+  background: #dfe3ea;
+}
+
+.disco-browser-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  height: 2.15rem;
+  border-radius: 0.55rem 0.55rem 0 0;
+  padding: 0 1rem;
+  background: #ffffff;
+  color: #202124;
+  font-size: 0.82rem;
+}
+
+.disco-browser-tab span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.disco-tab-dot {
+  width: 0.6rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 30deg, #e94235 0 33%, #fabb05 0 62%, #34a853 0 78%, #4285f4 0);
+}
+
+.disco-browser-title {
+  align-self: center;
+  justify-self: end;
+  color: #59606b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.disco-browser-toolbar {
+  display: grid;
+  grid-template-columns: repeat(3, 2rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.8rem;
+  border-bottom: 1px solid #d7d9de;
+  padding: 0.35rem 0.75rem;
+  background: #ffffff;
+}
+
+.disco-browser-toolbar button {
+  display: grid;
+  width: 2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #5f6368;
+  background: transparent;
+  font-size: 1rem;
+  cursor: default;
+}
+
+.disco-browser-toolbar button:hover {
+  background: #eef0f4;
+}
+
+.disco-address-bar {
+  min-width: 0;
+  border-radius: 999px;
+  padding: 0.58rem 1rem;
+  color: #3c4043;
+  background: #f1f3f4;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fake-wiki-page {
+  min-height: 0;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.fake-wiki-layout {
+  display: grid;
+  grid-template-columns: 13.5rem minmax(0, 1fr);
+  gap: 1.6rem;
+  width: min(100%, 68rem);
+  margin: 0 auto;
+  padding: 1.4rem 1.35rem 3rem;
+}
+
+.fake-wiki-sidebar {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  border-right: 1px solid #eaecf0;
+  padding-right: 1rem;
+  color: #54595d;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.82rem;
+}
+
+.fake-wiki-sidebar p {
+  margin: 0 0 0.55rem;
+  color: #202122;
+  font-weight: 700;
+}
+
+.fake-wiki-sidebar ol {
+  display: grid;
+  gap: 0.42rem;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.fake-wiki-main {
+  min-width: 0;
+  color: #202122;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.58;
+}
+
+.fake-wiki-main h1 {
+  margin: 0;
+  border-bottom: 1px solid #a2a9b1;
+  padding-bottom: 0.22rem;
+  color: #202122;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.fake-wiki-main h2 {
+  margin: 1.5rem 0 0.55rem;
+  border-bottom: 1px solid #a2a9b1;
+  padding-bottom: 0.14rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.fake-wiki-main p {
+  margin: 0.78rem 0;
+  font-size: 0.98rem;
+}
+
+.fake-wiki-source,
+.fake-wiki-description {
+  color: #54595d;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+}
+
+.fake-wiki-description {
+  margin-top: 0.24rem;
+}
+
+.fake-wiki-notice {
+  margin: 1rem 0;
+  border: 1px solid #a2a9b1;
+  padding: 0.55rem 0.75rem;
+  background: #f8f9fa;
+  color: #202122;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.84rem;
+}
+
+.fake-wiki-infobox {
+  float: right;
+  width: min(18rem, 42%);
+  margin: 0.2rem 0 1rem 1.2rem;
+  border: 1px solid #a2a9b1;
+  background: #f8f9fa;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+}
+
+.fake-wiki-infobox h2 {
+  margin: 0;
+  border-bottom: 1px solid #a2a9b1;
+  padding: 0.45rem;
+  background: #eaecf0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.fake-wiki-infobox p {
+  margin: 0;
+  padding: 0.48rem 0.55rem 0.2rem;
+  color: #202122;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.fake-wiki-infobox div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.3rem;
+  padding: 0 0.55rem 0.5rem;
+}
+
+.fake-wiki-link {
+  display: inline;
+  border: 0;
+  padding: 0;
+  color: #0645ad;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.fake-wiki-link:hover,
+.fake-wiki-link:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.fake-wiki-dan {
+  width: min(100%, 54rem);
+  margin: 0 auto;
+  padding: 1.4rem 1.35rem 3rem;
+}
+
+.fake-wiki-dan.is-animalized {
+  color: #1d3d1f;
+  background:
+    linear-gradient(180deg, rgba(239, 255, 232, 0.88), rgba(255, 255, 255, 0)),
+    #ffffff;
+}
+
 .animal-game-scene {
   overflow: hidden;
   background: #020203;
@@ -2292,6 +2570,67 @@ button.excel-cell {
     font-size: clamp(1.1rem, 6.2vw, 2.4rem);
   }
 
+  .disco-chrome-scene {
+    padding: 0;
+  }
+
+  .disco-browser-window {
+    width: 100vw;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .disco-browser-tabs {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-inline: 0.45rem;
+  }
+
+  .disco-browser-title {
+    display: none;
+  }
+
+  .disco-browser-toolbar {
+    grid-template-columns: repeat(3, 1.85rem) minmax(0, 1fr);
+    padding-inline: 0.45rem;
+  }
+
+  .disco-address-bar {
+    padding-inline: 0.75rem;
+    font-size: 0.76rem;
+  }
+
+  .fake-wiki-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 1rem 1rem 2.5rem;
+  }
+
+  .fake-wiki-sidebar {
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid #eaecf0;
+    padding: 0 0 0.75rem;
+  }
+
+  .fake-wiki-sidebar ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fake-wiki-infobox {
+    float: none;
+    width: 100%;
+    margin: 0.85rem 0;
+  }
+
+  .fake-wiki-main p {
+    font-size: 0.92rem;
+  }
+
+  .fake-wiki-dan {
+    padding: 1rem 1rem 2.5rem;
+  }
+
   .xp-login {
     grid-template-rows: 3.4rem 1fr 3.4rem;
   }
@@ -2589,6 +2928,37 @@ button.excel-cell {
 
   .apocalypse-text {
     font-size: clamp(1rem, 5.5vh, 2rem);
+  }
+
+  .disco-countdown {
+    font-size: clamp(5rem, 22vh, 9rem);
+  }
+
+  .disco-browser-tabs {
+    min-height: 2.2rem;
+  }
+
+  .disco-browser-toolbar {
+    min-height: 2.35rem;
+  }
+
+  .fake-wiki-layout {
+    padding-top: 0.75rem;
+  }
+
+  .fake-wiki-main h1 {
+    font-size: 1.75rem;
+  }
+
+  .fake-wiki-main h2 {
+    margin-top: 1rem;
+    font-size: 1.18rem;
+  }
+
+  .fake-wiki-main p {
+    margin: 0.55rem 0;
+    font-size: 0.84rem;
+    line-height: 1.45;
   }
 
   .xp-login {

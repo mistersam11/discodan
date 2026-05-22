@@ -12,6 +12,7 @@ type Scene =
   | "workComputer"
   | "aiCrt"
   | "discoReturn"
+  | "discoChrome"
   | "afterAiCrt";
 
 type Answers = Record<AnswerKey, string>;
@@ -132,6 +133,8 @@ const animalWords = new Set([
   "zebra",
 ]);
 
+const animalWordList = Array.from(animalWords);
+
 const failureMessages = [
   "wrong. that's not an animal.",
   "wrong. still not an animal, somehow.",
@@ -222,7 +225,11 @@ function App() {
           <AiCrtScene key="ai-crt" onNext={() => setScene("discoReturn")} />
         )}
 
-        {scene === "discoReturn" && <DiscoReturnScene key="disco-return" />}
+        {scene === "discoReturn" && (
+          <DiscoReturnScene key="disco-return" onNext={() => setScene("discoChrome")} />
+        )}
+
+        {scene === "discoChrome" && <DiscoChromeScene key="disco-chrome" />}
 
         {scene === "afterAiCrt" && <NextPhasePlaceholder key="after-ai-crt" />}
       </AnimatePresence>
@@ -509,16 +516,18 @@ const discoReturnCountdown = [
   { value: 0, at: 10120 },
 ];
 
-function DiscoReturnScene() {
+function DiscoReturnScene({ onNext }: { onNext: () => void }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [count, setCount] = useState(10);
   const [phase, setPhase] = useState<DiscoReturnPhase>("countdown");
+  const [showNext, setShowNext] = useState(false);
 
   useEffect(() => {
     const timers = discoReturnCountdown.map((step) =>
       window.setTimeout(() => setCount(step.value), step.at),
     );
     timers.push(window.setTimeout(() => setPhase("reveal"), 11200));
+    timers.push(window.setTimeout(() => setShowNext(true), 13600));
 
     return () => {
       timers.forEach(window.clearTimeout);
@@ -586,12 +595,341 @@ function DiscoReturnScene() {
                   Disco Dan
                 </motion.h1>
               </div>
+              <AnimatePresence>
+                {showNext && (
+                  <div className="disco-return-next-anchor">
+                    <motion.button
+                      className="next-button"
+                      type="button"
+                      onClick={onNext}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 12 }}
+                      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      next
+                    </motion.button>
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </motion.section>
   );
+}
+
+type DiscoChromePage = "disco" | "dan";
+type AnimalizedDanPage = {
+  source: string;
+  title: string;
+  heading: string;
+  summary: string;
+};
+
+type DiscoWikiSection = {
+  heading?: string;
+  paragraphs: string[];
+};
+
+const discoInfoLinks = [
+  "Philadelphia soul",
+  "funk",
+  "psychedelic soul",
+  "pop",
+  "dance-pop",
+  "house",
+  "post-punk",
+  "synth-pop",
+  "Italo disco",
+  "Cosmic disco",
+  "Eurodisco",
+  "Hi-NRG",
+  "Disco polo",
+  "Disco Demolition Night",
+  "Saturday Night Fever",
+  "Thank God It's Friday",
+];
+
+const discoWikiSections: DiscoWikiSection[] = [
+  {
+    paragraphs: [
+      "Disco is a genre of dance music and a subculture that emerged in the late 1960s from the United States' urban nightlife scene, particularly in African-American, Italian-American, Latino and gay and lesbian communities. Its sound is typified by four-on-the-floor beats, syncopated basslines, string sections, brass and horns, electric pianos, synthesizers, and electric rhythm guitars.",
+      "Discotheques as a venue were mostly a French invention, imported to the United States with the opening of Le Club, a members-only restaurant and nightclub located at 416 East 55th Street in Manhattan, by French expatriate Olivier Coquelin, on New Year's Eve 1960.[5]",
+      "Disco music as a genre started as a mixture of music from venues popular among African Americans, Latino Americans, and Italian Americans[6] in New York City (especially Brooklyn) and Philadelphia during the late 1960s to the mid-to-late 1970s. Disco can be seen as a reaction by the 1960s counterculture to both the dominance of rock music and the stigmatization of dance music at the time.[7] Several dance styles were developed during the period of '70s disco's popularity in the United States, including \"the Bump\", \"the Hustle\", \"the Watergate\", \"the Continental\",[8] and \"the Busstop\".[9]",
+      "During the 1970s, disco music was developed further, mainly by artists from the United States as well as from Europe.[10][11] While performers garnered public attention, record producers working behind the scenes played an important role in developing the genre. By the late 1970s, most major U.S. cities had thriving disco club scenes, and DJs would mix dance records at clubs such as Studio 54 in Manhattan, a venue popular among celebrities. Nightclub-goers often wore expensive, extravagant outfits, consisting predominantly of loose, flowing pants or dresses for ease of movement while dancing. There was also a thriving drug subculture in the disco scene, particularly for drugs that would enhance the experience of dancing to the loud music and the flashing lights, such as cocaine and quaaludes, the latter being so common in disco subculture that they were nicknamed \"disco biscuits\". Disco clubs were also associated with promiscuity as a reflection of the sexual revolution of this era in popular history. Films such as Saturday Night Fever (1977) and Thank God It's Friday (1978) contributed to disco's mainstream popularity.",
+      "Disco declined as a major trend in popular music in the United States following the infamous Disco Demolition Night on July 12, 1979, and it continued to sharply decline in popularity in the U.S. during the early 1980s; however, it remained popular in Italy and some European countries throughout the 1980s, and during this time also started becoming trendy in places elsewhere including India[12] and the Middle East,[13] where aspects of disco were blended with regional folk styles such as ghazals and belly dancing. Disco would eventually become a key influence in the development of electronic dance music, house music, hip-hop, new wave, dance-punk, and post-disco. The style has had several revivals since the 1990s, and the influence of disco remains strong across American and European pop music. A revival has been underway since the early 2010s, coming to great popularity in the early 2020s. Modern day artists have continued the genre's popularity, bringing it to a whole new younger generation.[14][15]",
+    ],
+  },
+  {
+    heading: "Etymology",
+    paragraphs: [
+      "The term \"disco\" is shorthand for the word discotheque, a French word for \"library of phonograph records\" derived from \"bibliotheque\". The word \"discotheque\" had the same meaning in English in the 1950s. \"Discotheque\" became used in French for a type of nightclub in Paris, after they had resorted to playing records during the Nazi occupation in the early 1940s. Some clubs used it as their proper name. In 1960, it was also used to describe a Parisian nightclub in an English magazine.",
+      "The Oxford English Dictionary defines Discotheque as \"A dance hall, nightclub, or similar venue where recorded music is played for dancing, typically equipped with a large dance floor, an elaborate system of flashing coloured lights, and a powerful amplified sound system. \" Its earliest example is use as the name of a particular venue in 1952, and other examples date from 1960 onwards. The entry is annotated as \"Now somewhat dated\".[16] It defines Disco as \"A genre of strongly rhythmical pop music mainly intended for dancing in nightclubs and particularly popular in the mid to late 1970s.\", with use from 1975 onwards, describing the origin of the word as a shortened form of discotheque.[17]",
+    ],
+  },
+];
+
+const discoWikiLinkTerms = [
+  "Oxford English Dictionary",
+  "Disco Demolition Night",
+  "electronic dance music",
+  "Thank God It's Friday",
+  "Saturday Night Fever",
+  "1960s counterculture",
+  "Italian-American",
+  "African-American",
+  "four-on-the-floor",
+  "electric pianos",
+  "rhythm guitars",
+  "record producers",
+  "sexual revolution",
+  "gay and lesbian",
+  "Latino Americans",
+  "African Americans",
+  "Italian Americans",
+  "string sections",
+  "New York City",
+  "Olivier Coquelin",
+  "discotheques",
+  "Discotheques",
+  "discotheque",
+  "Discotheque",
+  "dance music",
+  "subculture",
+  "nightlife",
+  "basslines",
+  "syncopated",
+  "brass",
+  "horns",
+  "synthesizers",
+  "Le Club",
+  "Manhattan",
+  "Brooklyn",
+  "Philadelphia",
+  "rock music",
+  "the Bump",
+  "the Hustle",
+  "the Watergate",
+  "the Continental",
+  "the Busstop",
+  "Europe",
+  "DJs",
+  "mix",
+  "Studio 54",
+  "celebrities",
+  "drug",
+  "cocaine",
+  "quaaludes",
+  "promiscuity",
+  "Italy",
+  "India",
+  "Middle East",
+  "ghazals",
+  "belly dancing",
+  "house music",
+  "hip-hop",
+  "new wave",
+  "dance-punk",
+  "post-disco",
+  "1990s",
+  "2010s",
+  "2020s",
+  "genre",
+  "Latino",
+  "1960s",
+  "1980s",
+  "nightclub",
+  "Paris",
+].sort((a, b) => b.length - a.length);
+
+const danSummary =
+  'Disco Dan defeated 200 people to become the disco diva that we know today. After naming hundreds of animals without fail, he invented the New York Times and purchased the hit game Dandle, renaming it "Disco Dandle."';
+
+function DiscoChromeScene() {
+  const [page, setPage] = useState<DiscoChromePage>("disco");
+  const [animalizedDanPage, setAnimalizedDanPage] = useState<AnimalizedDanPage | null>(null);
+
+  const navigateToDan = () => {
+    setPage("dan");
+    setAnimalizedDanPage(null);
+  };
+
+  const animalizeDan = () => {
+    setAnimalizedDanPage({
+      source: animalizeWords("From Wikipedia, the free encyclopedia"),
+      title: animalizeWords("Dan"),
+      heading: animalizeWords("Summary"),
+      summary: animalizeWords(danSummary),
+    });
+  };
+
+  return (
+    <motion.section
+      className="disco-chrome-scene"
+      initial={{ opacity: 0, filter: "blur(10px)" }}
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, filter: "blur(12px)" }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="disco-browser-window">
+        <div className="disco-browser-tabs">
+          <div className="disco-browser-tab is-active">
+            <span className="disco-tab-dot" aria-hidden="true" />
+            <span>{page === "disco" ? "Disco - Wikipedia" : "Dan - Wikipedia"}</span>
+          </div>
+          <div className="disco-browser-title">Disco Chrome</div>
+        </div>
+        <div className="disco-browser-toolbar">
+          <button type="button" aria-label="Back">&lt;</button>
+          <button type="button" aria-label="Forward">&gt;</button>
+          <button type="button" aria-label="Reload">r</button>
+          <div className="disco-address-bar">
+            {page === "disco" ? "https://en.wikipedia.org/wiki/Disco" : "https://en.wikipedia.org/wiki/Dan"}
+          </div>
+        </div>
+        <article className="fake-wiki-page">
+          {page === "disco" ? (
+            <DiscoWikiArticle onNavigateDan={navigateToDan} />
+          ) : (
+            <DanWikiArticle animalizedPage={animalizedDanPage} onAnimalize={animalizeDan} />
+          )}
+        </article>
+      </div>
+    </motion.section>
+  );
+}
+
+function DiscoWikiArticle({ onNavigateDan }: { onNavigateDan: () => void }) {
+  return (
+    <div className="fake-wiki-layout">
+      <aside className="fake-wiki-sidebar" aria-label="Article contents">
+        <p>Contents</p>
+        <ol>
+          <li>Etymology</li>
+          <li>Musical characteristics</li>
+          <li>Club culture</li>
+          <li>History</li>
+          <li>Legacy</li>
+        </ol>
+      </aside>
+      <div className="fake-wiki-main">
+        <p className="fake-wiki-source">From Wikipedia, the free encyclopedia</p>
+        <h1>Disco</h1>
+        <p className="fake-wiki-description">Music genre and subculture</p>
+        <div className="fake-wiki-notice">
+          This article has been recreated inside Disco Chrome. Every suspiciously blue word knows where Dan lives.
+        </div>
+        <div className="fake-wiki-infobox">
+          <h2>Disco</h2>
+          <p>Stylistic origins</p>
+          <div>
+            {discoInfoLinks.slice(0, 4).map((link) => (
+              <WikiButton key={link} onNavigateDan={onNavigateDan} text={link} />
+            ))}
+          </div>
+          <p>Derivative forms</p>
+          <div>
+            {discoInfoLinks.slice(4, 9).map((link) => (
+              <WikiButton key={link} onNavigateDan={onNavigateDan} text={link} />
+            ))}
+          </div>
+          <p>Subgenres and topics</p>
+          <div>
+            {discoInfoLinks.slice(9).map((link) => (
+              <WikiButton key={link} onNavigateDan={onNavigateDan} text={link} />
+            ))}
+          </div>
+        </div>
+        {discoWikiSections.map((section, sectionIndex) => (
+          <section key={section.heading ?? `lead-${sectionIndex}`}>
+            {section.heading && <h2>{section.heading}</h2>}
+            {section.paragraphs.map((paragraph, paragraphIndex) => (
+              <p key={paragraphIndex}>{renderLinkedWikiText(paragraph, onNavigateDan)}</p>
+            ))}
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DanWikiArticle({
+  animalizedPage,
+  onAnimalize,
+}: {
+  animalizedPage: AnimalizedDanPage | null;
+  onAnimalize: () => void;
+}) {
+  if (animalizedPage) {
+    return (
+      <div className="fake-wiki-main fake-wiki-dan is-animalized">
+        <p className="fake-wiki-source">{animalizedPage.source}</p>
+        <h1>{animalizedPage.title}</h1>
+        <h2>{animalizedPage.heading}</h2>
+        <p>{animalizedPage.summary}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fake-wiki-main fake-wiki-dan">
+      <p className="fake-wiki-source">From Wikipedia, the free encyclopedia</p>
+      <h1>Dan</h1>
+      <h2>Summary</h2>
+      <p>
+        Disco Dan defeated 200 people to become the disco diva that we know today. After naming hundreds of
+        animals without fail, he invented the New York Times and purchased the hit game Dandle, renaming it{" "}
+        &quot;
+        <button className="fake-wiki-link" type="button" onClick={onAnimalize}>
+          Disco Dandle
+        </button>
+        .&quot;
+      </p>
+    </div>
+  );
+}
+
+function WikiButton({
+  onNavigateDan,
+  text,
+}: {
+  onNavigateDan: () => void;
+  text: string;
+}) {
+  return (
+    <button className="fake-wiki-link" type="button" onClick={onNavigateDan}>
+      {text}
+    </button>
+  );
+}
+
+function renderLinkedWikiText(text: string, onNavigateDan: () => void) {
+  const linkLookup = new Set(discoWikiLinkTerms.map((term) => term.toLowerCase()));
+  const linkPattern = new RegExp(
+    `(${discoWikiLinkTerms.map(escapeRegex).join("|")})`,
+    "gi",
+  );
+
+  return text.split(linkPattern).map((part, index) => {
+    if (linkLookup.has(part.toLowerCase())) {
+      return <WikiButton key={`${part}-${index}`} onNavigateDan={onNavigateDan} text={part} />;
+    }
+
+    return <span key={`${part}-${index}`}>{part}</span>;
+  });
+}
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function animalizeWords(text: string) {
+  return text.replace(/[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g, () => {
+    const animal = animalWordList[Math.floor(Math.random() * animalWordList.length)] ?? "alpaca";
+    return animal;
+  });
 }
 
 type BurstSide = "left" | "right";
