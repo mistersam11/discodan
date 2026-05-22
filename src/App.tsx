@@ -819,7 +819,7 @@ function DiscoWikiArticle({ onNavigateDan }: { onNavigateDan: () => void }) {
         <h1>Disco</h1>
         <p className="fake-wiki-description">Music genre and subculture</p>
         <div className="fake-wiki-notice">
-          This article has been recreated inside Disco Chrome. Every suspiciously blue word knows where Dan lives.
+          For more information on disco, see the page on <i>Dance Pants Revolution</i>.
         </div>
         <div className="fake-wiki-infobox">
           <h2>Disco</h2>
