@@ -93,7 +93,7 @@ input {
   font-size: 1.45rem;
   line-height: 1.3;
   text-align: center;
-  caret-color: #ff4bd8;
+  caret-color: #ffffff;
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease;
@@ -131,8 +131,8 @@ input {
   width: 0.6rem;
   height: 1rem;
   margin-left: 0.12rem;
-  background: #ff4bd8;
-  box-shadow: 0 0 1rem rgba(255, 75, 216, 0.9);
+  background: #ffffff;
+  box-shadow: 0 0 1rem rgba(255, 255, 255, 0.9);
   transform: translateY(0.16rem);
   animation: blink 0.74s steps(2, start) infinite;
 }
