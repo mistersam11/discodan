@@ -149,8 +149,36 @@ const normalizeEntry = (value: string) => value.trim().toLowerCase().replace(/\s
 
 const normalizeWordleValue = (value: string) => value.trim().toUpperCase();
 
+const chooseWordleTarget = (answers: Answers) => {
+  const candidates = [answers.name, answers.date, answers.time]
+    .map(normalizeWordleValue)
+    .filter((entry) => entry.length === 5);
+
+  return candidates[Math.floor(Math.random() * candidates.length)] ?? "DISCO";
+};
+
+const devSceneShortcuts: Record<string, Scene> = {
+  animal: "animalGame",
+  wordle: "wordleGame",
+  xp: "workComputer",
+  ai: "aiCrt",
+  tv: "aiCrt",
+  count: "discoReturn",
+  countdown: "discoReturn",
+  wiki: "discoChrome",
+};
+
+const getDevSceneShortcut = (key: AnswerKey, value: string) => {
+  if (key !== "name") {
+    return null;
+  }
+
+  return devSceneShortcuts[normalizeEntry(value)] ?? null;
+};
+
 function App() {
   const [scene, setScene] = useState<Scene>("name");
+  const [wordleAnswer, setWordleAnswer] = useState("DISCO");
   const [answers, setAnswers] = useState<Answers>({
     name: "",
     date: "",
@@ -167,8 +195,10 @@ function App() {
   };
 
   const saveAnswer = (key: AnswerKey, value: string) => {
-    if (key === "name" && normalizeEntry(value) === "skip") {
-      setScene("workComputer");
+    const shortcutScene = getDevSceneShortcut(key, value);
+    if (shortcutScene) {
+      setWordleAnswer("DISCO");
+      setScene(shortcutScene);
       return;
     }
 
@@ -177,6 +207,11 @@ function App() {
       [key]: value,
     }));
     advance();
+  };
+
+  const startWordleGame = () => {
+    setWordleAnswer(chooseWordleTarget(answers));
+    setScene("wordleGame");
   };
 
   return (
@@ -203,13 +238,13 @@ function App() {
         )}
 
         {scene === "animalGame" && (
-          <AnimalGameScene key="animal-game" onNext={() => setScene("wordleGame")} />
+          <AnimalGameScene key="animal-game" onNext={startWordleGame} />
         )}
 
         {scene === "wordleGame" && (
           <WordleGameScene
             key="wordle-game"
-            answers={answers}
+            target={wordleAnswer}
             onNext={() => setScene("workComputer")}
           />
         )}
@@ -229,7 +264,9 @@ function App() {
           <DiscoReturnScene key="disco-return" onNext={() => setScene("discoChrome")} />
         )}
 
-        {scene === "discoChrome" && <DiscoChromeScene key="disco-chrome" />}
+        {scene === "discoChrome" && (
+          <DiscoChromeScene key="disco-chrome" wordleAnswer={wordleAnswer} />
+        )}
 
         {scene === "afterAiCrt" && <NextPhasePlaceholder key="after-ai-crt" />}
       </AnimatePresence>
@@ -274,7 +311,7 @@ function QuestionScene({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextValue = draft.trim();
-    if (question.id === "name" && normalizeEntry(nextValue) === "skip") {
+    if (getDevSceneShortcut(question.id, nextValue)) {
       onSubmit(question.id, nextValue);
       return;
     }
@@ -621,11 +658,11 @@ function DiscoReturnScene({ onNext }: { onNext: () => void }) {
 }
 
 type DiscoChromePage = "disco" | "dan";
+type CrabPhase = "idle" | "animalized" | "crabWave" | "scuttling" | "exploding" | "exploded";
 type AnimalizedDanPage = {
-  source: string;
-  title: string;
-  heading: string;
-  summary: string;
+  sourceWords: string[];
+  headingWords: string[];
+  summaryWords: string[];
 };
 
 type DiscoWikiSection = {
@@ -747,22 +784,88 @@ const discoWikiLinkTerms = [
 const danSummary =
   'Disco Dan defeated 200 people to become the disco diva that we know today. After naming hundreds of animals without fail, he invented the New York Times and purchased the hit game Dandle, renaming it "Disco Dandle."';
 
-function DiscoChromeScene() {
+function DiscoChromeScene({ wordleAnswer }: { wordleAnswer: string }) {
   const [page, setPage] = useState<DiscoChromePage>("disco");
   const [animalizedDanPage, setAnimalizedDanPage] = useState<AnimalizedDanPage | null>(null);
+  const [crabPhase, setCrabPhase] = useState<CrabPhase>("idle");
+  const [crabWaveProgress, setCrabWaveProgress] = useState(0);
+  const crabTimersRef = useRef<number[]>([]);
+  const crabWaveIntervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      crabTimersRef.current.forEach(window.clearTimeout);
+      if (crabWaveIntervalRef.current !== null) {
+        window.clearInterval(crabWaveIntervalRef.current);
+      }
+    };
+  }, []);
 
   const navigateToDan = () => {
     setPage("dan");
     setAnimalizedDanPage(null);
+    setCrabPhase("idle");
+    setCrabWaveProgress(0);
+    crabTimersRef.current.forEach(window.clearTimeout);
+    crabTimersRef.current = [];
+    if (crabWaveIntervalRef.current !== null) {
+      window.clearInterval(crabWaveIntervalRef.current);
+      crabWaveIntervalRef.current = null;
+    }
   };
 
   const animalizeDan = () => {
     setAnimalizedDanPage({
-      source: animalizeWords("From Wikipedia, the free encyclopedia"),
-      title: animalizeWords("Dan"),
-      heading: animalizeWords("Summary"),
-      summary: animalizeWords(danSummary),
+      sourceWords: animalWordsFromText("From Wikipedia, the free encyclopedia"),
+      headingWords: animalWordsFromText("Summary"),
+      summaryWords: animalWordsFromText(danSummary),
     });
+    setCrabPhase("animalized");
+    setCrabWaveProgress(0);
+  };
+
+  const startCrabSequence = () => {
+    if (crabPhase !== "animalized") {
+      return;
+    }
+
+    crabTimersRef.current.forEach(window.clearTimeout);
+    if (crabWaveIntervalRef.current !== null) {
+      window.clearInterval(crabWaveIntervalRef.current);
+    }
+
+    const waveDuration = 5000;
+    const allCrabHold = 300;
+    const scuttleDuration = 2600;
+    const fragmentDuration = 12000;
+    const waveStartedAt = window.performance.now();
+
+    setCrabWaveProgress(0);
+    setCrabPhase("crabWave");
+    crabWaveIntervalRef.current = window.setInterval(() => {
+      const progress = Math.min(1, (window.performance.now() - waveStartedAt) / waveDuration);
+      setCrabWaveProgress(progress);
+
+      if (progress >= 1 && crabWaveIntervalRef.current !== null) {
+        window.clearInterval(crabWaveIntervalRef.current);
+        crabWaveIntervalRef.current = null;
+      }
+    }, 90);
+
+    crabTimersRef.current = [
+      window.setTimeout(() => {
+        setCrabWaveProgress(1);
+        if (crabWaveIntervalRef.current !== null) {
+          window.clearInterval(crabWaveIntervalRef.current);
+          crabWaveIntervalRef.current = null;
+        }
+      }, waveDuration),
+      window.setTimeout(() => {
+        setCrabPhase("scuttling");
+      }, waveDuration + allCrabHold),
+      window.setTimeout(() => setCrabPhase("exploding"), waveDuration + allCrabHold + scuttleDuration),
+      window.setTimeout(() => setCrabPhase("exploded"), waveDuration + allCrabHold + scuttleDuration + fragmentDuration),
+    ];
   };
 
   return (
@@ -773,7 +876,17 @@ function DiscoChromeScene() {
       exit={{ opacity: 0, filter: "blur(12px)" }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="disco-browser-window">
+      <div className={`wordle-answer-reveal ${crabPhase === "exploded" ? "is-visible" : ""}`}>
+        {wordleAnswer.toLowerCase()}
+      </div>
+      {(crabPhase === "exploding" || crabPhase === "exploded") && (
+        <ChromeFragmentExplosion animalizedPage={animalizedDanPage} />
+      )}
+      <div
+        className={`disco-browser-window ${
+          crabPhase === "exploding" || crabPhase === "exploded" ? "is-blasted" : ""
+        }`}
+      >
         <div className="disco-browser-tabs">
           <div className="disco-browser-tab is-active">
             <span className="disco-tab-dot" aria-hidden="true" />
@@ -793,7 +906,13 @@ function DiscoChromeScene() {
           {page === "disco" ? (
             <DiscoWikiArticle onNavigateDan={navigateToDan} />
           ) : (
-            <DanWikiArticle animalizedPage={animalizedDanPage} onAnimalize={animalizeDan} />
+            <DanWikiArticle
+              animalizedPage={animalizedDanPage}
+              crabPhase={crabPhase}
+              crabWaveProgress={crabWaveProgress}
+              onAnimalize={animalizeDan}
+              onCrabClick={startCrabSequence}
+            />
           )}
         </article>
       </div>
@@ -857,18 +976,38 @@ function DiscoWikiArticle({ onNavigateDan }: { onNavigateDan: () => void }) {
 
 function DanWikiArticle({
   animalizedPage,
+  crabPhase,
+  crabWaveProgress,
   onAnimalize,
+  onCrabClick,
 }: {
   animalizedPage: AnimalizedDanPage | null;
+  crabPhase: CrabPhase;
+  crabWaveProgress: number;
   onAnimalize: () => void;
+  onCrabClick: () => void;
 }) {
   if (animalizedPage) {
     return (
-      <div className="fake-wiki-main fake-wiki-dan is-animalized">
-        <p className="fake-wiki-source">{animalizedPage.source}</p>
-        <h1>{animalizedPage.title}</h1>
-        <h2>{animalizedPage.heading}</h2>
-        <p>{animalizedPage.summary}</p>
+      <div className={`fake-wiki-main fake-wiki-dan is-animalized is-${crabPhase}`}>
+        <p className="fake-wiki-source">
+          <AnimalizedWords words={animalizedPage.sourceWords} phase={crabPhase} crabWaveProgress={crabWaveProgress} />
+        </p>
+        <h1>
+          <button
+            className="fake-wiki-link crab-title-link"
+            type="button"
+            onClick={onCrabClick}
+          >
+            crab
+          </button>
+        </h1>
+        <h2>
+          <AnimalizedWords words={animalizedPage.headingWords} phase={crabPhase} crabWaveProgress={crabWaveProgress} />
+        </h2>
+        <p>
+          <AnimalizedWords words={animalizedPage.summaryWords} phase={crabPhase} crabWaveProgress={crabWaveProgress} />
+        </p>
       </div>
     );
   }
@@ -925,11 +1064,163 @@ function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function animalizeWords(text: string) {
-  return text.replace(/[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g, () => {
+function animalWordsFromText(text: string) {
+  const words = text.match(/[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g) ?? [];
+  return words.map(() => randomAnimalWord());
+}
+
+function randomAnimalWord() {
     const animal = animalWordList[Math.floor(Math.random() * animalWordList.length)] ?? "alpaca";
     return animal;
-  });
+}
+
+function AnimalizedWords({
+  words,
+  phase,
+  crabWaveProgress,
+}: {
+  words: string[];
+  phase: CrabPhase;
+  crabWaveProgress: number;
+}) {
+  const isScuttling = phase === "scuttling" || phase === "exploding" || phase === "exploded";
+
+  return (
+    <>
+      {words.map((word, index) => {
+        const turnThreshold = Math.pow((index + 1) / Math.max(1, words.length), 0.72);
+        const hasTurnedToCrab =
+          isScuttling || (phase === "crabWave" && crabWaveProgress >= turnThreshold);
+        const side = index % 2 === 0 ? -1 : 1;
+        const distance = 58 + (index % 11) * 7;
+        const y = Math.sin(index * 1.9) * 2.3;
+
+        return (
+          <span
+            className={`animalized-word ${isScuttling ? "is-scuttling" : ""}`}
+            key={`${word}-${index}`}
+            style={
+              {
+                "--scuttle-delay": `${Math.min(0.75, index * 0.018)}s`,
+                "--scuttle-x": `${side * distance}vw`,
+                "--scuttle-y": `${y}rem`,
+              } as CSSProperties
+            }
+          >
+            {hasTurnedToCrab ? "crab" : word}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+function ChromeFragmentExplosion({ animalizedPage }: { animalizedPage: AnimalizedDanPage | null }) {
+  const fragments = useMemo(() => {
+    const columns = 20;
+    const rows = 15;
+
+    return Array.from({ length: columns * rows }, (_, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      const fromCenterX = (column + 0.5) / columns - 0.5;
+      const fromCenterY = (row + 0.5) / rows - 0.5;
+      const distance = Math.max(0.15, Math.sqrt(fromCenterX * fromCenterX + fromCenterY * fromCenterY));
+      const chipA = 6 + ((index * 11) % 18);
+      const chipB = 12 + ((index * 7) % 22);
+      const chipC = 76 + ((index * 5) % 18);
+      const chipD = 72 + ((index * 13) % 23);
+      const clipPath =
+        index % 4 === 0
+          ? `polygon(0 ${chipA}%, ${chipB}% 0, 100% ${chipA / 2}%, ${chipC}% 100%, ${chipB / 2}% ${chipD}%)`
+          : index % 4 === 1
+            ? `polygon(${chipA}% 0, 100% ${chipB}%, ${chipD}% 100%, 0 ${chipC}%, 0 ${chipB / 2}%)`
+            : index % 4 === 2
+              ? `polygon(0 0, ${chipC}% ${chipA / 2}%, 100% ${chipD}%, ${chipB}% 100%, 0 ${chipC}%)`
+              : `polygon(${chipB}% 0, 100% 0, ${chipC}% 100%, ${chipA / 2}% ${chipD}%, 0 ${chipB}%)`;
+
+      return {
+        id: index,
+        column,
+        row,
+        columns,
+        rows,
+        clipPath,
+        dx: (fromCenterX / distance) * (88 + (index % 9) * 9),
+        dy: (fromCenterY / distance) * (76 + (index % 11) * 8),
+        rotate: fromCenterX * 430 + fromCenterY * 270 + (index % 17) * 19,
+        delay: (column + row) * 0.0035,
+      };
+    });
+  }, []);
+
+  return (
+    <div className="chrome-fragment-layer" aria-hidden="true">
+      <div className="chrome-fragment-stage">
+        {fragments.map((fragment) => (
+          <span
+            className="chrome-fragment"
+            key={fragment.id}
+            style={
+              {
+                left: `${(fragment.column / fragment.columns) * 100}%`,
+                top: `${(fragment.row / fragment.rows) * 100}%`,
+                width: `${100 / fragment.columns}%`,
+                height: `${100 / fragment.rows}%`,
+                clipPath: fragment.clipPath,
+                "--snapshot-width": `${fragment.columns * 100}%`,
+                "--snapshot-height": `${fragment.rows * 100}%`,
+                "--snapshot-x": `${-(fragment.column / fragment.columns) * 100}%`,
+                "--snapshot-y": `${-(fragment.row / fragment.rows) * 100}%`,
+                "--frag-x": `${fragment.dx}vw`,
+                "--frag-y": `${fragment.dy}vh`,
+                "--frag-rotate": `${fragment.rotate}deg`,
+                "--frag-delay": `${fragment.delay}s`,
+              } as CSSProperties
+            }
+          >
+            <span className="chrome-fragment-snapshot">
+              <DiscoChromeSnapshot animalizedPage={animalizedPage} />
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DiscoChromeSnapshot({ animalizedPage }: { animalizedPage: AnimalizedDanPage | null }) {
+  const sourceWords = animalizedPage?.sourceWords ?? animalWordsFromText("From Wikipedia, the free encyclopedia");
+  const headingWords = animalizedPage?.headingWords ?? animalWordsFromText("Summary");
+  const summaryWords = animalizedPage?.summaryWords ?? animalWordsFromText(danSummary);
+
+  return (
+    <div className="disco-browser-window chrome-fragment-snapshot-window">
+      <div className="disco-browser-tabs">
+        <div className="disco-browser-tab is-active">
+          <span className="disco-tab-dot" aria-hidden="true" />
+          <span>Dan - Wikipedia</span>
+        </div>
+        <div className="disco-browser-title">Disco Chrome</div>
+      </div>
+      <div className="disco-browser-toolbar">
+        <span aria-hidden="true">&lt;</span>
+        <span aria-hidden="true">&gt;</span>
+        <span aria-hidden="true">r</span>
+        <div className="disco-address-bar">https://en.wikipedia.org/wiki/Dan</div>
+      </div>
+      <article className="fake-wiki-page">
+        <div className="fake-wiki-main fake-wiki-dan is-animalized">
+          <p className="fake-wiki-source">{sourceWords.map(() => "crab").join(" ")}</p>
+          <h1>
+            <span className="fake-wiki-link crab-title-link">crab</span>
+          </h1>
+          <h2>{headingWords.map(() => "crab").join(" ")}</h2>
+          <p>{summaryWords.map(() => "crab").join(" ")}</p>
+        </div>
+      </article>
+    </div>
+  );
 }
 
 type BurstSide = "left" | "right";
@@ -982,15 +1273,7 @@ function evaluateWordleGuess(guess: string, target: string): WordleCellState[] {
   return result;
 }
 
-function WordleGameScene({ answers, onNext }: { answers: Answers; onNext: () => void }) {
-  const target = useMemo(() => {
-    const candidates = [answers.name, answers.date, answers.time]
-      .map(normalizeWordleValue)
-      .filter((entry) => entry.length === 5);
-
-    return candidates[Math.floor(Math.random() * candidates.length)] ?? "DISCO";
-  }, [answers]);
-
+function WordleGameScene({ target, onNext }: { target: string; onNext: () => void }) {
   const [guess, setGuess] = useState("");
   const [rows, setRows] = useState<WordleRow[]>([]);
   const [status, setStatus] = useState<WordleStatus>("playing");
