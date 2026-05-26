@@ -402,7 +402,7 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
           <p className="danflix-original">A Danflix Original</p>
           <h1 className="danflix-title-logo">
             <span>Disco Dan</span>
-            <span>The Documentary</span>
+            <span>The Dancumentary</span>
           </h1>
           <p className="danflix-description">{danflixDescription}</p>
           <div className="danflix-actions">
@@ -421,7 +421,7 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
             src="/disco.jpg"
             alt="Disco ball glowing in orange light"
           />
-          <p>Disco Dan: The Documentary</p>
+          <p>Disco Dan: The Dancumentary</p>
         </div>
       </section>
 
@@ -481,10 +481,10 @@ const danflixPlayerTimers: Partial<
   nowPlaying: { delay: 4000, next: "initialLoading" },
   initialLoading: { delay: 2000, next: "firstDate" },
   firstDate: { delay: 2300, next: "firstCaption" },
-  firstCaption: { delay: 2400, next: "firstPaused" },
+  firstCaption: { delay: 3800, next: "firstPaused" },
   resuming: { delay: 3000, next: "secondDate" },
   secondDate: { delay: 2300, next: "secondCaption" },
-  secondCaption: { delay: 2400, next: "secondPaused" },
+  secondCaption: { delay: 3800, next: "secondPaused" },
 };
 
 const getRandomSuspensionDays = () =>
@@ -585,7 +585,7 @@ function DanflixNowPlaying() {
     <div className="danflix-player-stage danflix-now-playing">
       <div className="danflix-player-glow" aria-hidden="true" />
       <p className="danflix-player-kicker">Now Playing</p>
-      <h1>Disco Dan: The Documentary</h1>
+      <h1>Disco Dan: The Dancumentary</h1>
       <div className="danflix-progress" aria-hidden="true">
         <span />
       </div>
@@ -634,19 +634,14 @@ function DanflixDocumentaryStage({
         >
           JAN 12, 1965
         </motion.h1>
-        <AnimatePresence>
-          {showCaption && (
-            <motion.p
-              className="danflix-documentary-caption"
-              initial={animateIn ? { opacity: 0 } : false}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.65, ease: "easeOut" }}
-            >
-              {caption}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        <motion.p
+          className="danflix-documentary-caption"
+          initial={animateIn ? { opacity: 0 } : false}
+          animate={{ opacity: showCaption ? 1 : 0 }}
+          transition={{ duration: 1.65, ease: "easeOut" }}
+        >
+          {caption}
+        </motion.p>
       </div>
     </div>
   );
@@ -702,7 +697,7 @@ function DanflixSuspendedStage({
     <div className="danflix-player-stage danflix-suspension-stage">
       <p className="danflix-suspension-copy">
         Your subscription to Danflix was shared with a man in a business suit.
-        Account suspended for{" "}
+        Account <span className="danflix-suspension-word">suspended</span> for{" "}
         <span className="danflix-suspension-days">{suspensionDays}</span> days.
       </p>
     </div>
