@@ -321,7 +321,7 @@ function DanflixScene() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIntroComplete(true), 2250);
+    const timer = window.setTimeout(() => setIntroComplete(true), 2100);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -333,15 +333,18 @@ function DanflixScene() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.45 }}
     >
-      <AnimatePresence mode="wait">
-        {!introComplete ? (
-          <DanflixIntro key="danflix-intro" />
-        ) : isPlaying ? (
+      {isPlaying ? (
+        <AnimatePresence mode="wait">
           <DanflixPlayer key="danflix-player" />
-        ) : (
+        </AnimatePresence>
+      ) : (
+        <>
           <DanflixHome key="danflix-home" onPlay={() => setIsPlaying(true)} />
-        )}
-      </AnimatePresence>
+          <AnimatePresence>
+            {!introComplete && <DanflixIntro key="danflix-intro" />}
+          </AnimatePresence>
+        </>
+      )}
     </motion.section>
   );
 }
@@ -351,26 +354,13 @@ function DanflixIntro() {
     <motion.div
       className="danflix-intro"
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "blur(14px)" }}
-      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      aria-hidden="true"
     >
-      <div className="danflix-intro-beams" aria-hidden="true" />
-      <motion.h1
-        className="danflix-intro-logo"
-        initial={{ opacity: 0, scale: 0.82 }}
-        animate={{
-          opacity: [0, 1, 1, 1],
-          scale: [0.82, 1, 1.08, 8],
-          filter: ["blur(8px)", "blur(0px)", "blur(0px)", "blur(12px)"],
-        }}
-        transition={{
-          duration: 2.7,
-          times: [0, 0.22, 0.62, 1],
-          ease: [0.16, 1, 0.3, 1],
-        }}
-      >
-        Danflix
-      </motion.h1>
+      <div className="danflix-intro-curtain danflix-intro-curtain-left" />
+      <div className="danflix-intro-curtain danflix-intro-curtain-right" />
+      <div className="danflix-intro-slit" />
     </motion.div>
   );
 }
@@ -420,7 +410,8 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
               Play
             </button>
             <button className="danflix-info-button" type="button" disabled>
-              More Info
+              <span>More Info</span>
+              <span className="danflix-info-icon" aria-hidden="true">i</span>
             </button>
           </div>
         </div>
@@ -437,14 +428,6 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
       <section className="danflix-row" aria-label="Popular on Danflix">
         <div className="danflix-row-header">
           <h2>Popular on Danflix</h2>
-          <div className="danflix-row-controls" aria-label="Popular on Danflix carousel controls">
-            <button type="button" aria-label="Previous posters" onClick={() => scrollPosters(-1)}>
-              {"<"}
-            </button>
-            <button type="button" aria-label="Next posters" onClick={() => scrollPosters(1)}>
-              {">"}
-            </button>
-          </div>
         </div>
         <div className="danflix-row-frame">
           <button
