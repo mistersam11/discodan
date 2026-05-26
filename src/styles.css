@@ -1384,10 +1384,18 @@ input {
 
 .danflix-suspension-stage {
   background: #a94205;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.danflix-suspension-content {
+  display: grid;
+  width: min(calc(100% - 2rem), 48rem);
+  gap: clamp(1.2rem, 3vw, 2rem);
+  justify-items: center;
 }
 
 .danflix-suspension-copy {
-  max-width: 48rem;
+  max-width: 100%;
   margin: 0;
   color: #180600;
   font-size: clamp(1.15rem, 3.2vw, 2.55rem);
@@ -1398,18 +1406,76 @@ input {
 }
 
 .danflix-suspension-word {
-  color: #ff4bb3;
-  text-shadow: 0 0 1rem rgba(255, 75, 179, 0.38);
+  color: #120500;
+  text-shadow: none;
 }
 
 .danflix-suspension-days {
   display: inline-block;
   min-width: 4ch;
-  color: #2bff77;
+  color: #120500;
   font-variant-numeric: tabular-nums;
-  text-shadow:
-    0 0.08rem 0 #180600,
-    0 0 1.4rem rgba(43, 255, 119, 0.42);
+  text-shadow: none;
+}
+
+.danflix-forgiveness-button {
+  min-height: 3rem;
+  border: 1px solid rgba(18, 5, 0, 0.74);
+  border-radius: 0.2rem;
+  padding: 0.8rem 1.15rem;
+  color: #120500;
+  background: rgba(255, 244, 223, 0.88);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.88rem, 1.5vw, 1rem);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.danflix-forgiveness-button:hover,
+.danflix-forgiveness-button:focus-visible {
+  background: #fff4df;
+  box-shadow: 0 0.7rem 1.4rem rgba(18, 5, 0, 0.18);
+  outline: 2px solid rgba(18, 5, 0, 0.8);
+  outline-offset: 0.18rem;
+  transform: translateY(-1px);
+}
+
+.forgiveness-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  color: #ffffff;
+  background: #020203;
+  text-align: center;
+}
+
+.forgiveness-scene div {
+  display: grid;
+  gap: 0.8rem;
+  justify-items: center;
+}
+
+.forgiveness-scene h1,
+.forgiveness-scene p {
+  margin: 0;
+}
+
+.forgiveness-scene h1 {
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  line-height: 0.95;
+}
+
+.forgiveness-scene p {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.35;
 }
 
 .disco-browser-tabs {

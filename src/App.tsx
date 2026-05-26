@@ -13,7 +13,8 @@ type Scene =
   | "discoReturn"
   | "discoChrome"
   | "danflixLogo"
-  | "danflix";
+  | "danflix"
+  | "forgiveness";
 
 type Answers = Record<AnswerKey, string>;
 
@@ -293,7 +294,11 @@ function App() {
         )}
 
         {scene === "danflix" && (
-          <DanflixScene key="danflix" />
+          <DanflixScene key="danflix" onNext={() => setScene("forgiveness")} />
+        )}
+
+        {scene === "forgiveness" && (
+          <ForgivenessScene key="forgiveness" />
         )}
       </AnimatePresence>
     </main>
@@ -316,7 +321,7 @@ function DanflixLogoScene({ onNext }: { onNext: () => void }) {
   );
 }
 
-function DanflixScene() {
+function DanflixScene({ onNext }: { onNext: () => void }) {
   const [introComplete, setIntroComplete] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -335,7 +340,7 @@ function DanflixScene() {
     >
       {isPlaying ? (
         <AnimatePresence mode="wait">
-          <DanflixPlayer key="danflix-player" />
+          <DanflixPlayer key="danflix-player" onNext={onNext} />
         </AnimatePresence>
       ) : (
         <>
@@ -345,6 +350,23 @@ function DanflixScene() {
           </AnimatePresence>
         </>
       )}
+    </motion.section>
+  );
+}
+
+function ForgivenessScene() {
+  return (
+    <motion.section
+      className="forgiveness-scene"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.45 }}
+    >
+      <div>
+        <h1>Forgiveness requested</h1>
+        <p>Disco Dan is reviewing your account.</p>
+      </div>
     </motion.section>
   );
 }
@@ -490,7 +512,7 @@ const danflixPlayerTimers: Partial<
 const getRandomSuspensionDays = () =>
   Array.from({ length: 4 }, () => Math.floor(Math.random() * 10)).join("");
 
-function DanflixPlayer() {
+function DanflixPlayer({ onNext }: { onNext: () => void }) {
   const [phase, setPhase] = useState<DanflixPlayerPhase>("nowPlaying");
   const [suspensionDays, setSuspensionDays] = useState(getRandomSuspensionDays);
 
@@ -574,7 +596,7 @@ function DanflixPlayer() {
       )}
 
       {phase === "suspended" && (
-        <DanflixSuspendedStage suspensionDays={suspensionDays} />
+        <DanflixSuspendedStage suspensionDays={suspensionDays} onNext={onNext} />
       )}
     </motion.div>
   );
@@ -689,17 +711,28 @@ function DanflixPausedStage({
 }
 
 function DanflixSuspendedStage({
+  onNext,
   suspensionDays,
 }: {
+  onNext: () => void;
   suspensionDays: string;
 }) {
   return (
     <div className="danflix-player-stage danflix-suspension-stage">
-      <p className="danflix-suspension-copy">
-        Your subscription to Danflix was shared with a man in a business suit.
-        Account <span className="danflix-suspension-word">suspended</span> for{" "}
-        <span className="danflix-suspension-days">{suspensionDays}</span> days.
-      </p>
+      <div className="danflix-suspension-content">
+        <p className="danflix-suspension-copy">
+          Your subscription to Danflix was shared with a man in a business suit.
+          Account <span className="danflix-suspension-word">suspended</span> for{" "}
+          <span className="danflix-suspension-days">{suspensionDays}</span> days.
+        </p>
+        <button
+          className="danflix-forgiveness-button"
+          type="button"
+          onClick={onNext}
+        >
+          Request Disco Dan&apos;s Forgiveness
+        </button>
+      </div>
     </div>
   );
 }
