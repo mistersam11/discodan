@@ -63,7 +63,8 @@ input {
 .animal-game-scene,
 .wordle-game-scene,
 .work-computer-scene,
-.danflix-scene {
+.danflix-scene,
+.word-search-scene {
   position: absolute;
   inset: 0;
   display: grid;
@@ -989,13 +990,26 @@ input {
 .danflix-poster {
   position: relative;
   display: flex;
-  height: clamp(8.5rem, 20dvh, 14.5rem);
+  aspect-ratio: 7 / 9;
+  height: auto;
+  min-height: 0;
   overflow: hidden;
   border-radius: 0.5rem;
-  padding: 1rem;
-  color: #ffffff;
-  background: #2d2d2d;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  padding: clamp(0.72rem, 1.3vw, 1rem);
+  color: var(--poster-title-color, #ffffff);
+  background-color: #171717;
+  background-image:
+    var(
+      --poster-overlay,
+      radial-gradient(circle at 32% 76%, rgba(0, 0, 0, 0.78), transparent 48%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.62))
+    ),
+    var(--poster-image);
+  background-position: var(--poster-position, center);
+  background-size: cover;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -3.8rem 3.5rem rgba(0, 0, 0, 0.18);
   scroll-snap-align: start;
   transform: translateY(0) scale(1);
   transform-origin: center bottom;
@@ -1006,12 +1020,53 @@ input {
   animation: danflix-poster-arrive 0.58s cubic-bezier(0.22, 1, 0.36, 1) var(--poster-delay) both;
 }
 
-.danflix-poster span {
+.danflix-poster::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 22%),
+    radial-gradient(circle at 50% 108%, transparent 38%, rgba(0, 0, 0, 0.2) 100%);
+  box-shadow: inset 0 0 2.4rem rgba(0, 0, 0, 0.34);
+  content: "";
+}
+
+.danflix-poster-title {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.02em 0.2em;
+  align-items: flex-start;
+  max-width: 100%;
+  color: var(--poster-title-color, #ffffff);
+  font-family: var(--poster-title-font, Impact, Haettenschweiler, "Arial Black", sans-serif);
+  font-size: var(--poster-title-size, clamp(1.35rem, 2.15vw, 2.35rem));
+  font-weight: var(--poster-title-weight, 900);
+  letter-spacing: 0;
+  line-height: 0.9;
+  text-align: var(--poster-title-align, left);
+  text-shadow:
+    var(
+      --poster-title-shadow,
+      0 0.1rem 0.14rem rgba(0, 0, 0, 0.96),
+      0 0.26rem 0.82rem rgba(0, 0, 0, 0.88)
+    );
+  text-transform: uppercase;
+  -webkit-text-stroke: var(--poster-title-stroke, 0.012em rgba(0, 0, 0, 0.45));
+}
+
+.danflix-poster-word {
+  display: block;
   max-width: 100%;
   overflow-wrap: anywhere;
-  letter-spacing: 0;
-  line-height: 0.94;
-  text-shadow: 0 0.14rem 0.25rem rgba(0, 0, 0, 0.55);
+}
+
+.danflix-poster-word.is-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  line-height: 0.86;
 }
 
 .danflix-poster:hover {
@@ -1026,190 +1081,265 @@ input {
 .poster-one {
   align-items: flex-end;
   justify-content: flex-start;
-  background: #e50914;
-  color: #ffffff;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(1.45rem, 2.4vw, 2.55rem);
-  text-transform: uppercase;
+  --poster-overlay:
+    radial-gradient(circle at 28% 76%, rgba(0, 0, 0, 0.88), transparent 49%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.68));
+  --poster-position: center;
+  --poster-title-size: clamp(1.55rem, 2.6vw, 2.8rem);
 }
 
 .poster-two {
   align-items: flex-start;
-  justify-content: center;
-  background: #ffcf33;
-  color: #171717;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.35rem, 2.1vw, 2.25rem);
-  text-align: center;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.7) 26%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.06));
+  --poster-position: center;
+  --poster-title-color: #141414;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.85rem rgba(255, 255, 255, 0.95);
+  --poster-title-size: clamp(1.55rem, 2.35vw, 2.55rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
 }
 
 .poster-three {
-  align-items: center;
-  justify-content: center;
-  background: #126b54;
-  color: #f6f0d6;
-  font-family: "Courier New", Consolas, monospace;
-  font-size: clamp(1.1rem, 1.7vw, 1.75rem);
-  text-align: center;
-  text-transform: uppercase;
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 76% 23%, rgba(0, 0, 0, 0.76), transparent 46%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(4, 7, 25, 0.48));
+  --poster-position: 42% center;
+  --poster-title-align: right;
+  --poster-title-font: "Courier New", Consolas, monospace;
+  --poster-title-size: clamp(1.18rem, 1.8vw, 1.95rem);
 }
 
 .poster-four {
   align-items: flex-end;
-  justify-content: center;
-  background: #2628a8;
-  color: #ff86c8;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(1.18rem, 1.9vw, 2rem);
-  font-weight: 900;
-  text-align: center;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 24% 76%, rgba(0, 0, 0, 0.9), transparent 45%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.55), transparent 72%);
+  --poster-position: 60% center;
+  --poster-title-font: Arial, Helvetica, sans-serif;
+  --poster-title-size: clamp(1.2rem, 1.95vw, 2.1rem);
+}
+
+.poster-four .danflix-poster-title {
+  align-items: flex-end;
+  gap: 0.26em;
 }
 
 .poster-five {
-  align-items: center;
+  align-items: flex-end;
   justify-content: flex-start;
-  background: #f2f2f2;
-  color: #e50914;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(1.65rem, 2.8vw, 3.1rem);
-  text-transform: uppercase;
+  --poster-overlay:
+    radial-gradient(circle at 28% 82%, rgba(0, 0, 0, 0.82), transparent 48%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.66), transparent 48%);
+  --poster-position: center;
+  --poster-title-color: #f6f6f6;
+  --poster-title-size: clamp(2rem, 3.3vw, 3.7rem);
 }
 
 .poster-six {
-  align-items: flex-start;
-  justify-content: flex-end;
-  background: #6a2c70;
-  color: #f9ed69;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.45rem, 2.3vw, 2.5rem);
-  text-align: right;
+  align-items: flex-end;
+  justify-content: center;
+  --poster-overlay:
+    radial-gradient(circle at 50% 82%, rgba(0, 0, 0, 0.82), transparent 45%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.54));
+  --poster-position: center;
+  --poster-title-align: center;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-size: clamp(1.3rem, 2.12vw, 2.35rem);
+}
+
+.poster-six .danflix-poster-title {
+  justify-content: center;
 }
 
 .poster-seven {
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: flex-end;
-  background: #1b1b1b;
-  color: #4df2ff;
-  font-family: Verdana, Geneva, sans-serif;
-  font-size: clamp(1.1rem, 1.7vw, 1.75rem);
-  font-weight: 900;
-  text-align: right;
+  --poster-overlay:
+    radial-gradient(circle at 78% 24%, rgba(0, 0, 0, 0.8), transparent 44%),
+    linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.46));
+  --poster-position: 42% center;
+  --poster-title-font: Verdana, Geneva, sans-serif;
+  --poster-title-size: clamp(1.16rem, 1.75vw, 1.9rem);
 }
 
 .poster-eight {
-  align-items: center;
-  justify-content: center;
-  background: #ff7a1a;
-  color: #ffffff;
-  font-family: "Arial Black", Arial, sans-serif;
-  font-size: clamp(1.35rem, 2.2vw, 2.35rem);
-  text-align: center;
-  text-transform: uppercase;
+  align-items: flex-end;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 82%, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.66) 24%, transparent 54%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.34));
+  --poster-position: center;
+  --poster-title-color: #151a12;
+  --poster-title-font: "Arial Black", Arial, sans-serif;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.95),
+    0 0 0.78rem rgba(255, 255, 255, 0.92);
+  --poster-title-size: clamp(1.8rem, 3vw, 3.35rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
 }
 
 .poster-nine {
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: flex-start;
-  background: #006d9c;
-  color: #fff4d6;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.55rem, 2.6vw, 2.85rem);
+  --poster-overlay:
+    radial-gradient(circle at 28% 78%, rgba(0, 0, 0, 0.86), transparent 50%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.6));
+  --poster-position: center;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-size: clamp(1.42rem, 2.34vw, 2.58rem);
 }
 
 .poster-ten {
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
-  background: #f72585;
-  color: #2b061e;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(1.25rem, 2vw, 2.2rem);
-  text-align: right;
-  text-transform: uppercase;
+  --poster-overlay:
+    radial-gradient(circle at 78% 25%, rgba(0, 0, 0, 0.82), transparent 45%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 20, 26, 0.52));
+  --poster-position: center;
+  --poster-title-align: right;
+  --poster-title-color: #e9ffff;
+  --poster-title-shadow:
+    0 0.12rem 0.12rem rgba(0, 0, 0, 0.95),
+    0 0 0.85rem rgba(0, 229, 255, 0.44);
+  --poster-title-size: clamp(1.12rem, 1.8vw, 1.98rem);
+}
+
+.poster-ten .danflix-poster-title {
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.24em;
 }
 
 .poster-eleven {
-  align-items: flex-end;
-  justify-content: flex-start;
-  background: #b7efc5;
-  color: #10451d;
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 23%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.62) 25%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 62%);
+  --poster-position: center;
+  --poster-title-color: #0c1115;
   font-family: "Courier New", Consolas, monospace;
-  font-size: clamp(1.1rem, 1.8vw, 1.88rem);
-  font-weight: 900;
-  text-transform: lowercase;
+  --poster-title-font: "Courier New", Consolas, monospace;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.8rem rgba(255, 255, 255, 0.9);
+  --poster-title-size: clamp(1.2rem, 1.9vw, 2.08rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
 }
 
 .poster-twelve {
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: center;
-  background: #2f184b;
-  color: #f4d35e;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(1.45rem, 2.35vw, 2.55rem);
-  font-weight: 900;
-  text-align: center;
+  --poster-overlay:
+    radial-gradient(circle at 50% 84%, rgba(0, 0, 0, 0.84), transparent 48%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent 55%);
+  --poster-position: center;
+  --poster-title-align: center;
+  --poster-title-font: Arial, Helvetica, sans-serif;
+  --poster-title-size: clamp(1.35rem, 2.18vw, 2.42rem);
+}
+
+.poster-twelve .danflix-poster-title {
+  justify-content: center;
 }
 
 .poster-thirteen {
-  align-items: center;
-  justify-content: center;
-  background: #111111;
-  color: #e50914;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(1.65rem, 2.8vw, 3rem);
-  text-align: center;
-  text-transform: uppercase;
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 77% 24%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.54) 24%, transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 60%);
+  --poster-position: 38% center;
+  --poster-title-color: #111111;
+  --poster-title-align: right;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.75rem rgba(255, 255, 255, 0.88);
+  --poster-title-size: clamp(1.38rem, 2.26vw, 2.48rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
 }
 
 .poster-fourteen {
-  align-items: flex-end;
-  justify-content: center;
-  background: #f7ede2;
-  color: #9d0208;
+  align-items: flex-start;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 24% 24%, rgba(0, 0, 0, 0.82), transparent 45%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 6, 16, 0.54));
+  --poster-position: center;
+  --poster-title-color: #f7fbff;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.3rem, 2vw, 2.2rem);
-  text-align: center;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-shadow:
+    0 0.12rem 0.12rem rgba(0, 0, 0, 0.98),
+    0 0 0.85rem rgba(36, 144, 255, 0.42);
+  --poster-title-size: clamp(1.52rem, 2.36vw, 2.6rem);
 }
 
 .poster-fifteen {
-  align-items: flex-start;
-  justify-content: flex-end;
-  background: #00b4d8;
-  color: #03045e;
+  align-items: flex-end;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 28% 79%, rgba(0, 0, 0, 0.82), transparent 46%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.56), transparent 52%);
+  --poster-position: 62% center;
+  --poster-title-color: #ffffff;
   font-family: Verdana, Geneva, sans-serif;
-  font-size: clamp(1.15rem, 1.85vw, 1.95rem);
-  font-weight: 900;
-  text-align: right;
+  --poster-title-font: Verdana, Geneva, sans-serif;
+  --poster-title-size: clamp(1.12rem, 1.76vw, 1.94rem);
 }
 
 .poster-sixteen {
-  align-items: center;
-  justify-content: flex-start;
-  background: #c1121f;
-  color: #fdf0d5;
-  font-family: "Arial Black", Arial, sans-serif;
-  font-size: clamp(1.4rem, 2.25vw, 2.45rem);
-  text-transform: uppercase;
+  align-items: flex-end;
+  justify-content: center;
+  --poster-overlay:
+    radial-gradient(circle at 50% 84%, rgba(0, 0, 0, 0.88), transparent 48%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.64), rgba(0, 0, 0, 0.08) 58%);
+  --poster-position: center;
+  --poster-title-align: center;
+  --poster-title-font: "Arial Black", Arial, sans-serif;
+  --poster-title-size: clamp(1.3rem, 2.16vw, 2.38rem);
 }
 
 .poster-seventeen {
   align-items: flex-end;
   justify-content: flex-end;
-  background: #2a9d8f;
-  color: #fff7ae;
-  font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: clamp(1.35rem, 2.2vw, 2.35rem);
-  font-weight: 900;
-  text-align: right;
+  --poster-overlay:
+    radial-gradient(circle at 76% 78%, rgba(0, 0, 0, 0.88), transparent 48%),
+    linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5));
+  --poster-position: 56% center;
+  --poster-title-align: right;
+  --poster-title-color: #fff7ae;
+  --poster-title-font: "Trebuchet MS", Arial, sans-serif;
+  --poster-title-size: clamp(1.14rem, 1.82vw, 2rem);
+}
+
+.poster-seventeen .danflix-poster-title {
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.24em;
 }
 
 .poster-eighteen {
   align-items: flex-start;
   justify-content: flex-start;
-  background: #3a0ca3;
-  color: #ffbe0b;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(1.5rem, 2.45vw, 2.65rem);
-  text-transform: uppercase;
+  --poster-overlay:
+    radial-gradient(circle at 24% 22%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.66) 25%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36), transparent 60%);
+  --poster-position: center;
+  --poster-title-color: #101010;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.85rem rgba(255, 255, 255, 0.92);
+  --poster-title-size: clamp(2rem, 3.28vw, 3.62rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.74);
 }
 
 .danflix-player {
@@ -1525,6 +1655,268 @@ input {
   color: rgba(255, 255, 255, 0.72);
   font-size: clamp(1rem, 2vw, 1.25rem);
   line-height: 1.35;
+}
+
+.word-search-scene {
+  --word-search-board-size: min(calc(100vw - 1.5rem), calc(100dvh - 8rem), 38rem);
+
+  overflow: hidden;
+  padding: 0;
+  background: #020203;
+}
+
+.word-search-title {
+  position: absolute;
+  top: calc(50% - var(--word-search-board-size) / 2 - clamp(3.1rem, 7vmin, 4.35rem));
+  right: 0;
+  left: 0;
+  width: min(calc(100vw - 2rem), 36rem);
+  margin: 0 auto;
+  color: #ffffff;
+  font-size: clamp(1.55rem, 4.8vw, 2.55rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+}
+
+.word-search-board-anchor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: var(--word-search-board-size);
+  height: var(--word-search-board-size);
+  transform: translate(-50%, -50%);
+}
+
+.word-search-board-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.word-search-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--word-search-size), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #020203;
+  box-shadow: none;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.word-search-cell {
+  position: relative;
+  z-index: 0;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  border: 0;
+  color: #ffffff;
+  background: transparent;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: var(--word-search-letter-size);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  transition:
+    color 110ms ease,
+    text-shadow 110ms ease;
+}
+
+.word-search-cell.is-selected {
+  z-index: 1;
+  color: #ffffff;
+  text-shadow: 0 0 0.65rem rgba(255, 255, 255, 0.58);
+}
+
+.word-search-cell.is-found-letter {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.word-search-cell.is-solution-pulsing {
+  animation: word-search-solution-pulse 2.4s ease-in-out var(--word-search-pulse-delay) infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.word-search-cell.is-final-solution-pulsing {
+  animation-name: word-search-final-solution-pulse;
+  animation-duration: 1.15s;
+}
+
+.word-search-letter-glyph {
+  position: relative;
+  display: inline-block;
+  transform-origin: center;
+}
+
+.word-search-cell.is-found-letter .word-search-letter-glyph {
+  animation: word-search-found-fire-core 1.18s ease-in-out var(--word-search-fire-delay) infinite alternate;
+  color: #ffffff;
+  text-shadow:
+    0 0 0.22rem rgba(255, 255, 255, 0.9),
+    0 -0.12rem 0.45rem rgba(255, 228, 92, 0.72),
+    0 -0.3rem 0.75rem rgba(255, 75, 216, 0.58),
+    0 -0.48rem 1rem rgba(53, 217, 255, 0.44);
+  will-change: color, text-shadow, transform;
+}
+
+.word-search-cell.is-found-letter .word-search-letter-glyph::before,
+.word-search-cell.is-found-letter .word-search-letter-glyph::after {
+  position: absolute;
+  inset: 0;
+  content: attr(data-letter);
+  pointer-events: none;
+}
+
+.word-search-cell.is-found-letter .word-search-letter-glyph::before {
+  animation: word-search-found-fire-flame 0.82s ease-in-out var(--word-search-fire-delay) infinite alternate;
+  color: #ff4bd8;
+  filter: blur(0.035em);
+  opacity: 0.76;
+  text-shadow:
+    0 -0.22rem 0.55rem rgba(255, 75, 216, 0.7),
+    0 -0.46rem 0.9rem rgba(255, 228, 92, 0.48);
+}
+
+.word-search-cell.is-found-letter .word-search-letter-glyph::after {
+  animation: word-search-found-fire-flame 1.05s ease-in-out calc(var(--word-search-fire-delay) - 0.18s) infinite alternate-reverse;
+  color: #35d9ff;
+  filter: blur(0.045em);
+  opacity: 0.66;
+  text-shadow:
+    0 -0.18rem 0.58rem rgba(53, 217, 255, 0.72),
+    0 -0.42rem 0.92rem rgba(82, 255, 143, 0.46);
+}
+
+.word-search-letter-glyph.is-final-disco-pulsing {
+  animation: word-search-final-solution-pulse 1.15s ease-in-out infinite;
+  color: #ffffff;
+  will-change: transform;
+}
+
+.word-search-letter-glyph.is-final-dan-rainbow {
+  animation: word-search-final-dan-rainbow 5.2s linear var(--word-search-rainbow-delay) infinite;
+}
+
+.word-search-cell.is-final-falling {
+  animation: word-search-final-letter-fall var(--word-search-fall-duration) cubic-bezier(0.36, 0, 0.96, 0.34) var(--word-search-fall-delay) forwards;
+  transform-origin: center;
+  will-change: transform, opacity, filter;
+}
+
+.word-search-selection-outline {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.word-search-selection-outline-path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 0.24rem rgba(255, 255, 255, 0.24));
+}
+
+.word-search-selection-outline.is-rejected {
+  animation: word-search-selection-reject 760ms ease forwards;
+}
+
+.word-search-selection-outline.is-rejected .word-search-selection-outline-path {
+  fill: none;
+  stroke: #ff3b3b;
+  filter: drop-shadow(0 0 0.32rem rgba(255, 59, 59, 0.28));
+}
+
+.word-search-board-wrap.is-solving .word-search-cell {
+  animation: word-search-letter-shrink 1.35s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+.word-search-board-wrap.is-finale-flipping .word-search-cell {
+  animation: word-search-final-letter-flip 980ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  backface-visibility: hidden;
+  transform-origin: center;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+.word-search-board-wrap.is-finale .word-search-cell {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.word-search-solve-outline {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 6;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ffffff;
+  border-radius: clamp(0.35rem, 1.6vmin, 0.8rem);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: word-search-outline-expand 2.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.word-search-clues {
+  position: absolute;
+  top: calc(50% + var(--word-search-board-size) / 2 + clamp(0.95rem, 2.4vmin, 1.35rem));
+  right: 0;
+  left: 0;
+  display: flex;
+  width: min(calc(100vw - 2rem), 36rem);
+  margin: 0 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem 1.2rem;
+}
+
+.word-search-clue {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(1rem, 2.4vw, 1.18rem);
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow: 0 0 0.8rem rgba(255, 255, 255, 0.22);
+}
+
+.word-search-clue.is-found {
+  opacity: 0.34;
+}
+
+.word-search-next-complete {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.word-search-next-complete .next-button {
+  pointer-events: auto;
 }
 
 .disco-browser-tabs {
@@ -2984,6 +3376,211 @@ button.excel-cell {
   outline: none;
 }
 
+@keyframes word-search-selection-reject {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes word-search-solution-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  46% {
+    transform: scale(1.16);
+  }
+}
+
+@keyframes word-search-found-fire-core {
+  0% {
+    color: #ffffff;
+    transform: translateY(0) scale(1);
+    text-shadow:
+      0 0 0.2rem rgba(255, 255, 255, 0.86),
+      0 -0.1rem 0.42rem rgba(255, 228, 92, 0.66),
+      0 -0.28rem 0.68rem rgba(255, 75, 216, 0.5),
+      0 -0.44rem 0.9rem rgba(53, 217, 255, 0.38);
+  }
+
+  100% {
+    color: #fff7ae;
+    transform: translateY(-0.035em) scale(1.08);
+    text-shadow:
+      0 0 0.24rem rgba(255, 255, 255, 1),
+      0 -0.15rem 0.5rem rgba(255, 228, 92, 0.78),
+      0 -0.36rem 0.82rem rgba(255, 75, 216, 0.68),
+      0 -0.58rem 1.16rem rgba(53, 217, 255, 0.56);
+  }
+}
+
+@keyframes word-search-found-fire-flame {
+  0% {
+    opacity: 0.36;
+    transform: translate3d(-0.02em, -0.04em, 0) scaleX(0.96) scaleY(1.08);
+  }
+
+  100% {
+    opacity: 0.84;
+    transform: translate3d(0.03em, -0.24em, 0) scaleX(1.14) scaleY(1.42);
+  }
+}
+
+@keyframes word-search-final-solution-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.36);
+  }
+}
+
+@keyframes word-search-final-dan-rainbow {
+  0% {
+    color: #ff3b7f;
+    text-shadow: 0 0 0.6rem rgba(255, 59, 127, 0.35);
+  }
+
+  20% {
+    color: #ffe45c;
+    text-shadow: 0 0 0.6rem rgba(255, 228, 92, 0.32);
+  }
+
+  40% {
+    color: #52ff8f;
+    text-shadow: 0 0 0.6rem rgba(82, 255, 143, 0.32);
+  }
+
+  60% {
+    color: #35d9ff;
+    text-shadow: 0 0 0.6rem rgba(53, 217, 255, 0.34);
+  }
+
+  80% {
+    color: #ff4bd8;
+    text-shadow: 0 0 0.6rem rgba(255, 75, 216, 0.34);
+  }
+
+  100% {
+    color: #ff3b7f;
+    text-shadow: 0 0 0.6rem rgba(255, 59, 127, 0.35);
+  }
+}
+
+@keyframes word-search-final-letter-flip {
+  0% {
+    opacity: 1;
+    transform: perspective(24rem) rotateY(0deg) scale(1);
+  }
+
+  48% {
+    opacity: 0.72;
+    transform: perspective(24rem) rotateY(88deg) scale(0.98);
+  }
+
+  52% {
+    opacity: 0.72;
+    transform: perspective(24rem) rotateY(-88deg) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: perspective(24rem) rotateY(0deg) scale(1);
+  }
+}
+
+@keyframes word-search-final-letter-fall {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+
+  28% {
+    opacity: 1;
+    transform: translate3d(0, 8vh, 0) scale(1);
+    filter: blur(0);
+  }
+
+  64% {
+    opacity: 1;
+    transform: translate3d(0, 48vh, 0) scale(0.98);
+    filter: blur(0.2px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 126vh, 0) scale(0.96);
+    filter: blur(1.2px);
+  }
+}
+
+@keyframes word-search-letter-shrink {
+  0% {
+    opacity: 1;
+    color: #ffffff;
+    transform: scale(1);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 0;
+    color: transparent;
+    transform: scale(0.02);
+    filter: blur(2px);
+  }
+}
+
+@keyframes word-search-outline-expand {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  16% {
+    opacity: 0.74;
+  }
+
+  27% {
+    opacity: 0.96;
+  }
+
+  41% {
+    opacity: 0.68;
+  }
+
+  56% {
+    opacity: 0.82;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(4.4);
+  }
+}
+
+@keyframes word-search-finale-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.18);
+    filter: blur(2px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
 @keyframes blink {
   0%,
   45% {
@@ -3284,8 +3881,15 @@ button.excel-cell {
   .finale-scene,
   .animal-game-scene,
   .wordle-game-scene,
+  .word-search-scene,
   .work-computer-scene {
     padding: 1.25rem;
+  }
+
+  .word-search-scene {
+    --word-search-board-size: min(calc(100vw - 1rem), calc(100dvh - 7rem), 34rem);
+
+    padding: 0;
   }
 
   .question-form {
@@ -3490,13 +4094,13 @@ button.excel-cell {
   }
 
   .danflix-poster {
-    min-height: 13.6rem;
+    min-height: 0;
   }
 
   .poster-one,
   .poster-five,
   .poster-thirteen {
-    font-size: 2rem;
+    --poster-title-size: 2rem;
   }
 
   .poster-two,
@@ -3507,7 +4111,7 @@ button.excel-cell {
   .poster-sixteen,
   .poster-seventeen,
   .poster-eighteen {
-    font-size: 1.75rem;
+    --poster-title-size: 1.75rem;
   }
 
   .poster-three,
@@ -3517,7 +4121,7 @@ button.excel-cell {
   .poster-eleven,
   .poster-fourteen,
   .poster-fifteen {
-    font-size: 1.42rem;
+    --poster-title-size: 1.42rem;
   }
 
   .danflix-now-playing h1 {
@@ -3763,9 +4367,17 @@ button.excel-cell {
     padding-bottom: 0.8rem;
   }
 
+  .danflix-poster-strip {
+    grid-auto-columns: clamp(6.25rem, 14vh, 7.6rem);
+  }
+
   .danflix-poster {
-    height: 7.8rem;
+    height: auto;
     min-height: 0;
+  }
+
+  .danflix-poster-title {
+    font-size: clamp(0.9rem, 5.4vh, 1.35rem);
   }
 
   .question-scene,
@@ -3774,8 +4386,28 @@ button.excel-cell {
   .finale-scene,
   .animal-game-scene,
   .wordle-game-scene,
+  .word-search-scene,
   .work-computer-scene {
     padding: 0.85rem;
+  }
+
+  .word-search-scene {
+    --word-search-board-size: min(calc(100vw - 0.75rem), calc(100dvh - 5.7rem), 34rem);
+
+    padding: 0;
+  }
+
+  .word-search-title {
+    top: calc(50% - var(--word-search-board-size) / 2 - 2.45rem);
+    font-size: clamp(1.15rem, 6vh, 1.55rem);
+  }
+
+  .word-search-clues {
+    top: calc(50% + var(--word-search-board-size) / 2 + 0.6rem);
+  }
+
+  .word-search-clue {
+    font-size: 0.9rem;
   }
 
   .question-form {

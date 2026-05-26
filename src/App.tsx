@@ -14,7 +14,8 @@ type Scene =
   | "discoChrome"
   | "danflixLogo"
   | "danflix"
-  | "forgiveness";
+  | "forgiveness"
+  | "wordSearch";
 
 type Answers = Record<AnswerKey, string>;
 
@@ -167,6 +168,9 @@ const devSceneShortcuts: Record<string, Scene> = {
   wiki: "discoChrome",
   danflix: "danflixLogo",
   netflix: "danflixLogo",
+  search: "wordSearch",
+  wordsearch: "wordSearch",
+  "word search": "wordSearch",
 };
 
 const getDevSceneShortcut = (key: AnswerKey, value: string) => {
@@ -180,25 +184,129 @@ const getDevSceneShortcut = (key: AnswerKey, value: string) => {
 const danflixDescription =
   "Regular Dan was a regular man. But Dan had an irregular plan. He spiked up his hair with jelly and crisco, and found that his calling in life was the disco.";
 
-const danflixPosters = [
-  "poster-one",
-  "poster-two",
-  "poster-three",
-  "poster-four",
-  "poster-five",
-  "poster-six",
-  "poster-seven",
-  "poster-eight",
-  "poster-nine",
-  "poster-ten",
-  "poster-eleven",
-  "poster-twelve",
-  "poster-thirteen",
-  "poster-fourteen",
-  "poster-fifteen",
-  "poster-sixteen",
-  "poster-seventeen",
-  "poster-eighteen",
+type DanflixPosterWord = {
+  text: "Disco" | "Dan";
+  vertical?: boolean;
+};
+
+type DanflixPoster = {
+  id: string;
+  className: string;
+  image: string;
+  words: DanflixPosterWord[];
+};
+
+const danflixImage = (fileName: string) => `/danflix/${fileName}`;
+
+const danflixPosters: DanflixPoster[] = [
+  {
+    id: "fog-dance",
+    className: "poster-one",
+    image: danflixImage("sergiu-baica-5hCneY6YeFQ-unsplash.jpg"),
+    words: [{ text: "Disco" }, { text: "Dan" }],
+  },
+  {
+    id: "cream-dan",
+    className: "poster-two",
+    image: danflixImage("klara-kulikova-x6_nIirpjKc-unsplash.jpg"),
+    words: [{ text: "Dan", vertical: true }],
+  },
+  {
+    id: "volcano-disco",
+    className: "poster-three",
+    image: danflixImage("alain-bonnardeaux-tLxGw_ITs7k-unsplash.jpg"),
+    words: [{ text: "Disco" }],
+  },
+  {
+    id: "number-one-dan",
+    className: "poster-four",
+    image: danflixImage("alex-sheldon-n6EdYIwpqp4-unsplash.jpg"),
+    words: [{ text: "Disco", vertical: true }, { text: "Dan" }],
+  },
+  {
+    id: "portrait-dan",
+    className: "poster-five",
+    image: danflixImage("jonathan-cosens-photography-BnIgRIBKZX8-unsplash.jpg"),
+    words: [{ text: "Dan" }],
+  },
+  {
+    id: "warehouse-disco",
+    className: "poster-six",
+    image: danflixImage("lance-chang-h3pVxOIpnzk-unsplash.jpg"),
+    words: [{ text: "Disco" }, { text: "Dan" }],
+  },
+  {
+    id: "jungle-disco",
+    className: "poster-seven",
+    image: danflixImage("hanna-lazar-CRkxVYeYIso-unsplash.jpg"),
+    words: [{ text: "Disco", vertical: true }],
+  },
+  {
+    id: "rabbit-dan",
+    className: "poster-eight",
+    image: danflixImage("waranya-mooldee-Efj0HGPdPKs-unsplash.jpg"),
+    words: [{ text: "Dan" }],
+  },
+  {
+    id: "produce-dance",
+    className: "poster-nine",
+    image: danflixImage("nrd-D6Tu_L3chLE-unsplash.jpg"),
+    words: [{ text: "Disco" }, { text: "Dan" }],
+  },
+  {
+    id: "aurora-dan",
+    className: "poster-ten",
+    image: danflixImage("nicolas-j-leclercq-va_nrBLonf8-unsplash.jpg"),
+    words: [{ text: "Disco", vertical: true }, { text: "Dan" }],
+  },
+  {
+    id: "shore-disco",
+    className: "poster-eleven",
+    image: danflixImage("adam-jang-MLKrf51NV8w-unsplash.jpg"),
+    words: [{ text: "Disco" }],
+  },
+  {
+    id: "library-dan",
+    className: "poster-twelve",
+    image: danflixImage("pickawood-YbLitAY8bPA-unsplash.jpg"),
+    words: [{ text: "Disco" }, { text: "Dan" }],
+  },
+  {
+    id: "castle-disco",
+    className: "poster-thirteen",
+    image: danflixImage("k-mitch-hodge-QFQcqINA6UM-unsplash.jpg"),
+    words: [{ text: "Disco" }],
+  },
+  {
+    id: "blue-dan",
+    className: "poster-fourteen",
+    image: danflixImage("evgeniy-prokofiev-2kazXeobLfM-unsplash.jpg"),
+    words: [{ text: "Dan", vertical: true }],
+  },
+  {
+    id: "holiday-disco",
+    className: "poster-fifteen",
+    image: danflixImage("gene-gallin-D9AmgxR4Lko-unsplash.jpg"),
+    words: [{ text: "Disco" }, { text: "Dan" }],
+  },
+  {
+    id: "mirrorball-disco",
+    className: "poster-sixteen",
+    image: danflixImage("matthew-lejune-onKZfGmLmgo-unsplash.jpg"),
+    words: [{ text: "Disco" }],
+  },
+  {
+    id: "fish-dance",
+    className: "poster-seventeen",
+    image: danflixImage("david-clode-ekthrVC_DVs-unsplash.jpg"),
+    words: [{ text: "Disco" }, { text: "Dan", vertical: true }],
+  },
+  {
+    id: "cupcake-dan",
+    className: "poster-eighteen",
+    image: danflixImage("brooke-lark-pGM4sjt_BdQ-unsplash.jpg"),
+    words: [{ text: "Dan" }],
+  },
 ];
 
 function App() {
@@ -270,8 +378,12 @@ function App() {
           <WordleGameScene
             key="wordle-game"
             target={wordleAnswer}
-            onNext={() => setScene("workComputer")}
+            onNext={() => setScene("wordSearch")}
           />
+        )}
+
+        {scene === "wordSearch" && (
+          <WordSearchScene key="word-search" onNext={() => setScene("workComputer")} />
         )}
 
         {scene === "workComputer" && (
@@ -364,9 +476,940 @@ function ForgivenessScene() {
       transition={{ duration: 0.45 }}
     >
       <div>
-        <h1>Forgiveness requested</h1>
-        <p>Disco Dan is reviewing your account.</p>
+        <h1>To be continued...</h1>
+        <p>Stay tuned for more Disco Dan.</p>
       </div>
+    </motion.section>
+  );
+}
+
+type WordSearchAxis = "horizontal" | "vertical";
+type WordSearchPhase = "idle" | "selecting" | "rejected" | "solved" | "finaleFlip" | "finale";
+type WordSearchCoord = {
+  row: number;
+  col: number;
+};
+type WordSearchPoint = {
+  x: number;
+  y: number;
+};
+type WordSearchCellStyle = CSSProperties & Record<`--word-search-${string}`, string>;
+type WordSearchPuzzle = {
+  id: string;
+  size: number;
+  grid: string[][];
+  targets: WordSearchTarget[];
+};
+
+type WordSearchTargetConfig = {
+  id: string;
+  word: string;
+  clue: string;
+};
+
+type WordSearchLevel = {
+  size: number;
+  pulseDelayMs: number;
+  targets: WordSearchTargetConfig[];
+};
+
+type WordSearchTarget = WordSearchTargetConfig & {
+  solution: WordSearchCoord[];
+};
+
+const wordSearchAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const danDiscoFinalPhrase = "DANDISCO";
+const wordSearchLevels: WordSearchLevel[] = [
+  {
+    size: 5,
+    pulseDelayMs: 20000,
+    targets: [{ id: "disco", word: "DISCO", clue: "1. Disco" }],
+  },
+  {
+    size: 10,
+    pulseDelayMs: 10000,
+    targets: [
+      { id: "disco", word: "DISCO", clue: "1. Disco" },
+      { id: "dan", word: "DAN", clue: "2. Dan" },
+      { id: "crab", word: "CRAB", clue: "3. Crab" },
+    ],
+  },
+  {
+    size: 20,
+    pulseDelayMs: 5000,
+    targets: [
+      { id: "disco", word: "DISCO", clue: "1. Disco" },
+      { id: "dan", word: "DAN", clue: "2. Dan" },
+      { id: "crab", word: "CRAB", clue: "3. Crab" },
+      { id: "dandle", word: "DANDLE", clue: "4. Dandle" },
+      { id: "puter", word: "PUTER", clue: "5. Puter" },
+    ],
+  },
+];
+
+const wordSearchLetterSizes: Record<number, string> = {
+  5: "clamp(1.55rem, 6.6vmin, 2.6rem)",
+  10: "clamp(0.8rem, 3.1vmin, 1.28rem)",
+  20: "clamp(0.62rem, 2.2vmin, 1.08rem)",
+};
+const wordSearchFinalGravityDelayMs = 5000;
+
+function randomWordSearchLetter() {
+  return wordSearchAlphabet[Math.floor(Math.random() * wordSearchAlphabet.length)] ?? "D";
+}
+
+function wordSearchCoordKey(coord: WordSearchCoord) {
+  return `${coord.row}-${coord.col}`;
+}
+
+function clampWordSearchValue(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function canPlaceWordSearchTarget(
+  target: WordSearchTargetConfig,
+  grid: string[][],
+  occupiedKeys: Set<string>,
+  row: number,
+  col: number,
+  axis: WordSearchAxis,
+) {
+  const word = target.word.toUpperCase();
+  const size = grid.length;
+
+  if (axis === "horizontal" && col + word.length > size) {
+    return false;
+  }
+
+  if (axis === "vertical" && row + word.length > size) {
+    return false;
+  }
+
+  return Array.from(word).every((letter, index) => {
+    const coord = {
+      row: row + (axis === "vertical" ? index : 0),
+      col: col + (axis === "horizontal" ? index : 0),
+    };
+    const key = wordSearchCoordKey(coord);
+
+    return !occupiedKeys.has(key);
+  });
+}
+
+function placeWordSearchTarget(
+  target: WordSearchTargetConfig,
+  grid: string[][],
+  occupiedKeys: Set<string>,
+) {
+  const size = grid.length;
+  const word = target.word.toUpperCase();
+
+  for (let attempt = 0; attempt < 400; attempt += 1) {
+    const axis: WordSearchAxis = Math.random() > 0.5 ? "horizontal" : "vertical";
+    const row =
+      axis === "vertical"
+        ? Math.floor(Math.random() * (size - word.length + 1))
+        : Math.floor(Math.random() * size);
+    const col =
+      axis === "horizontal"
+        ? Math.floor(Math.random() * (size - word.length + 1))
+        : Math.floor(Math.random() * size);
+
+    if (!canPlaceWordSearchTarget(target, grid, occupiedKeys, row, col, axis)) {
+      continue;
+    }
+
+    const solution = Array.from(word).map((letter, index) => {
+      const coord = {
+        row: row + (axis === "vertical" ? index : 0),
+        col: col + (axis === "horizontal" ? index : 0),
+      };
+
+      grid[coord.row][coord.col] = letter;
+      occupiedKeys.add(wordSearchCoordKey(coord));
+      return coord;
+    });
+
+    return { ...target, word, solution };
+  }
+
+  throw new Error(`Could not place word search target ${target.word}`);
+}
+
+function createWordSearchPuzzle(level: WordSearchLevel, levelIndex: number): WordSearchPuzzle {
+  const grid = Array.from({ length: level.size }, () =>
+    Array.from({ length: level.size }, randomWordSearchLetter),
+  );
+  const occupiedKeys = new Set<string>();
+  const targets = level.targets.map((target) =>
+    placeWordSearchTarget(target, grid, occupiedKeys),
+  );
+
+  return {
+    id: `word-search-${level.size}-${levelIndex}-${Date.now()}-${Math.random()}`,
+    size: level.size,
+    grid,
+    targets,
+  };
+}
+
+function createDanDiscoGrid(size: number): string[][] {
+  return Array.from({ length: size }, (_, rowIndex) =>
+    Array.from(
+      { length: size },
+      (_, colIndex) =>
+        danDiscoFinalPhrase[(rowIndex * size + colIndex) % danDiscoFinalPhrase.length] ?? "D",
+    ),
+  );
+}
+
+function isFinalDiscoLetter(row: number, col: number, size: number) {
+  return (row * size + col) % danDiscoFinalPhrase.length >= 3;
+}
+
+function isFinalDanLetter(row: number, col: number, size: number) {
+  return (row * size + col) % danDiscoFinalPhrase.length < 3;
+}
+
+function createWordSearchFinalFallTimings(size: number) {
+  return Array.from({ length: size * size }, (_, index) => {
+    const staggerGroup = index % 31;
+    const randomDelay = Math.random() * 1.15 + staggerGroup * 0.035;
+    const duration = 1.65 + Math.random() * 0.62;
+
+    return {
+      delay: randomDelay,
+      duration,
+      end: randomDelay + duration,
+    };
+  });
+}
+
+function getWordSearchCellCoord(element: Element | null): WordSearchCoord | null {
+  const cell = element?.closest("[data-word-search-cell]") as HTMLElement | null;
+
+  if (!cell) {
+    return null;
+  }
+
+  const row = Number(cell.dataset.row);
+  const col = Number(cell.dataset.col);
+
+  if (!Number.isInteger(row) || !Number.isInteger(col)) {
+    return null;
+  }
+
+  return { row, col };
+}
+
+function getWordSearchPath(
+  start: WordSearchCoord,
+  end: WordSearchCoord,
+  lockedAxis: WordSearchAxis | null,
+) {
+  let axis = lockedAxis;
+
+  if (!axis) {
+    if (start.row === end.row && start.col !== end.col) {
+      axis = "horizontal";
+    } else if (start.col === end.col && start.row !== end.row) {
+      axis = "vertical";
+    } else if (start.row === end.row && start.col === end.col) {
+      return { axis, coords: [start] };
+    } else {
+      return null;
+    }
+  }
+
+  if (axis === "horizontal") {
+    if (end.row !== start.row) {
+      return null;
+    }
+
+    const minCol = Math.min(start.col, end.col);
+    const maxCol = Math.max(start.col, end.col);
+    return {
+      axis,
+      coords: Array.from({ length: maxCol - minCol + 1 }, (_, index) => ({
+        row: start.row,
+        col: minCol + index,
+      })),
+    };
+  }
+
+  if (end.col !== start.col) {
+    return null;
+  }
+
+  const minRow = Math.min(start.row, end.row);
+  const maxRow = Math.max(start.row, end.row);
+  return {
+    axis,
+    coords: Array.from({ length: maxRow - minRow + 1 }, (_, index) => ({
+      row: minRow + index,
+      col: start.col,
+    })),
+  };
+}
+
+function wordSearchCoordsMatch(a: WordSearchCoord[], b: WordSearchCoord[]) {
+  return (
+    a.length === b.length &&
+    a.every((coord, index) => coord.row === b[index]?.row && coord.col === b[index]?.col)
+  );
+}
+
+function isCorrectWordSearchSelection(selection: WordSearchCoord[], solution: WordSearchCoord[]) {
+  return (
+    wordSearchCoordsMatch(selection, solution) ||
+    wordSearchCoordsMatch(selection, [...solution].reverse())
+  );
+}
+
+function findSelectedWordSearchTarget(
+  selection: WordSearchCoord[],
+  targets: WordSearchTarget[],
+  foundTargetIds: string[],
+) {
+  const foundSet = new Set(foundTargetIds);
+
+  return targets.find(
+    (target) =>
+      !foundSet.has(target.id) && isCorrectWordSearchSelection(selection, target.solution),
+  );
+}
+
+function getWordSearchBoardPoint(
+  event: { clientX: number; clientY: number },
+  board: HTMLDivElement | null,
+  size: number,
+): WordSearchPoint | null {
+  const rect = board?.getBoundingClientRect();
+
+  if (!rect || rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  return {
+    x: clampWordSearchValue(((event.clientX - rect.left) / rect.width) * size, 0.5, size - 0.5),
+    y: clampWordSearchValue(((event.clientY - rect.top) / rect.height) * size, 0.5, size - 0.5),
+  };
+}
+
+function getWordSearchCoordFromPoint(point: WordSearchPoint, size: number): WordSearchCoord {
+  return {
+    row: clampWordSearchValue(Math.floor(point.y), 0, size - 1),
+    col: clampWordSearchValue(Math.floor(point.x), 0, size - 1),
+  };
+}
+
+function createWordSearchSelectionPath({
+  axis,
+  dragPoint,
+  puzzleSize,
+  selection,
+  start,
+}: {
+  axis: WordSearchAxis | null;
+  dragPoint: WordSearchPoint | null;
+  puzzleSize: number;
+  selection: WordSearchCoord[];
+  start: WordSearchCoord;
+}) {
+  const radius = 0.43;
+  const startCenter = {
+    x: start.col + 0.5,
+    y: start.row + 0.5,
+  };
+  const fallbackEnd = selection[selection.length - 1] ?? start;
+  const fallbackCenter = {
+    x: fallbackEnd.col + 0.5,
+    y: fallbackEnd.row + 0.5,
+  };
+
+  if (axis === "vertical") {
+    const x = startCenter.x;
+    const yEnd = clampWordSearchValue(
+      dragPoint?.y ?? fallbackCenter.y,
+      0.5,
+      puzzleSize - 0.5,
+    );
+    const top = Math.min(startCenter.y, yEnd);
+    const bottom = Math.max(startCenter.y, yEnd);
+
+    return [
+      `M ${x + radius} ${top}`,
+      `L ${x + radius} ${bottom}`,
+      `A ${radius} ${radius} 0 0 1 ${x - radius} ${bottom}`,
+      `L ${x - radius} ${top}`,
+      `A ${radius} ${radius} 0 0 1 ${x + radius} ${top}`,
+      "Z",
+    ].join(" ");
+  }
+
+  const y = startCenter.y;
+  const xEnd = clampWordSearchValue(
+    axis === "horizontal" ? dragPoint?.x ?? fallbackCenter.x : startCenter.x,
+    0.5,
+    puzzleSize - 0.5,
+  );
+  const left = Math.min(startCenter.x, xEnd);
+  const right = Math.max(startCenter.x, xEnd);
+
+  return [
+    `M ${left} ${y - radius}`,
+    `L ${right} ${y - radius}`,
+    `A ${radius} ${radius} 0 0 1 ${right} ${y + radius}`,
+    `L ${left} ${y + radius}`,
+    `A ${radius} ${radius} 0 0 1 ${left} ${y - radius}`,
+    "Z",
+  ].join(" ");
+}
+
+function WordSearchSelectionOutline({
+  isRejected,
+  axis,
+  dragPoint,
+  puzzleSize,
+  selection,
+  start,
+}: {
+  isRejected: boolean;
+  axis: WordSearchAxis | null;
+  dragPoint: WordSearchPoint | null;
+  puzzleSize: number;
+  selection: WordSearchCoord[];
+  start: WordSearchCoord;
+}) {
+  const selectionPath = useMemo(() => {
+    return createWordSearchSelectionPath({
+      axis,
+      dragPoint,
+      puzzleSize,
+      selection,
+      start,
+    });
+  }, [axis, dragPoint, puzzleSize, selection, start]);
+
+  return (
+    <svg
+      className={`word-search-selection-outline${isRejected ? " is-rejected" : ""}`}
+      viewBox={`0 0 ${puzzleSize} ${puzzleSize}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <motion.path
+        className="word-search-selection-outline-path"
+        d={selectionPath}
+        animate={{ d: selectionPath }}
+        initial={false}
+        transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+      />
+    </svg>
+  );
+}
+
+function WordSearchScene({ onNext }: { onNext: () => void }) {
+  const [levelIndex, setLevelIndex] = useState(0);
+  const [puzzle, setPuzzle] = useState(() =>
+    createWordSearchPuzzle(wordSearchLevels[0], 0),
+  );
+  const [selection, setSelection] = useState<WordSearchCoord[]>([]);
+  const [selectionAxis, setSelectionAxis] = useState<WordSearchAxis | null>(null);
+  const [selectionStart, setSelectionStart] = useState<WordSearchCoord | null>(null);
+  const [dragPoint, setDragPoint] = useState<WordSearchPoint | null>(null);
+  const [foundTargetIds, setFoundTargetIds] = useState<string[]>([]);
+  const [shouldPulseSolution, setShouldPulseSolution] = useState(false);
+  const [successOutlines, setSuccessOutlines] = useState<number[]>([]);
+  const [isFinalGravityActive, setIsFinalGravityActive] = useState(false);
+  const [showWordSearchNext, setShowWordSearchNext] = useState(false);
+  const [phase, setPhase] = useState<WordSearchPhase>("idle");
+  const boardRef = useRef<HTMLDivElement>(null);
+  const activePointerRef = useRef<number | null>(null);
+  const phaseRef = useRef<WordSearchPhase>("idle");
+  const selectionRef = useRef<WordSearchCoord[]>([]);
+  const selectionStartRef = useRef<WordSearchCoord | null>(null);
+  const selectionAxisRef = useRef<WordSearchAxis | null>(null);
+  const successOutlineIdRef = useRef(0);
+  const timersRef = useRef<number[]>([]);
+  const activeLevel = wordSearchLevels[levelIndex] ?? wordSearchLevels[wordSearchLevels.length - 1];
+  const isFinale = phase === "finale";
+  const isFinaleTransition = phase === "finaleFlip";
+  const isLastLevel = levelIndex === wordSearchLevels.length - 1;
+  const selectionKeys = useMemo(
+    () => new Set(selection.map(wordSearchCoordKey)),
+    [selection],
+  );
+  const foundTargetIdSet = useMemo(() => new Set(foundTargetIds), [foundTargetIds]);
+  const foundCellKeys = useMemo(() => {
+    const keys = new Set<string>();
+
+    puzzle.targets.forEach((target) => {
+      if (!foundTargetIdSet.has(target.id)) {
+        return;
+      }
+
+      target.solution.forEach((coord) => keys.add(wordSearchCoordKey(coord)));
+    });
+
+    return keys;
+  }, [foundTargetIdSet, puzzle.targets]);
+  const pulseIndexes = useMemo(
+    () => {
+      const indexes = new Map<string, number>();
+      let pulseIndex = 0;
+
+      puzzle.targets.forEach((target) => {
+        if (foundTargetIdSet.has(target.id)) {
+          return;
+        }
+
+        target.solution.forEach((coord) => {
+          indexes.set(wordSearchCoordKey(coord), pulseIndex);
+          pulseIndex += 1;
+        });
+      });
+
+      return indexes;
+    },
+    [foundTargetIdSet, puzzle.targets],
+  );
+  const areAllTargetsFound =
+    puzzle.targets.length > 0 && puzzle.targets.every((target) => foundTargetIdSet.has(target.id));
+  const finalFallTimings = useMemo(
+    () => createWordSearchFinalFallTimings(puzzle.size),
+    [puzzle.id, puzzle.size],
+  );
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    selectionRef.current = selection;
+  }, [selection]);
+
+  useEffect(() => {
+    selectionAxisRef.current = selectionAxis;
+  }, [selectionAxis]);
+
+  useEffect(
+    () => () => {
+      timersRef.current.forEach(window.clearTimeout);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    setSuccessOutlines([]);
+  }, [puzzle.id]);
+
+  useEffect(() => {
+    setShouldPulseSolution(false);
+    const pulseDelay = activeLevel.pulseDelayMs;
+    const timer = window.setTimeout(() => setShouldPulseSolution(true), pulseDelay);
+    return () => window.clearTimeout(timer);
+  }, [activeLevel.pulseDelayMs, puzzle.id]);
+
+  useEffect(() => {
+    if (!isFinale) {
+      setIsFinalGravityActive(false);
+      setShowWordSearchNext(false);
+      return undefined;
+    }
+
+    setIsFinalGravityActive(false);
+    setShowWordSearchNext(false);
+    const latestFallEnd = Math.max(...finalFallTimings.map((timing) => timing.end));
+    const gravityTimer = window.setTimeout(
+      () => setIsFinalGravityActive(true),
+      wordSearchFinalGravityDelayMs,
+    );
+    const nextTimer = window.setTimeout(
+      () => setShowWordSearchNext(true),
+      wordSearchFinalGravityDelayMs + latestFallEnd * 1000 + 260,
+    );
+
+    return () => {
+      window.clearTimeout(gravityTimer);
+      window.clearTimeout(nextTimer);
+    };
+  }, [finalFallTimings, isFinale]);
+
+  const clearTimers = () => {
+    timersRef.current.forEach(window.clearTimeout);
+    timersRef.current = [];
+  };
+
+  const setWordSearchPhase = (nextPhase: WordSearchPhase) => {
+    phaseRef.current = nextPhase;
+    setPhase(nextPhase);
+  };
+
+  const launchSuccessOutline = () => {
+    const outlineId = successOutlineIdRef.current;
+    successOutlineIdRef.current += 1;
+    setSuccessOutlines((current) => [...current, outlineId]);
+  };
+
+  const startSelection = (coord: WordSearchCoord, pointerId: number, target: EventTarget) => {
+    if (phaseRef.current !== "idle") {
+      return;
+    }
+
+    clearTimers();
+    activePointerRef.current = pointerId;
+    selectionStartRef.current = coord;
+    selectionAxisRef.current = null;
+    selectionRef.current = [coord];
+    setSelection([coord]);
+    setSelectionStart(coord);
+    setSelectionAxis(null);
+    setDragPoint({ x: coord.col + 0.5, y: coord.row + 0.5 });
+    setWordSearchPhase("selecting");
+
+    if (target instanceof Element) {
+      boardRef.current?.setPointerCapture(pointerId);
+    }
+  };
+
+  const extendSelection = (coord: WordSearchCoord) => {
+    if (phaseRef.current !== "selecting") {
+      return;
+    }
+
+    const start = selectionStartRef.current;
+
+    if (!start) {
+      return;
+    }
+
+    const projectedCoord =
+      selectionAxisRef.current === "horizontal"
+        ? { row: start.row, col: coord.col }
+        : selectionAxisRef.current === "vertical"
+          ? { row: coord.row, col: start.col }
+          : coord;
+    const nextPath = getWordSearchPath(start, projectedCoord, selectionAxisRef.current);
+
+    if (!nextPath) {
+      return;
+    }
+
+    if (nextPath.axis !== selectionAxisRef.current) {
+      selectionAxisRef.current = nextPath.axis;
+      setSelectionAxis(nextPath.axis);
+    }
+
+    selectionRef.current = nextPath.coords;
+    setSelection(nextPath.coords);
+  };
+
+  const finishSelection = (pointerId: number) => {
+    if (phaseRef.current !== "selecting" || activePointerRef.current !== pointerId) {
+      return;
+    }
+
+    if (boardRef.current?.hasPointerCapture(pointerId)) {
+      boardRef.current.releasePointerCapture(pointerId);
+    }
+
+    activePointerRef.current = null;
+    selectionStartRef.current = null;
+
+    const selectedTarget = findSelectedWordSearchTarget(
+      selectionRef.current,
+      puzzle.targets,
+      foundTargetIds,
+    );
+
+    if (selectedTarget) {
+      const nextFoundTargetIds = [...foundTargetIds, selectedTarget.id];
+      const didFindAllTargets = puzzle.targets.every((target) =>
+        nextFoundTargetIds.includes(target.id),
+      );
+
+      setFoundTargetIds(nextFoundTargetIds);
+      setSelection([]);
+      setSelectionStart(null);
+      setSelectionAxis(null);
+      setDragPoint(null);
+      selectionRef.current = [];
+      selectionAxisRef.current = null;
+      launchSuccessOutline();
+
+      if (didFindAllTargets && levelIndex === wordSearchLevels.length - 1) {
+        setSelection([]);
+        setSelectionStart(null);
+        setSelectionAxis(null);
+        setDragPoint(null);
+        selectionRef.current = [];
+        selectionAxisRef.current = null;
+        setShouldPulseSolution(false);
+        setWordSearchPhase("solved");
+        timersRef.current = [
+          window.setTimeout(() => setWordSearchPhase("finaleFlip"), 2350),
+          window.setTimeout(() => {
+            setPuzzle((currentPuzzle) => ({
+              ...currentPuzzle,
+              grid: createDanDiscoGrid(currentPuzzle.size),
+              targets: [],
+            }));
+          }, 2840),
+          window.setTimeout(() => setWordSearchPhase("finale"), 3330),
+        ];
+        return;
+      }
+
+      if (!didFindAllTargets) {
+        setWordSearchPhase("idle");
+        return;
+      }
+
+      setWordSearchPhase("solved");
+      timersRef.current = [
+        window.setTimeout(() => {
+          if (didFindAllTargets) {
+            const nextLevelIndex = levelIndex + 1;
+            setLevelIndex(nextLevelIndex);
+            setFoundTargetIds([]);
+            setPuzzle(createWordSearchPuzzle(wordSearchLevels[nextLevelIndex], nextLevelIndex));
+          }
+
+          setWordSearchPhase("idle");
+        }, 2350),
+      ];
+      return;
+    }
+
+    setWordSearchPhase("rejected");
+    timersRef.current = [
+      window.setTimeout(() => {
+        selectionRef.current = [];
+        selectionAxisRef.current = null;
+        setSelection([]);
+        setSelectionStart(null);
+        setSelectionAxis(null);
+        setDragPoint(null);
+        setWordSearchPhase("idle");
+      }, 760),
+    ];
+  };
+
+  return (
+    <motion.section
+      className={`word-search-scene is-${phase}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <AnimatePresence>
+        {!isFinale && !isFinaleTransition && (
+          <motion.h1
+            className="word-search-title"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          >
+            Word Search
+          </motion.h1>
+        )}
+      </AnimatePresence>
+
+      <div className="word-search-board-anchor">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={puzzle.id}
+            className={`word-search-board-wrap${
+              phase === "finaleFlip" ? " is-finale-flipping" : ""
+            }${
+              isFinale ? " is-finale" : ""
+            }`}
+            initial={{ opacity: 0, filter: "blur(10px)", scale: 0.96 }}
+            animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+            exit={{ opacity: 0, filter: "blur(10px)", scale: 0.96 }}
+            transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div
+              ref={boardRef}
+              className="word-search-board"
+              role="grid"
+              aria-label={`${puzzle.size} by ${puzzle.size} word search`}
+              style={
+                {
+                  "--word-search-size": puzzle.size,
+                  "--word-search-letter-size":
+                    wordSearchLetterSizes[puzzle.size] ?? wordSearchLetterSizes[20],
+                } as CSSProperties
+              }
+              onPointerDown={(event) => {
+                const coord = getWordSearchCellCoord(event.target as Element);
+
+                if (coord) {
+                  startSelection(coord, event.pointerId, event.target);
+                }
+              }}
+              onPointerMove={(event) => {
+                if (activePointerRef.current !== event.pointerId) {
+                  return;
+                }
+
+                const point = getWordSearchBoardPoint(event, boardRef.current, puzzle.size);
+
+                if (point) {
+                  setDragPoint(point);
+                  extendSelection(getWordSearchCoordFromPoint(point, puzzle.size));
+                }
+              }}
+              onPointerUp={(event) => finishSelection(event.pointerId)}
+              onPointerCancel={(event) => finishSelection(event.pointerId)}
+            >
+              {puzzle.grid.map((row, rowIndex) =>
+                row.map((letter, colIndex) => {
+                  const coord = { row: rowIndex, col: colIndex };
+                  const coordKey = wordSearchCoordKey(coord);
+                  const isSelected = selectionKeys.has(coordKey);
+                  const isFoundLetter = foundCellKeys.has(coordKey);
+                  const pulseIndex = pulseIndexes.get(coordKey);
+                  const shouldPulse =
+                    shouldPulseSolution &&
+                    pulseIndex !== undefined &&
+                    !isFoundLetter &&
+                    phase !== "solved" &&
+                    !isFinale &&
+                    !isFinaleTransition;
+                  const shouldPulseFinalDisco =
+                    isFinale && isFinalDiscoLetter(rowIndex, colIndex, puzzle.size);
+                  const shouldCycleFinalDan =
+                    isFinale && isFinalDanLetter(rowIndex, colIndex, puzzle.size);
+                  const finalCellIndex = rowIndex * puzzle.size + colIndex;
+                  const fallTiming = finalFallTimings[finalCellIndex];
+                  const cellStyle = {} as WordSearchCellStyle;
+
+                  if (shouldPulse) {
+                    cellStyle["--word-search-pulse-delay"] = `${
+                      pulseIndex * (isLastLevel ? 0.09 : 0.18)
+                    }s`;
+                  }
+
+                  if (shouldCycleFinalDan) {
+                    cellStyle["--word-search-rainbow-delay"] = `-${
+                      (finalCellIndex % 23) * 0.18
+                    }s`;
+                  }
+
+                  if (isFoundLetter) {
+                    cellStyle["--word-search-fire-delay"] = `-${(finalCellIndex % 13) * 0.07}s`;
+                  }
+
+                  if (isFinalGravityActive && fallTiming) {
+                    cellStyle["--word-search-fall-delay"] = `${fallTiming.delay}s`;
+                    cellStyle["--word-search-fall-duration"] = `${fallTiming.duration}s`;
+                  }
+
+                  return (
+                    <span
+                      className={`word-search-cell${isSelected ? " is-selected" : ""}${
+                        isFoundLetter ? " is-found-letter" : ""
+                      }${
+                        shouldPulse ? " is-solution-pulsing" : ""
+                      }${shouldPulse && isLastLevel ? " is-final-solution-pulsing" : ""}${
+                        isFinalGravityActive ? " is-final-falling" : ""
+                      }`}
+                      data-word-search-cell
+                      data-row={rowIndex}
+                      data-col={colIndex}
+                      key={`${puzzle.id}-${rowIndex}-${colIndex}`}
+                      role="gridcell"
+                      aria-label={letter}
+                      style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
+                    >
+                      <span
+                        className={`word-search-letter-glyph${
+                          shouldPulseFinalDisco ? " is-final-disco-pulsing" : ""
+                        }${
+                          shouldCycleFinalDan ? " is-final-dan-rainbow" : ""
+                        }`}
+                        data-letter={letter}
+                      >
+                        {letter}
+                      </span>
+                    </span>
+                  );
+                }),
+              )}
+              {selection.length > 0 &&
+                selectionStart &&
+                phase !== "solved" &&
+                !isFinale &&
+                !isFinaleTransition && (
+                  <WordSearchSelectionOutline
+                    isRejected={phase === "rejected"}
+                    axis={selectionAxis}
+                    dragPoint={dragPoint}
+                    puzzleSize={puzzle.size}
+                    selection={selection}
+                    start={selectionStart}
+                  />
+                )}
+            </div>
+            {successOutlines.map((outlineId) => (
+              <span
+                className="word-search-solve-outline"
+                key={outlineId}
+                aria-hidden="true"
+                onAnimationEnd={() =>
+                  setSuccessOutlines((current) =>
+                    current.filter((currentOutlineId) => currentOutlineId !== outlineId),
+                  )
+                }
+              />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {!isFinale && !isFinaleTransition && (
+          <motion.div
+            key={`${puzzle.id}-clues`}
+            className="word-search-clues"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: phase === "solved" && areAllTargetsFound ? 0 : 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {puzzle.targets.map((target) => (
+              <span
+                className={`word-search-clue${
+                  foundTargetIdSet.has(target.id) ? " is-found" : ""
+                }`}
+                key={target.id}
+              >
+                {target.clue}
+              </span>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showWordSearchNext && (
+          <motion.div
+            className="word-search-next-complete"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <button className="next-button" type="button" onClick={onNext}>
+              next
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 }
@@ -461,15 +1504,35 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
             {"<"}
           </button>
           <div className="danflix-poster-strip" ref={posterStripRef}>
-            {danflixPosters.map((posterClass, index) => (
-              <article
-                className={`danflix-poster ${posterClass}`}
-                key={posterClass}
-                style={{ "--poster-delay": `${index * 0.035}s` } as CSSProperties}
-              >
-                <span>Disco Dan</span>
-              </article>
-            ))}
+            {danflixPosters.map((poster, index) => {
+              const title = poster.words.map((word) => word.text).join(" ");
+
+              return (
+                <article
+                  aria-label={`${title} poster`}
+                  className={`danflix-poster ${poster.className}`}
+                  key={poster.id}
+                  style={
+                    {
+                      "--poster-delay": `${index * 0.035}s`,
+                      "--poster-image": `url("${poster.image}")`,
+                    } as CSSProperties
+                  }
+                >
+                  <span className="danflix-poster-title" aria-label={title}>
+                    {poster.words.map((word, wordIndex) => (
+                      <span
+                        aria-hidden="true"
+                        className={`danflix-poster-word${word.vertical ? " is-vertical" : ""}`}
+                        key={`${poster.id}-${word.text}-${wordIndex}`}
+                      >
+                        {word.text}
+                      </span>
+                    ))}
+                  </span>
+                </article>
+              );
+            })}
           </div>
           <button
             className="danflix-row-arrow danflix-row-arrow-right"
