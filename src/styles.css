@@ -401,6 +401,7 @@ input {
 }
 
 .danflix-scene {
+  z-index: 8;
   display: block;
   overflow: hidden;
   padding: 0;
@@ -461,8 +462,8 @@ input {
 }
 
 .danflix-home {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -472,16 +473,18 @@ input {
 }
 
 .danflix-nav {
-  position: sticky;
+  position: relative;
   top: 0;
-  z-index: 6;
+  z-index: 30;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: clamp(1.1rem, 2.8vw, 2.2rem);
   min-height: clamp(3.35rem, 7dvh, 4.6rem);
   padding: 0 clamp(1.1rem, 4vw, 3.6rem);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.18));
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.98), rgba(0, 0, 0, 0.74) 68%, rgba(0, 0, 0, 0));
+  box-shadow: 0 1.2rem 1.8rem rgba(0, 0, 0, 0.2);
 }
 
 .danflix-logo {
@@ -537,14 +540,14 @@ input {
 
 .danflix-feature {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(18rem, 0.84fr) minmax(18rem, 1.16fr);
+  flex: 1 1 auto;
+  display: block;
   min-height: 0;
-  margin: 0 clamp(1.1rem, 4vw, 3.6rem);
+  margin: 0;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: 0;
   background:
-    linear-gradient(90deg, #080808 0%, rgba(8, 8, 8, 0.96) 34%, rgba(8, 8, 8, 0.28) 64%, rgba(8, 8, 8, 0.08) 100%),
+    linear-gradient(90deg, #080808 0%, rgba(8, 8, 8, 0.98) 34%, rgba(8, 8, 8, 0.48) 61%, rgba(8, 8, 8, 0.08) 100%),
     #101010;
   box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.52);
   animation: danflix-feature-arrive 0.82s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -560,17 +563,20 @@ input {
 
 .danflix-feature-copy {
   position: relative;
-  z-index: 2;
+  z-index: 16;
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  max-width: min(37rem, 48vw);
+  width: min(42rem, 55vw);
+  min-height: 100%;
+  max-width: none;
   padding:
-    clamp(1.2rem, 5.6dvh, 5.6rem)
+    clamp(1.05rem, 4.6dvh, 4.8rem)
     clamp(1rem, 2vw, 1.8rem)
-    clamp(1.1rem, 4.6dvh, 4.8rem)
+    clamp(1.05rem, 4dvh, 4.2rem)
     clamp(1.2rem, 3.8vw, 3.4rem);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0));
 }
 
 .danflix-original {
@@ -663,10 +669,11 @@ input {
 }
 
 .danflix-feature-art {
-  position: relative;
+  position: absolute;
+  inset: 0 0 0 28%;
   display: grid;
   min-width: 0;
-  min-height: 100%;
+  min-height: 0;
   place-items: center;
   overflow: hidden;
   background:
@@ -726,7 +733,9 @@ input {
   position: relative;
   z-index: 2;
   display: grid;
-  width: min(78%, 28rem);
+  justify-self: end;
+  width: min(34vw, 28rem);
+  max-width: calc(100% - 3rem);
   min-height: clamp(9.5rem, 34dvh, 20rem);
   place-items: center;
   gap: 0.35rem;
@@ -739,6 +748,7 @@ input {
   box-shadow:
     0 1.6rem 3rem rgba(0, 0, 0, 0.52),
     inset 0 0 0 0.08rem rgba(255, 255, 255, 0.12);
+  margin-right: clamp(1.4rem, 7vw, 8rem);
   text-align: center;
   text-transform: uppercase;
   transform: rotate(-2deg);
@@ -781,12 +791,16 @@ input {
 }
 
 .danflix-row {
+  position: relative;
+  z-index: 20;
+  flex: 0 0 auto;
   min-height: 0;
   padding:
     clamp(0.3rem, 1.6dvh, 1rem)
     0
     clamp(0.55rem, 2dvh, 1.4rem)
     clamp(1.1rem, 4vw, 3.6rem);
+  background: linear-gradient(180deg, rgba(7, 7, 7, 0.88), #070707 42%);
 }
 
 .danflix-row-header {
@@ -851,7 +865,7 @@ input {
   position: absolute;
   top: 0;
   bottom: 0.8rem;
-  z-index: 4;
+  z-index: 12;
   width: clamp(2.35rem, 4vw, 3.25rem);
   background: rgba(0, 0, 0, 0.76);
   font-size: 2.8rem;
@@ -3014,7 +3028,10 @@ button.excel-cell {
 
   .danflix-feature-copy {
     max-width: none;
+    width: 100%;
+    min-height: auto;
     padding: 1.35rem 1.15rem 1.15rem;
+    background: #080808;
   }
 
   .danflix-title-logo {
@@ -3030,6 +3047,8 @@ button.excel-cell {
   }
 
   .danflix-feature-art {
+    position: relative;
+    inset: auto;
     min-height: clamp(12.5rem, 34dvh, 18rem);
   }
 
