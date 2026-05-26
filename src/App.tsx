@@ -321,7 +321,7 @@ function DanflixScene() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIntroComplete(true), 2850);
+    const timer = window.setTimeout(() => setIntroComplete(true), 2250);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -359,9 +359,9 @@ function DanflixIntro() {
         className="danflix-intro-logo"
         initial={{ opacity: 0, scale: 0.82 }}
         animate={{
-          opacity: [0, 1, 1, 0],
-          scale: [0.82, 1, 1.08, 14],
-          filter: ["blur(8px)", "blur(0px)", "blur(0px)", "blur(18px)"],
+          opacity: [0, 1, 1, 1],
+          scale: [0.82, 1, 1.08, 8],
+          filter: ["blur(8px)", "blur(0px)", "blur(0px)", "blur(12px)"],
         }}
         transition={{
           duration: 2.7,

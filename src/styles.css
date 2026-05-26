@@ -402,6 +402,8 @@ input {
 
 .danflix-scene {
   z-index: 8;
+  width: 100%;
+  height: 100%;
   display: block;
   overflow: hidden;
   padding: 0;
@@ -462,8 +464,11 @@ input {
 }
 
 .danflix-home {
-  position: relative;
-  display: block;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -473,10 +478,7 @@ input {
 }
 
 .danflix-nav {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 30;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -541,12 +543,9 @@ input {
 }
 
 .danflix-feature {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: clamp(10.2rem, 27dvh, 17rem);
-  left: 0;
-  display: block;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.88fr) minmax(18rem, 1.12fr);
   min-height: 0;
   margin: 0;
   overflow: hidden;
@@ -564,7 +563,7 @@ input {
 .danflix-feature::after {
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: 1;
   pointer-events: none;
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.86) 27%, rgba(0, 0, 0, 0.34) 55%, rgba(0, 0, 0, 0.08) 100%),
@@ -578,19 +577,20 @@ input {
 }
 
 .danflix-feature-copy {
-  position: absolute;
-  top: clamp(4rem, 9dvh, 6.6rem);
-  bottom: clamp(1rem, 4dvh, 3rem);
-  left: clamp(1.2rem, 4vw, 3.8rem);
+  position: relative;
   z-index: 16;
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  width: min(42rem, 52vw);
-  min-height: 0;
+  width: auto;
+  min-height: 100%;
   max-width: none;
-  padding: 0;
+  padding:
+    clamp(1.05rem, 4.6dvh, 4.8rem)
+    clamp(1rem, 2vw, 1.8rem)
+    clamp(1.05rem, 4dvh, 4.2rem)
+    clamp(1.2rem, 3.8vw, 3.4rem);
   background: transparent;
 }
 
@@ -684,12 +684,11 @@ input {
 }
 
 .danflix-feature-art {
-  position: absolute;
-  inset: 0;
+  position: relative;
   z-index: 0;
   display: grid;
   min-width: 0;
-  min-height: 0;
+  min-height: 100%;
   place-items: center;
   overflow: hidden;
   background:
@@ -749,12 +748,10 @@ input {
 }
 
 .danflix-documentary-cover {
-  position: absolute;
-  right: clamp(1.25rem, 6vw, 7rem);
-  top: 50%;
+  position: relative;
   z-index: 3;
   display: grid;
-  width: min(34vw, 28rem);
+  width: min(78%, 28rem);
   max-width: calc(100% - 3rem);
   min-height: clamp(9.5rem, 34dvh, 20rem);
   place-items: center;
@@ -770,7 +767,7 @@ input {
     inset 0 0 0 0.08rem rgba(255, 255, 255, 0.12);
   text-align: center;
   text-transform: uppercase;
-  transform: translateY(-50%) rotate(-2deg);
+  transform: rotate(-2deg);
 }
 
 .danflix-documentary-cover span:first-child {
@@ -810,14 +807,11 @@ input {
 }
 
 .danflix-row {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  position: relative;
   z-index: 20;
-  height: clamp(10.2rem, 27dvh, 17rem);
+  height: auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding:
     clamp(0.3rem, 1.6dvh, 1rem)
     0
@@ -3038,15 +3032,13 @@ button.excel-cell {
   .danflix-home {
     display: block;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
   }
 
   .danflix-feature {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 12.8rem;
-    left: 0;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
     min-height: auto;
     margin: 0;
     overflow: hidden;
@@ -3055,14 +3047,10 @@ button.excel-cell {
 
   .danflix-feature-copy {
     max-width: none;
-    position: absolute;
-    top: 3.9rem;
-    right: 1.1rem;
-    bottom: auto;
-    left: 1.1rem;
+    position: relative;
     width: auto;
     min-height: auto;
-    padding: 0;
+    padding: 1.35rem 1.15rem 1.15rem;
     background: transparent;
   }
 
@@ -3080,9 +3068,8 @@ button.excel-cell {
   }
 
   .danflix-feature-art {
-    position: absolute;
-    inset: 0;
-    min-height: 0;
+    position: relative;
+    min-height: clamp(12.5rem, 34dvh, 18rem);
   }
 
   .danflix-disco-orbit {
@@ -3092,9 +3079,7 @@ button.excel-cell {
   }
 
   .danflix-documentary-cover {
-    top: auto;
-    right: 1rem;
-    bottom: 1rem;
+    position: relative;
     width: min(36vw, 12rem);
     min-height: clamp(6.6rem, 18dvh, 9rem);
     transform: rotate(-2deg);
@@ -3107,11 +3092,8 @@ button.excel-cell {
   }
 
   .danflix-row {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 12.8rem;
+    position: relative;
+    height: auto;
     padding: 0.85rem 0 1rem 1.1rem;
   }
 
@@ -3365,11 +3347,10 @@ button.excel-cell {
 
 @media (max-height: 560px) {
   .danflix-home {
-    overflow: hidden;
+    overflow: auto;
   }
 
   .danflix-feature {
-    bottom: clamp(7.8rem, 30dvh, 10.4rem);
     min-height: 0;
   }
 
@@ -3378,14 +3359,12 @@ button.excel-cell {
   }
 
   .danflix-feature-copy {
-    top: 3.25rem;
-    bottom: clamp(0.35rem, 2dvh, 1.1rem);
     justify-content: center;
-    padding-block: 0;
+    padding-block: 1rem;
   }
 
   .danflix-feature-art {
-    min-height: 0;
+    min-height: 10rem;
   }
 
   .danflix-title-logo {
@@ -3398,7 +3377,6 @@ button.excel-cell {
   }
 
   .danflix-row {
-    height: clamp(7.8rem, 30dvh, 10.4rem);
     padding-top: 0.45rem;
     padding-bottom: 0.8rem;
   }
