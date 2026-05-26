@@ -2978,23 +2978,24 @@ button.excel-cell {
   }
 
   .danflix-nav {
-    flex-wrap: wrap;
-    gap: 0.85rem 1rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
     min-height: auto;
-    padding: 1rem 1.1rem 0.75rem;
+    padding: 0.9rem 1rem 0.7rem;
   }
 
   .danflix-logo {
-    width: 100%;
-    font-size: 1.55rem;
+    width: auto;
+    font-size: clamp(1.12rem, 6.5vw, 1.45rem);
   }
 
   .danflix-nav-links {
-    gap: 1rem;
+    gap: 0.8rem;
   }
 
   .danflix-nav-links button {
-    font-size: 0.84rem;
+    font-size: clamp(0.72rem, 3.25vw, 0.84rem);
   }
 
   .danflix-home {
@@ -3013,7 +3014,7 @@ button.excel-cell {
 
   .danflix-feature-copy {
     max-width: none;
-    padding: 2.6rem 1.25rem 1.3rem;
+    padding: 1.35rem 1.15rem 1.15rem;
   }
 
   .danflix-title-logo {
@@ -3029,8 +3030,7 @@ button.excel-cell {
   }
 
   .danflix-feature-art {
-    min-height: clamp(16rem, 42dvh, 20rem);
-    order: -1;
+    min-height: clamp(12.5rem, 34dvh, 18rem);
   }
 
   .danflix-disco-orbit {
@@ -3039,25 +3039,9 @@ button.excel-cell {
     width: 5.5rem;
   }
 
-  .danflix-dan-figure {
-    width: 9rem;
-    height: 16rem;
-  }
-
-  .danflix-dan-figure span:first-child {
-    width: 3.7rem;
-    height: 3.7rem;
-  }
-
-  .danflix-dan-figure span:first-child::before {
-    width: 4.6rem;
-    height: 2rem;
-  }
-
-  .danflix-dan-figure span:last-child {
-    top: 3.45rem;
-    width: 7rem;
-    height: 12rem;
+  .danflix-documentary-cover {
+    width: min(82%, 20rem);
+    min-height: clamp(8.6rem, 26dvh, 12rem);
   }
 
   .danflix-feature-art p {
@@ -3084,13 +3068,15 @@ button.excel-cell {
   }
 
   .danflix-row-arrow {
-    display: none;
+    display: grid;
+    width: 2.35rem;
+    font-size: 2rem;
   }
 
   .danflix-poster-strip {
     grid-auto-columns: 9.6rem;
     gap: 0.65rem;
-    padding: 0.45rem 1.1rem 1rem 0;
+    padding: 0.45rem 2.65rem 1rem 2.65rem;
   }
 
   .danflix-poster {
