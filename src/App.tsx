@@ -12,6 +12,7 @@ type Scene =
   | "workComputer"
   | "discoReturn"
   | "discoChrome"
+  | "danflixLogo"
   | "danflix";
 
 type Answers = Record<AnswerKey, string>;
@@ -163,7 +164,8 @@ const devSceneShortcuts: Record<string, Scene> = {
   count: "discoReturn",
   countdown: "discoReturn",
   wiki: "discoChrome",
-  danflix: "danflix",
+  danflix: "danflixLogo",
+  netflix: "danflixLogo",
 };
 
 const getDevSceneShortcut = (key: AnswerKey, value: string) => {
@@ -173,6 +175,30 @@ const getDevSceneShortcut = (key: AnswerKey, value: string) => {
 
   return devSceneShortcuts[normalizeEntry(value)] ?? null;
 };
+
+const danflixDescription =
+  "Regular Dan was a regular man. But Dan had an irregular plan. He spiked up his hair with jelly and crisco, and found that his calling in life was the disco.";
+
+const danflixPosters = [
+  "poster-one",
+  "poster-two",
+  "poster-three",
+  "poster-four",
+  "poster-five",
+  "poster-six",
+  "poster-seven",
+  "poster-eight",
+  "poster-nine",
+  "poster-ten",
+  "poster-eleven",
+  "poster-twelve",
+  "poster-thirteen",
+  "poster-fourteen",
+  "poster-fifteen",
+  "poster-sixteen",
+  "poster-seventeen",
+  "poster-eighteen",
+];
 
 function App() {
   const [scene, setScene] = useState<Scene>("name");
@@ -262,6 +288,10 @@ function App() {
           <DiscoChromeScene key="disco-chrome" onNext={() => setScene("danflix")} />
         )}
 
+        {scene === "danflixLogo" && (
+          <DanflixLogoScene key="danflix-logo" onNext={() => setScene("danflix")} />
+        )}
+
         {scene === "danflix" && (
           <DanflixScene key="danflix" />
         )}
@@ -270,23 +300,202 @@ function App() {
   );
 }
 
+function DanflixLogoScene({ onNext }: { onNext: () => void }) {
+  return (
+    <motion.section
+      className="disco-chrome-scene danflix-logo-skip-scene"
+      initial={{ opacity: 0, filter: "blur(10px)" }}
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, filter: "blur(12px)" }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <button className="danflix-reveal-button is-visible" type="button" onClick={onNext}>
+        Danflix
+      </button>
+    </motion.section>
+  );
+}
+
 function DanflixScene() {
+  const [introComplete, setIntroComplete] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIntroComplete(true), 2850);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <motion.section
       className="danflix-scene"
-      initial={{ opacity: 0, filter: "blur(14px)" }}
-      animate={{ opacity: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, filter: "blur(14px)" }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.45 }}
     >
+      <AnimatePresence mode="wait">
+        {!introComplete ? (
+          <DanflixIntro key="danflix-intro" />
+        ) : isPlaying ? (
+          <DanflixPlayer key="danflix-player" />
+        ) : (
+          <DanflixHome key="danflix-home" onPlay={() => setIsPlaying(true)} />
+        )}
+      </AnimatePresence>
+    </motion.section>
+  );
+}
+
+function DanflixIntro() {
+  return (
+    <motion.div
+      className="danflix-intro"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, filter: "blur(14px)" }}
+      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="danflix-intro-beams" aria-hidden="true" />
       <motion.h1
-        initial={{ y: 18, scale: 0.97 }}
-        animate={{ y: 0, scale: 1 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className="danflix-intro-logo"
+        initial={{ opacity: 0, scale: 0.82 }}
+        animate={{
+          opacity: [0, 1, 1, 0],
+          scale: [0.82, 1, 1.08, 14],
+          filter: ["blur(8px)", "blur(0px)", "blur(0px)", "blur(18px)"],
+        }}
+        transition={{
+          duration: 2.7,
+          times: [0, 0.22, 0.62, 1],
+          ease: [0.16, 1, 0.3, 1],
+        }}
       >
         Danflix
       </motion.h1>
-    </motion.section>
+    </motion.div>
+  );
+}
+
+function DanflixHome({ onPlay }: { onPlay: () => void }) {
+  const posterStripRef = useRef<HTMLDivElement>(null);
+
+  const scrollPosters = (direction: -1 | 1) => {
+    const strip = posterStripRef.current;
+    if (!strip) {
+      return;
+    }
+
+    strip.scrollBy({
+      left: direction * strip.clientWidth * 0.82,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <motion.div
+      className="danflix-home"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <header className="danflix-nav">
+        <div className="danflix-logo">Danflix</div>
+        <nav className="danflix-nav-links" aria-label="Danflix sections">
+          <button type="button" disabled>TV Shows</button>
+          <button type="button" disabled>Movies</button>
+          <button type="button" disabled>My Lists</button>
+        </nav>
+      </header>
+
+      <section className="danflix-feature" aria-label="Featured title">
+        <div className="danflix-feature-copy">
+          <p className="danflix-original">A Danflix Original</p>
+          <h1 className="danflix-title-logo">
+            <span>Disco Dan</span>
+            <span>The Documentary</span>
+          </h1>
+          <p className="danflix-description">{danflixDescription}</p>
+          <div className="danflix-actions">
+            <button className="danflix-play-button" type="button" onClick={onPlay}>
+              Play
+            </button>
+            <button className="danflix-info-button" type="button" disabled>
+              More Info
+            </button>
+          </div>
+        </div>
+        <div className="danflix-feature-art" aria-label="Disco Dan: The Documentary image placeholder">
+          <div className="danflix-disco-orbit" aria-hidden="true" />
+          <div className="danflix-dan-figure" aria-hidden="true">
+            <span />
+            <span />
+          </div>
+          <p>Disco Dan: The Documentary</p>
+        </div>
+      </section>
+
+      <section className="danflix-row" aria-label="Popular on Danflix">
+        <div className="danflix-row-header">
+          <h2>Popular on Danflix</h2>
+          <div className="danflix-row-controls" aria-label="Popular on Danflix carousel controls">
+            <button type="button" aria-label="Previous posters" onClick={() => scrollPosters(-1)}>
+              {"<"}
+            </button>
+            <button type="button" aria-label="Next posters" onClick={() => scrollPosters(1)}>
+              {">"}
+            </button>
+          </div>
+        </div>
+        <div className="danflix-row-frame">
+          <button
+            className="danflix-row-arrow danflix-row-arrow-left"
+            type="button"
+            aria-label="Previous posters"
+            onClick={() => scrollPosters(-1)}
+          >
+            {"<"}
+          </button>
+          <div className="danflix-poster-strip" ref={posterStripRef}>
+            {danflixPosters.map((posterClass, index) => (
+              <article
+                className={`danflix-poster ${posterClass}`}
+                key={posterClass}
+                style={{ "--poster-delay": `${index * 0.035}s` } as CSSProperties}
+              >
+                <span>Disco Dan</span>
+              </article>
+            ))}
+          </div>
+          <button
+            className="danflix-row-arrow danflix-row-arrow-right"
+            type="button"
+            aria-label="Next posters"
+            onClick={() => scrollPosters(1)}
+          >
+            {">"}
+          </button>
+        </div>
+      </section>
+    </motion.div>
+  );
+}
+
+function DanflixPlayer() {
+  return (
+    <motion.div
+      className="danflix-player"
+      initial={{ opacity: 0, scale: 1.02 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="danflix-player-glow" aria-hidden="true" />
+      <p className="danflix-player-kicker">Now Playing</p>
+      <h1>Disco Dan: The Documentary</h1>
+      <div className="danflix-progress" aria-hidden="true">
+        <span />
+      </div>
+    </motion.div>
   );
 }
 
