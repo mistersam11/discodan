@@ -461,10 +461,13 @@ input {
 }
 
 .danflix-home {
-  min-height: 100%;
-  overflow: auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0, rgba(0, 0, 0, 0.82) 37rem, #070707 50rem),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0, rgba(0, 0, 0, 0.82) 70%, #070707 100%),
     #070707;
 }
 
@@ -474,15 +477,15 @@ input {
   z-index: 6;
   display: flex;
   align-items: center;
-  gap: 2.2rem;
-  min-height: 4.6rem;
-  padding: 0 3.6rem;
+  gap: clamp(1.1rem, 2.8vw, 2.2rem);
+  min-height: clamp(3.35rem, 7dvh, 4.6rem);
+  padding: 0 clamp(1.1rem, 4vw, 3.6rem);
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.18));
 }
 
 .danflix-logo {
   color: #e50914;
-  font-size: 1.8rem;
+  font-size: clamp(1.35rem, 2.6vw, 1.8rem);
   font-weight: 900;
   letter-spacing: 0;
   line-height: 1;
@@ -524,9 +527,9 @@ input {
 .danflix-feature {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(20rem, 0.84fr) minmax(25rem, 1.16fr);
-  min-height: 35rem;
-  margin: 0 3.6rem;
+  grid-template-columns: minmax(18rem, 0.84fr) minmax(18rem, 1.16fr);
+  min-height: 0;
+  margin: 0 clamp(1.1rem, 4vw, 3.6rem);
   overflow: hidden;
   border-radius: 0.5rem;
   background:
@@ -550,8 +553,12 @@ input {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 37rem;
-  padding: 5.6rem 0 4.8rem 3.4rem;
+  max-width: min(37rem, 48vw);
+  padding:
+    clamp(1.2rem, 5.6dvh, 5.6rem)
+    0
+    clamp(1.1rem, 4.6dvh, 4.8rem)
+    clamp(1.2rem, 3.8vw, 3.4rem);
 }
 
 .danflix-original {
@@ -569,7 +576,7 @@ input {
   margin: 0;
   color: #ffffff;
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: 4.7rem;
+  font-size: clamp(2.45rem, min(5.6vw, 8.5dvh), 4.7rem);
   font-weight: 900;
   letter-spacing: 0;
   line-height: 0.86;
@@ -582,24 +589,24 @@ input {
 .danflix-title-logo span:last-child {
   color: #e50914;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 1.35rem;
+  font-size: clamp(0.95rem, min(1.6vw, 2.5dvh), 1.35rem);
   font-weight: 900;
   line-height: 1.05;
 }
 
 .danflix-description {
   max-width: 34.5rem;
-  margin: 1.45rem 0 0;
+  margin: clamp(0.8rem, 2.2dvh, 1.45rem) 0 0;
   color: #f3f3f3;
-  font-size: 1.08rem;
-  line-height: 1.45;
+  font-size: clamp(0.88rem, min(1.25vw, 2dvh), 1.08rem);
+  line-height: 1.36;
 }
 
 .danflix-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
-  margin-top: 1.75rem;
+  margin-top: clamp(0.95rem, 2.5dvh, 1.75rem);
 }
 
 .danflix-play-button,
@@ -607,8 +614,8 @@ input {
   min-height: 2.75rem;
   border: 0;
   border-radius: 0.25rem;
-  padding: 0 1.45rem;
-  font-size: 1rem;
+  padding: 0 clamp(1rem, 2vw, 1.45rem);
+  font-size: clamp(0.9rem, 1.15vw, 1rem);
   font-weight: 800;
 }
 
@@ -690,7 +697,7 @@ input {
   position: absolute;
   top: 11%;
   right: 18%;
-  width: 8.5rem;
+  width: clamp(5.8rem, 9.5vw, 8.5rem);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
@@ -703,17 +710,17 @@ input {
 .danflix-dan-figure {
   position: relative;
   z-index: 1;
-  width: 13.5rem;
-  height: 23rem;
-  transform: translateY(2rem);
+  width: clamp(8.8rem, 14vw, 13.5rem);
+  height: clamp(15rem, 39dvh, 23rem);
+  transform: translateY(clamp(0.4rem, 2dvh, 2rem));
 }
 
 .danflix-dan-figure span:first-child {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 5.4rem;
-  height: 5.4rem;
+  width: clamp(3.45rem, 5.4vw, 5.4rem);
+  height: clamp(3.45rem, 5.4vw, 5.4rem);
   border-radius: 50%;
   background: #f1c29c;
   box-shadow: 0 -1.2rem 0 -0.45rem #141414;
@@ -722,10 +729,10 @@ input {
 
 .danflix-dan-figure span:first-child::before {
   position: absolute;
-  top: -1.5rem;
+  top: clamp(-1.5rem, -1.8vw, -0.95rem);
   left: 50%;
-  width: 6.6rem;
-  height: 2.6rem;
+  width: clamp(4.4rem, 6.6vw, 6.6rem);
+  height: clamp(1.8rem, 2.8vw, 2.6rem);
   clip-path: polygon(0 100%, 12% 14%, 26% 78%, 42% 0, 58% 76%, 75% 10%, 100% 100%);
   background: #151515;
   content: "";
@@ -734,10 +741,10 @@ input {
 
 .danflix-dan-figure span:last-child {
   position: absolute;
-  top: 5.1rem;
+  top: clamp(3.3rem, 5.1vw, 5.1rem);
   left: 50%;
-  width: 10.2rem;
-  height: 17.2rem;
+  width: clamp(6.8rem, 10.2vw, 10.2rem);
+  height: clamp(10.8rem, 30dvh, 17.2rem);
   border-radius: 5rem 5rem 1rem 1rem;
   background:
     radial-gradient(circle at 32% 38%, #ffffff 0 0.7rem, transparent 0.72rem),
@@ -764,7 +771,12 @@ input {
 }
 
 .danflix-row {
-  padding: 1.65rem 0 4rem 3.6rem;
+  min-height: 0;
+  padding:
+    clamp(0.3rem, 1.6dvh, 1rem)
+    0
+    clamp(0.55rem, 2dvh, 1.4rem)
+    clamp(1.1rem, 4vw, 3.6rem);
 }
 
 .danflix-row-header {
@@ -772,13 +784,13 @@ input {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding-right: 3.6rem;
+  padding-right: clamp(1.1rem, 4vw, 3.6rem);
 }
 
 .danflix-row h2 {
-  margin: 0 0 0.75rem;
+  margin: 0 0 clamp(0.35rem, 1dvh, 0.75rem);
   color: #ffffff;
-  font-size: 1.32rem;
+  font-size: clamp(1rem, 2.2dvh, 1.32rem);
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -786,7 +798,7 @@ input {
 .danflix-row-controls {
   display: flex;
   gap: 0.35rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: clamp(0.35rem, 1dvh, 0.75rem);
 }
 
 .danflix-row-controls button,
@@ -853,12 +865,12 @@ input {
 
 .danflix-poster-strip {
   display: grid;
-  grid-auto-columns: 13.5rem;
+  grid-auto-columns: clamp(8.2rem, 11vw, 12rem);
   grid-auto-flow: column;
   gap: 0.85rem;
   overflow-x: auto;
   overflow-y: visible;
-  padding: 0.6rem 3.6rem 1.25rem 0;
+  padding: 0.45rem clamp(1.1rem, 4vw, 3.6rem) 0.85rem 0;
   scroll-behavior: smooth;
   scroll-padding-inline: 3rem;
   scroll-snap-type: x mandatory;
@@ -868,7 +880,7 @@ input {
 .danflix-poster {
   position: relative;
   display: flex;
-  min-height: 19rem;
+  height: clamp(8.5rem, 20dvh, 14.5rem);
   overflow: hidden;
   border-radius: 0.5rem;
   padding: 1rem;
@@ -908,7 +920,7 @@ input {
   background: #e50914;
   color: #ffffff;
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: 2.55rem;
+  font-size: clamp(1.45rem, 2.4vw, 2.55rem);
   text-transform: uppercase;
 }
 
@@ -918,7 +930,7 @@ input {
   background: #ffcf33;
   color: #171717;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.25rem;
+  font-size: clamp(1.35rem, 2.1vw, 2.25rem);
   text-align: center;
 }
 
@@ -928,7 +940,7 @@ input {
   background: #126b54;
   color: #f6f0d6;
   font-family: "Courier New", Consolas, monospace;
-  font-size: 1.75rem;
+  font-size: clamp(1.1rem, 1.7vw, 1.75rem);
   text-align: center;
   text-transform: uppercase;
 }
@@ -939,7 +951,7 @@ input {
   background: #2628a8;
   color: #ff86c8;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 2rem;
+  font-size: clamp(1.18rem, 1.9vw, 2rem);
   font-weight: 900;
   text-align: center;
 }
@@ -950,7 +962,7 @@ input {
   background: #f2f2f2;
   color: #e50914;
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: 3.1rem;
+  font-size: clamp(1.65rem, 2.8vw, 3.1rem);
   text-transform: uppercase;
 }
 
@@ -960,7 +972,7 @@ input {
   background: #6a2c70;
   color: #f9ed69;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.5rem;
+  font-size: clamp(1.45rem, 2.3vw, 2.5rem);
   text-align: right;
 }
 
@@ -970,7 +982,7 @@ input {
   background: #1b1b1b;
   color: #4df2ff;
   font-family: Verdana, Geneva, sans-serif;
-  font-size: 1.75rem;
+  font-size: clamp(1.1rem, 1.7vw, 1.75rem);
   font-weight: 900;
   text-align: right;
 }
@@ -981,7 +993,7 @@ input {
   background: #ff7a1a;
   color: #ffffff;
   font-family: "Arial Black", Arial, sans-serif;
-  font-size: 2.35rem;
+  font-size: clamp(1.35rem, 2.2vw, 2.35rem);
   text-align: center;
   text-transform: uppercase;
 }
@@ -992,7 +1004,7 @@ input {
   background: #006d9c;
   color: #fff4d6;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.85rem;
+  font-size: clamp(1.55rem, 2.6vw, 2.85rem);
 }
 
 .poster-ten {
@@ -1001,7 +1013,7 @@ input {
   background: #f72585;
   color: #2b061e;
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: 2.2rem;
+  font-size: clamp(1.25rem, 2vw, 2.2rem);
   text-align: right;
   text-transform: uppercase;
 }
@@ -1012,7 +1024,7 @@ input {
   background: #b7efc5;
   color: #10451d;
   font-family: "Courier New", Consolas, monospace;
-  font-size: 1.88rem;
+  font-size: clamp(1.1rem, 1.8vw, 1.88rem);
   font-weight: 900;
   text-transform: lowercase;
 }
@@ -1023,7 +1035,7 @@ input {
   background: #2f184b;
   color: #f4d35e;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 2.55rem;
+  font-size: clamp(1.45rem, 2.35vw, 2.55rem);
   font-weight: 900;
   text-align: center;
 }
@@ -1034,7 +1046,7 @@ input {
   background: #111111;
   color: #e50914;
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: 3rem;
+  font-size: clamp(1.65rem, 2.8vw, 3rem);
   text-align: center;
   text-transform: uppercase;
 }
@@ -1045,7 +1057,7 @@ input {
   background: #f7ede2;
   color: #9d0208;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.2rem;
+  font-size: clamp(1.3rem, 2vw, 2.2rem);
   text-align: center;
 }
 
@@ -1055,7 +1067,7 @@ input {
   background: #00b4d8;
   color: #03045e;
   font-family: Verdana, Geneva, sans-serif;
-  font-size: 1.95rem;
+  font-size: clamp(1.15rem, 1.85vw, 1.95rem);
   font-weight: 900;
   text-align: right;
 }
@@ -1066,7 +1078,7 @@ input {
   background: #c1121f;
   color: #fdf0d5;
   font-family: "Arial Black", Arial, sans-serif;
-  font-size: 2.45rem;
+  font-size: clamp(1.4rem, 2.25vw, 2.45rem);
   text-transform: uppercase;
 }
 
@@ -1076,7 +1088,7 @@ input {
   background: #2a9d8f;
   color: #fff7ae;
   font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: 2.35rem;
+  font-size: clamp(1.35rem, 2.2vw, 2.35rem);
   font-weight: 900;
   text-align: right;
 }
@@ -1087,7 +1099,7 @@ input {
   background: #3a0ca3;
   color: #ffbe0b;
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: 2.65rem;
+  font-size: clamp(1.5rem, 2.45vw, 2.65rem);
   text-transform: uppercase;
 }
 
@@ -2979,10 +2991,17 @@ button.excel-cell {
     font-size: 0.84rem;
   }
 
+  .danflix-home {
+    display: block;
+    height: 100%;
+    overflow: auto;
+  }
+
   .danflix-feature {
     grid-template-columns: 1fr;
-    min-height: 0;
+    min-height: auto;
     margin: 0;
+    overflow: hidden;
     border-radius: 0;
   }
 
@@ -3004,7 +3023,7 @@ button.excel-cell {
   }
 
   .danflix-feature-art {
-    min-height: 20rem;
+    min-height: clamp(16rem, 42dvh, 20rem);
     order: -1;
   }
 
@@ -3292,20 +3311,24 @@ button.excel-cell {
 }
 
 @media (max-height: 560px) {
+  .danflix-home {
+    overflow: auto;
+  }
+
   .danflix-feature {
-    min-height: 100dvh;
+    min-height: clamp(18rem, calc(100dvh - 8.8rem), 25rem);
   }
 
   .danflix-nav {
-    min-height: 3.4rem;
+    min-height: 3.2rem;
   }
 
   .danflix-feature-copy {
-    padding-block: 1.3rem;
+    padding-block: 1rem;
   }
 
   .danflix-feature-art {
-    min-height: 14rem;
+    min-height: 12rem;
   }
 
   .danflix-title-logo {
@@ -3318,7 +3341,13 @@ button.excel-cell {
   }
 
   .danflix-row {
-    padding-bottom: 1.8rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .danflix-poster {
+    height: 7.8rem;
+    min-height: 0;
   }
 
   .question-scene,
