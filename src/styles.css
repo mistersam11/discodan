@@ -438,14 +438,19 @@ input {
   top: 0;
   bottom: 0;
   z-index: 2;
-  width: 50.1%;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255, 60, 60, 0.22), transparent 18rem),
-    linear-gradient(90deg, #120000, #e50914 52%, #4a0105);
-  box-shadow: 0 0 4rem rgba(229, 9, 20, 0.38);
-  animation-duration: 2.05s;
+  width: 50.05%;
+
+  background: #080808;
+
+  box-shadow:
+    inset 0 0 4rem rgba(0, 0, 0, 0.85),
+    0 0 1.5rem rgba(229, 9, 20, 0.14);
+
+  animation-duration: 1.85s;
   animation-fill-mode: forwards;
-  animation-timing-function: cubic-bezier(0.72, 0, 0.22, 1);
+  animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+
+  will-change: transform, opacity;
 }
 
 .danflix-intro-curtain-left {
@@ -462,17 +467,20 @@ input {
 
 .danflix-intro-slit {
   position: absolute;
-  top: -10%;
-  bottom: -10%;
+  top: 0;
+  bottom: 0;
   left: 50%;
   z-index: 3;
-  width: clamp(0.3rem, 0.8vw, 0.8rem);
-  background: #ff1f2d;
-  box-shadow:
-    0 0 1.2rem rgba(255, 45, 58, 0.95),
-    0 0 4rem rgba(229, 9, 20, 0.72);
+
+  width: 1px;
+  background: rgba(229, 9, 20, 0.9);
+
+  box-shadow: 0 0 1.25rem rgba(229, 9, 20, 0.35);
+
   transform: translateX(-50%) scaleY(0);
-  animation: danflix-slit-open 2.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: danflix-slit-open 1.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+
+  will-change: transform, opacity;
 }
 
 .danflix-home {
@@ -1892,8 +1900,8 @@ input {
     opacity: 1;
   }
 
-  58% {
-    opacity: 0.78;
+  72% {
+    opacity: 1;
   }
 
   100% {
@@ -1903,45 +1911,45 @@ input {
 
 @keyframes danflix-curtain-left {
   0%,
-  28% {
+  22% {
     transform: translateX(0);
   }
 
   100% {
-    transform: translateX(-102%);
+    transform: translateX(-101%);
   }
 }
 
 @keyframes danflix-curtain-right {
   0%,
-  28% {
+  22% {
     transform: translateX(0);
   }
 
   100% {
-    transform: translateX(102%);
+    transform: translateX(101%);
   }
 }
 
 @keyframes danflix-slit-open {
   0% {
     opacity: 0;
-    transform: translateX(-50%) scaleY(0) scaleX(1);
+    transform: translateX(-50%) scaleY(0);
   }
 
   18% {
     opacity: 1;
-    transform: translateX(-50%) scaleY(1) scaleX(1);
+    transform: translateX(-50%) scaleY(1);
   }
 
-  54% {
+  58% {
     opacity: 1;
-    transform: translateX(-50%) scaleY(1) scaleX(1.15);
+    transform: translateX(-50%) scaleY(1);
   }
 
   100% {
     opacity: 0;
-    transform: translateX(-50%) scaleY(1) scaleX(10);
+    transform: translateX(-50%) scaleY(1);
   }
 }
 
@@ -1968,7 +1976,7 @@ input {
 @keyframes danflix-pause-question-appear {
   0% {
     opacity: 0;
-    transform: translate(-50%, 0.6rem);
+    transform: translate(-50%, 0.4rem);
   }
 
   100% {
@@ -1980,19 +1988,19 @@ input {
 @keyframes danflix-feature-arrive {
   0% {
     opacity: 0;
-    transform: translateY(1.4rem) scale(0.992);
+    transform: translateY(0.75rem);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes danflix-poster-arrive {
   0% {
     opacity: 0;
-    transform: translateY(1rem) scale(0.96);
+    transform: translateY(0.6rem) scale(0.985);
   }
 
   100% {
