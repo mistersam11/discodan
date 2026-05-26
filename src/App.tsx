@@ -415,12 +415,12 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
             </button>
           </div>
         </div>
-        <div className="danflix-feature-art" aria-label="Disco Dan: The Documentary image placeholder">
-          <div className="danflix-disco-orbit" aria-hidden="true" />
-          <div className="danflix-documentary-cover" aria-hidden="true">
-            <span>Disco Dan</span>
-            <span>The Documentary</span>
-          </div>
+        <div className="danflix-feature-art">
+          <img
+            className="danflix-feature-image"
+            src="/disco.jpg"
+            alt="Disco ball glowing in orange light"
+          />
           <p>Disco Dan: The Documentary</p>
         </div>
       </section>
