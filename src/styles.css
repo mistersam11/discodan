@@ -283,23 +283,64 @@ input {
 }
 
 .disco-countdown {
+  position: relative;
   z-index: 2;
   display: grid;
   place-items: center;
   color: #ffffff;
-  font-size: clamp(8rem, 28vw, 22rem);
+
+  /* Smaller real text = less expensive paint on phones */
+  font-size: clamp(6rem, 18vw, 13rem);
   font-weight: 760;
   font-variant-numeric: tabular-nums;
   line-height: 0.82;
   text-align: center;
-  text-shadow:
-    0 0.18rem 0 #050505,
-    0 0 2.5rem rgba(255, 255, 255, 0.18);
+
+  /* Avoid huge blurred text-shadow repaints */
+  text-shadow: 0 0.16rem 0 #050505;
+}
+
+.disco-countdown::before {
+  content: "";
+  position: absolute;
+  width: min(34rem, 72vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.12),
+    transparent 62%
+  );
+  pointer-events: none;
 }
 
 .disco-countdown-number {
+  position: relative;
+  z-index: 1;
   display: block;
   min-width: 1.15em;
+
+  transform: translate3d(0, 0, 0) scale(1.18);
+  transform-origin: center;
+
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+@media (max-width: 700px), (pointer: coarse) {
+  .disco-countdown {
+    font-size: clamp(5.5rem, 24vw, 9rem);
+    text-shadow: 0 0.12rem 0 #050505;
+  }
+
+  .disco-countdown::before {
+    width: min(22rem, 80vw);
+    opacity: 0.65;
+  }
+
+  .disco-countdown-number {
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
 }
 
 .disco-return-reveal {
