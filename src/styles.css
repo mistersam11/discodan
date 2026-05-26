@@ -475,7 +475,8 @@ input {
   position: sticky;
   top: 0;
   z-index: 6;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: clamp(1.1rem, 2.8vw, 2.2rem);
   min-height: clamp(3.35rem, 7dvh, 4.6rem);
@@ -490,15 +491,25 @@ input {
   letter-spacing: 0;
   line-height: 1;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .danflix-nav-links {
   display: flex;
   gap: 1.35rem;
   align-items: center;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.danflix-nav-links::-webkit-scrollbar {
+  display: none;
 }
 
 .danflix-nav-links button {
+  flex: 0 0 auto;
   border: 0;
   padding: 0;
   color: #ffffff;
@@ -553,10 +564,11 @@ input {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-width: 0;
   max-width: min(37rem, 48vw);
   padding:
     clamp(1.2rem, 5.6dvh, 5.6rem)
-    0
+    clamp(1rem, 2vw, 1.8rem)
     clamp(1.1rem, 4.6dvh, 4.8rem)
     clamp(1.2rem, 3.8vw, 3.4rem);
 }
@@ -573,6 +585,7 @@ input {
 .danflix-title-logo {
   display: grid;
   gap: 0.06rem;
+  max-width: 100%;
   margin: 0;
   color: #ffffff;
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
@@ -584,6 +597,7 @@ input {
     0 0.2rem 0 #141414,
     0 0 1.5rem rgba(229, 9, 20, 0.36);
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .danflix-title-logo span:last-child {
@@ -651,6 +665,7 @@ input {
 .danflix-feature-art {
   position: relative;
   display: grid;
+  min-width: 0;
   min-height: 100%;
   place-items: center;
   overflow: hidden;
@@ -707,51 +722,46 @@ input {
   box-shadow: 0 0 2.4rem rgba(255, 255, 255, 0.4);
 }
 
-.danflix-dan-figure {
+.danflix-documentary-cover {
   position: relative;
-  z-index: 1;
-  width: clamp(8.8rem, 14vw, 13.5rem);
-  height: clamp(15rem, 39dvh, 23rem);
-  transform: translateY(clamp(0.4rem, 2dvh, 2rem));
-}
-
-.danflix-dan-figure span:first-child {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: clamp(3.45rem, 5.4vw, 5.4rem);
-  height: clamp(3.45rem, 5.4vw, 5.4rem);
-  border-radius: 50%;
-  background: #f1c29c;
-  box-shadow: 0 -1.2rem 0 -0.45rem #141414;
-  transform: translateX(-50%);
-}
-
-.danflix-dan-figure span:first-child::before {
-  position: absolute;
-  top: clamp(-1.5rem, -1.8vw, -0.95rem);
-  left: 50%;
-  width: clamp(4.4rem, 6.6vw, 6.6rem);
-  height: clamp(1.8rem, 2.8vw, 2.6rem);
-  clip-path: polygon(0 100%, 12% 14%, 26% 78%, 42% 0, 58% 76%, 75% 10%, 100% 100%);
-  background: #151515;
-  content: "";
-  transform: translateX(-50%);
-}
-
-.danflix-dan-figure span:last-child {
-  position: absolute;
-  top: clamp(3.3rem, 5.1vw, 5.1rem);
-  left: 50%;
-  width: clamp(6.8rem, 10.2vw, 10.2rem);
-  height: clamp(10.8rem, 30dvh, 17.2rem);
-  border-radius: 5rem 5rem 1rem 1rem;
+  z-index: 2;
+  display: grid;
+  width: min(78%, 28rem);
+  min-height: clamp(9.5rem, 34dvh, 20rem);
+  place-items: center;
+  gap: 0.35rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 0.16rem solid rgba(255, 255, 255, 0.22);
+  border-radius: 0.45rem;
   background:
-    radial-gradient(circle at 32% 38%, #ffffff 0 0.7rem, transparent 0.72rem),
-    radial-gradient(circle at 68% 38%, #ffffff 0 0.7rem, transparent 0.72rem),
-    linear-gradient(90deg, #e50914 0 50%, #111111 50%);
-  box-shadow: 0 1.8rem 2rem rgba(0, 0, 0, 0.4);
-  transform: translateX(-50%);
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.24), transparent 6rem),
+    linear-gradient(145deg, #121212 0%, #e50914 54%, #3a0407 100%);
+  box-shadow:
+    0 1.6rem 3rem rgba(0, 0, 0, 0.52),
+    inset 0 0 0 0.08rem rgba(255, 255, 255, 0.12);
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.danflix-documentary-cover span:first-child {
+  color: #ffffff;
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size: clamp(2.6rem, min(6vw, 9dvh), 5.2rem);
+  font-weight: 900;
+  line-height: 0.86;
+  text-shadow:
+    0 0.18rem 0 #050505,
+    0 0 1.5rem rgba(0, 0, 0, 0.48);
+}
+
+.danflix-documentary-cover span:last-child {
+  align-self: start;
+  color: #ffffff;
+  font-size: clamp(0.78rem, min(1.4vw, 2.2dvh), 1.1rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .danflix-feature-art p {
@@ -842,14 +852,10 @@ input {
   top: 0;
   bottom: 0.8rem;
   z-index: 4;
-  width: 3rem;
+  width: clamp(2.35rem, 4vw, 3.25rem);
+  background: rgba(0, 0, 0, 0.76);
   font-size: 2.8rem;
   line-height: 1;
-  opacity: 0;
-}
-
-.danflix-row:hover .danflix-row-arrow,
-.danflix-row:focus-within .danflix-row-arrow {
   opacity: 1;
 }
 
@@ -870,7 +876,7 @@ input {
   gap: 0.85rem;
   overflow-x: auto;
   overflow-y: visible;
-  padding: 0.45rem clamp(1.1rem, 4vw, 3.6rem) 0.85rem 0;
+  padding: 0.45rem clamp(3rem, 4.8vw, 4rem) 0.85rem clamp(2.9rem, 4.2vw, 3.6rem);
   scroll-behavior: smooth;
   scroll-padding-inline: 3rem;
   scroll-snap-type: x mandatory;
