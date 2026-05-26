@@ -1166,10 +1166,22 @@ input {
 .danflix-player {
   position: absolute;
   inset: 0;
+  overflow: hidden;
+  background: #000000;
+  text-align: center;
+}
+
+.danflix-player-stage {
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
   overflow: hidden;
+  padding: 2rem;
   background: #000000;
+}
+
+.danflix-now-playing {
   text-align: center;
 }
 
@@ -1190,7 +1202,7 @@ input {
   text-transform: uppercase;
 }
 
-.danflix-player h1 {
+.danflix-now-playing h1 {
   position: relative;
   z-index: 1;
   margin: 0;
@@ -1219,6 +1231,179 @@ input {
   transform: scaleX(0);
   transform-origin: left;
   animation: danflix-progress-fill 4s linear forwards;
+}
+
+.danflix-loading-stage {
+  align-content: center;
+  gap: 1.2rem;
+}
+
+.danflix-loading-stage p {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.25rem, 3.2vw, 2.45rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.danflix-loading-wheel {
+  width: clamp(3.2rem, 7vw, 5.3rem);
+  aspect-ratio: 1;
+  border: 0.42rem solid rgba(255, 255, 255, 0.22);
+  border-top-color: #e50914;
+  border-radius: 50%;
+  animation: danflix-loading-spin 0.78s linear infinite;
+}
+
+.danflix-documentary-stage {
+  align-content: center;
+  text-align: center;
+}
+
+.danflix-documentary-stage.is-paused .danflix-documentary-copy {
+  opacity: 0.34;
+  filter: brightness(0.58);
+}
+
+.danflix-documentary-copy {
+  display: grid;
+  justify-items: center;
+  gap: clamp(0.85rem, 2.4vw, 1.45rem);
+  width: min(100%, 58rem);
+  transition:
+    filter 320ms ease,
+    opacity 320ms ease;
+}
+
+.danflix-documentary-date {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(3.2rem, 12vw, 8.6rem);
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 0.9;
+  text-shadow: 0 0 2rem rgba(255, 255, 255, 0.15);
+}
+
+.danflix-documentary-caption {
+  min-height: 1.25em;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.35rem, 4.8vw, 3.35rem);
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.danflix-pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.danflix-pause-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  gap: clamp(0.78rem, 1.7vw, 1.25rem);
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+}
+
+.danflix-pause-symbol span {
+  display: block;
+  width: clamp(0.78rem, 1.7vw, 1.18rem);
+  height: clamp(4.2rem, 10vw, 7rem);
+  border-radius: 0.16rem;
+  background: #ffffff;
+  box-shadow: 0 0 1.4rem rgba(255, 255, 255, 0.34);
+}
+
+.danflix-pause-question {
+  position: absolute;
+  top: calc(50% + clamp(5.8rem, 12vw, 8rem));
+  left: 50%;
+  display: grid;
+  width: min(calc(100% - 2rem), 35rem);
+  gap: 1rem;
+  justify-items: center;
+  transform: translateX(-50%);
+  animation: danflix-pause-question-appear 0.82s ease 0.55s both;
+}
+
+.danflix-pause-question p {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.35rem, 4vw, 2.55rem);
+  font-weight: 850;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.danflix-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.danflix-choice-button {
+  min-width: 9.2rem;
+  min-height: 2.85rem;
+  border: 0;
+  border-radius: 0.28rem;
+  padding: 0.7rem 1.2rem;
+  color: #000000;
+  background: #ffffff;
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.danflix-choice-button-secondary {
+  color: #ffffff;
+  background: rgba(109, 109, 110, 0.82);
+}
+
+.danflix-choice-button:hover,
+.danflix-choice-button:focus-visible {
+  box-shadow: 0 0.6rem 1.2rem rgba(255, 255, 255, 0.16);
+  outline: 2px solid rgba(255, 255, 255, 0.88);
+  outline-offset: 0.18rem;
+  transform: translateY(-1px);
+}
+
+.danflix-suspension-stage {
+  background: #ff7a00;
+}
+
+.danflix-suspension-copy {
+  max-width: 62rem;
+  margin: 0;
+  color: #180600;
+  font-size: clamp(1.85rem, 5.6vw, 4.55rem);
+  font-weight: 950;
+  line-height: 1.04;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.danflix-suspension-days {
+  display: inline-block;
+  min-width: 4ch;
+  color: #fff7dc;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 0.08rem 0 #180600,
+    0 0 1.4rem rgba(255, 255, 255, 0.48);
 }
 
 .disco-browser-tabs {
@@ -1695,6 +1880,28 @@ input {
 
   100% {
     transform: scaleX(1);
+  }
+}
+
+@keyframes danflix-loading-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes danflix-pause-question-appear {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0.6rem);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
@@ -3192,9 +3399,25 @@ button.excel-cell {
     font-size: 1.42rem;
   }
 
-  .danflix-player h1 {
+  .danflix-now-playing h1 {
     width: min(100% - 2rem, 30rem);
     font-size: 2.1rem;
+  }
+
+  .danflix-documentary-date {
+    font-size: clamp(3rem, 15vw, 5.4rem);
+  }
+
+  .danflix-documentary-caption {
+    font-size: clamp(1.35rem, 7vw, 2.35rem);
+  }
+
+  .danflix-pause-question {
+    top: calc(50% + 5.3rem);
+  }
+
+  .danflix-choice-button {
+    min-width: 8.2rem;
   }
 
 

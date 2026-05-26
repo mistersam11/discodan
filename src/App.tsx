@@ -463,7 +463,61 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
   );
 }
 
+type DanflixPlayerPhase =
+  | "nowPlaying"
+  | "initialLoading"
+  | "firstDate"
+  | "firstCaption"
+  | "firstPaused"
+  | "resuming"
+  | "secondDate"
+  | "secondCaption"
+  | "secondPaused"
+  | "suspended";
+
+const danflixPlayerTimers: Partial<
+  Record<DanflixPlayerPhase, { delay: number; next: DanflixPlayerPhase }>
+> = {
+  nowPlaying: { delay: 4000, next: "initialLoading" },
+  initialLoading: { delay: 2000, next: "firstDate" },
+  firstDate: { delay: 2300, next: "firstCaption" },
+  firstCaption: { delay: 2400, next: "firstPaused" },
+  resuming: { delay: 3000, next: "secondDate" },
+  secondDate: { delay: 2300, next: "secondCaption" },
+  secondCaption: { delay: 2400, next: "secondPaused" },
+};
+
+const getRandomSuspensionDays = () =>
+  Array.from({ length: 4 }, () => Math.floor(Math.random() * 10)).join("");
+
 function DanflixPlayer() {
+  const [phase, setPhase] = useState<DanflixPlayerPhase>("nowPlaying");
+  const [suspensionDays, setSuspensionDays] = useState(getRandomSuspensionDays);
+
+  useEffect(() => {
+    const timerConfig = danflixPlayerTimers[phase];
+
+    if (!timerConfig) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setPhase(timerConfig.next), timerConfig.delay);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "suspended") {
+      return undefined;
+    }
+
+    setSuspensionDays(getRandomSuspensionDays());
+    const interval = window.setInterval(() => {
+      setSuspensionDays(getRandomSuspensionDays());
+    }, 180);
+
+    return () => window.clearInterval(interval);
+  }, [phase]);
+
   return (
     <motion.div
       className="danflix-player"
@@ -472,13 +526,186 @@ function DanflixPlayer() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
+      {phase === "nowPlaying" && <DanflixNowPlaying />}
+
+      {phase === "initialLoading" && (
+        <DanflixLoadingStage ariaLabel="Documentary loading" />
+      )}
+
+      {(phase === "firstDate" || phase === "firstCaption") && (
+        <DanflixDocumentaryStage
+          caption="Dan was born."
+          showCaption={phase === "firstCaption"}
+        />
+      )}
+
+      {phase === "firstPaused" && (
+        <DanflixPausedStage
+          caption="Dan was born."
+          question="Are you still watching?"
+          primaryLabel="Yes"
+          secondaryLabel="Not anymore"
+          onPrimary={() => setPhase("resuming")}
+        />
+      )}
+
+      {phase === "resuming" && (
+        <DanflixLoadingStage
+          ariaLabel="Resuming documentary"
+          label="Resuming from beginning"
+        />
+      )}
+
+      {(phase === "secondDate" || phase === "secondCaption") && (
+        <DanflixDocumentaryStage
+          caption="Dan was died."
+          showCaption={phase === "secondCaption"}
+        />
+      )}
+
+      {phase === "secondPaused" && (
+        <DanflixPausedStage
+          caption="Dan was died."
+          question="Are you still watching?"
+          primaryLabel="Disco"
+          secondaryLabel="No Disco"
+          onPrimary={() => setPhase("suspended")}
+        />
+      )}
+
+      {phase === "suspended" && (
+        <DanflixSuspendedStage suspensionDays={suspensionDays} />
+      )}
+    </motion.div>
+  );
+}
+
+function DanflixNowPlaying() {
+  return (
+    <div className="danflix-player-stage danflix-now-playing">
       <div className="danflix-player-glow" aria-hidden="true" />
       <p className="danflix-player-kicker">Now Playing</p>
       <h1>Disco Dan: The Documentary</h1>
       <div className="danflix-progress" aria-hidden="true">
         <span />
       </div>
-    </motion.div>
+    </div>
+  );
+}
+
+function DanflixLoadingStage({
+  ariaLabel,
+  label,
+}: {
+  ariaLabel: string;
+  label?: string;
+}) {
+  return (
+    <div className="danflix-player-stage danflix-loading-stage" aria-label={ariaLabel}>
+      {label && <p>{label}</p>}
+      <div className="danflix-loading-wheel" aria-hidden="true" />
+    </div>
+  );
+}
+
+function DanflixDocumentaryStage({
+  caption,
+  animateIn = true,
+  isPaused = false,
+  showCaption = true,
+}: {
+  caption: string;
+  animateIn?: boolean;
+  isPaused?: boolean;
+  showCaption?: boolean;
+}) {
+  return (
+    <div
+      className={`danflix-player-stage danflix-documentary-stage ${
+        isPaused ? "is-paused" : ""
+      }`}
+    >
+      <div className="danflix-documentary-copy">
+        <motion.h1
+          className="danflix-documentary-date"
+          initial={animateIn ? { opacity: 0 } : false}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 2, ease: "easeOut" }}
+        >
+          JAN 12, 1965
+        </motion.h1>
+        <AnimatePresence>
+          {showCaption && (
+            <motion.p
+              className="danflix-documentary-caption"
+              initial={animateIn ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.65, ease: "easeOut" }}
+            >
+              {caption}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+function DanflixPausedStage({
+  caption,
+  question,
+  primaryLabel,
+  secondaryLabel,
+  onPrimary,
+}: {
+  caption: string;
+  question: string;
+  primaryLabel: string;
+  secondaryLabel: string;
+  onPrimary: () => void;
+}) {
+  return (
+    <>
+      <DanflixDocumentaryStage caption={caption} animateIn={false} isPaused />
+      <div className="danflix-pause-overlay">
+        <div className="danflix-pause-symbol" aria-hidden="true">
+          <span />
+          <span />
+        </div>
+        <div className="danflix-pause-question">
+          <p>{question}</p>
+          <div className="danflix-choice-row">
+            <button className="danflix-choice-button" type="button" onClick={onPrimary}>
+              {primaryLabel}
+            </button>
+            <button
+              className="danflix-choice-button danflix-choice-button-secondary"
+              type="button"
+              onClick={() => {}}
+            >
+              {secondaryLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DanflixSuspendedStage({
+  suspensionDays,
+}: {
+  suspensionDays: string;
+}) {
+  return (
+    <div className="danflix-player-stage danflix-suspension-stage">
+      <p className="danflix-suspension-copy">
+        Your subscription to Danflix was shared with a man in a business suit.
+        Account suspended for{" "}
+        <span className="danflix-suspension-days">{suspensionDays}</span> days.
+      </p>
+    </div>
   );
 }
 
