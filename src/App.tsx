@@ -1,4 +1,4 @@
-import { type CSSProperties, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, type MouseEvent, type MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 type AnswerKey = "name" | "date" | "time";
@@ -18,6 +18,14 @@ type Scene =
   | "wordSearch";
 
 type Answers = Record<AnswerKey, string>;
+type PerformanceMode = "full" | "reduced";
+
+type NavigatorPerformanceHints = Navigator & {
+  connection?: {
+    saveData?: boolean;
+  };
+  deviceMemory?: number;
+};
 
 type Question = {
   id: AnswerKey;
@@ -168,6 +176,7 @@ const devSceneShortcuts: Record<string, Scene> = {
   wiki: "discoChrome",
   danflix: "danflixLogo",
   netflix: "danflixLogo",
+  jeopardy: "forgiveness",
   search: "wordSearch",
   wordsearch: "wordSearch",
   "word search": "wordSearch",
@@ -309,6 +318,47 @@ const danflixPosters: DanflixPoster[] = [
   },
 ];
 
+function getPerformanceMode(): PerformanceMode {
+  if (typeof window === "undefined") {
+    return "full";
+  }
+
+  const nav = window.navigator as NavigatorPerformanceHints;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+  const compactViewport = window.matchMedia("(max-width: 740px)").matches;
+  const lowCpu = typeof nav.hardwareConcurrency === "number" && nav.hardwareConcurrency <= 4;
+  const lowMemory = typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4;
+  const saveData = Boolean(nav.connection?.saveData);
+
+  return prefersReducedMotion || coarsePointer || compactViewport || lowCpu || lowMemory || saveData
+    ? "reduced"
+    : "full";
+}
+
+function usePerformanceMode() {
+  const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(getPerformanceMode);
+
+  useEffect(() => {
+    const mediaQueries = [
+      window.matchMedia("(prefers-reduced-motion: reduce)"),
+      window.matchMedia("(pointer: coarse)"),
+      window.matchMedia("(max-width: 740px)"),
+    ];
+    const updatePerformanceMode = () => setPerformanceMode(getPerformanceMode());
+
+    mediaQueries.forEach((query) => query.addEventListener("change", updatePerformanceMode));
+    window.addEventListener("resize", updatePerformanceMode);
+
+    return () => {
+      mediaQueries.forEach((query) => query.removeEventListener("change", updatePerformanceMode));
+      window.removeEventListener("resize", updatePerformanceMode);
+    };
+  }, []);
+
+  return performanceMode;
+}
+
 function App() {
   const [scene, setScene] = useState<Scene>("name");
   const [wordleAnswer, setWordleAnswer] = useState("DISCO");
@@ -317,6 +367,7 @@ function App() {
     date: "",
     time: "",
   });
+  const performanceMode = usePerformanceMode();
 
   const currentQuestion = questions.find((question) => question.id === scene);
 
@@ -348,7 +399,7 @@ function App() {
   };
 
   return (
-    <main className="experience-shell">
+    <main className="experience-shell" data-performance-mode={performanceMode}>
       <div className="screen-vignette" />
       <AnimatePresence mode="wait">
         {currentQuestion && (
@@ -367,7 +418,11 @@ function App() {
         {scene === "story" && <StoryScene key="story" onComplete={advance} />}
 
         {scene === "finale" && (
-          <FinaleScene key="finale" onStart={() => setScene("animalGame")} />
+          <FinaleScene
+            key="finale"
+            performanceMode={performanceMode}
+            onStart={() => setScene("animalGame")}
+          />
         )}
 
         {scene === "animalGame" && (
@@ -383,18 +438,27 @@ function App() {
         )}
 
         {scene === "wordSearch" && (
-          <WordSearchScene key="word-search" onNext={() => setScene("workComputer")} />
+          <WordSearchScene
+            key="word-search"
+            performanceMode={performanceMode}
+            onNext={() => setScene("workComputer")}
+          />
         )}
 
         {scene === "workComputer" && (
           <WorkComputerScene
             key="work-computer"
-            onComplete={() => setScene("discoReturn")}
+            performanceMode={performanceMode}
+            onComplete={() => setScene("danflix")}
           />
         )}
 
         {scene === "discoReturn" && (
-          <DiscoReturnScene key="disco-return" onNext={() => setScene("discoChrome")} />
+          <DiscoReturnScene
+            key="disco-return"
+            performanceMode={performanceMode}
+            onNext={() => setScene("discoChrome")}
+          />
         )}
 
         {scene === "discoChrome" && (
@@ -410,7 +474,11 @@ function App() {
         )}
 
         {scene === "forgiveness" && (
-          <ForgivenessScene key="forgiveness" />
+          <ForgivenessScene
+            key="forgiveness"
+            performanceMode={performanceMode}
+            playerName={answers.name}
+          />
         )}
       </AnimatePresence>
     </main>
@@ -466,21 +534,1556 @@ function DanflixScene({ onNext }: { onNext: () => void }) {
   );
 }
 
-function ForgivenessScene() {
+type JeopardyPhase =
+  | "clock"
+  | "logo"
+  | "podiumsIntro"
+  | "board"
+  | "question"
+  | "choice"
+  | "result"
+  | "finalCard"
+  | "standings"
+  | "finalIntro"
+  | "finalQuestion"
+  | "charityGate"
+  | "charity";
+
+type JeopardyContestant = {
+  id: "dan-left" | "dan-center" | "player";
+  name: string;
+};
+
+type JeopardyQuestion = {
+  id: string;
+  category: "DISCO" | "DAN";
+  value: number;
+  clue: string;
+  answer: string;
+  options: string[];
+};
+
+type JeopardyResult = {
+  contestantIndex: number;
+  text: string;
+};
+
+type JeopardyScoreFlash = {
+  contestantIndex: number;
+  tone: "positive" | "negative";
+};
+
+type JeopardyStanding = {
+  contestantIndex: number;
+  name: string;
+  place: number;
+  score: number;
+};
+
+type FinalJeopardyChoice = "yes" | "no";
+
+type CharityPhysicsApi = {
+  igniteGold: () => void;
+  setFlaming: (isFlaming: boolean) => void;
+  shardIce: () => void;
+  spawnCoin: () => void;
+};
+
+type CharityCoin = {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  angle: number;
+  va: number;
+};
+
+type CharityParticle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  color: string;
+};
+
+type JeopardyTileOrigin = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  targetLeft: number;
+  targetTop: number;
+  targetWidth: number;
+  targetHeight: number;
+};
+
+const jeopardyCategories = ["POTPOURRI", "POTPOURRI", "DISCO", "DAN", "POTPOURRI", "POTPOURRI"] as const;
+const jeopardyValues = [100, 200, 400, 800, 1000];
+
+const jeopardyQuestions: JeopardyQuestion[] = [
+  {
+    id: "disco-100",
+    category: "DISCO",
+    value: 100,
+    clue: "This sparkling dance floor object makes Dan believe every room can become a party.",
+    answer: "disco ball",
+    options: ["disco ball", "spreadsheet", "blue screen", "potpourri"],
+  },
+  {
+    id: "disco-200",
+    category: "DISCO",
+    value: 200,
+    clue: "This four beat pulse keeps the club moving while Dan points dramatically at the ceiling.",
+    answer: "four on the floor",
+    options: ["four on the floor", "two in the chair", "one under the desk", "zero on purpose"],
+  },
+  {
+    id: "disco-400",
+    category: "DISCO",
+    value: 400,
+    clue: "This kind of venue gave disco its name and gave Dan somewhere to stand under lights.",
+    answer: "discotheque",
+    options: ["discotheque", "library card", "spreadsheet cell", "forgiveness office"],
+  },
+  {
+    id: "disco-800",
+    category: "DISCO",
+    value: 800,
+    clue: "This feverish Saturday movie helped make disco a pop culture phenomenon.",
+    answer: "Saturday Night Fever",
+    options: ["Saturday Night Fever", "Monday Morning Printer", "Thursday Lunch Email", "Sunday Tax Folder"],
+  },
+  {
+    id: "disco-1000",
+    category: "DISCO",
+    value: 1000,
+    clue: "This famous New York nightclub is where celebrities danced while Dan studied the mirror ball.",
+    answer: "Studio 54",
+    options: ["Studio 54", "Cubicle 12", "Room 404", "Spreadsheet 7"],
+  },
+  {
+    id: "dan-100",
+    category: "DAN",
+    value: 100,
+    clue: "This is the first name of the man whose disco forgiveness has become urgently important.",
+    answer: "Dan",
+    options: ["Dan", "Crab", "Excel", "Wikipedia"],
+  },
+  {
+    id: "dan-200",
+    category: "DAN",
+    value: 200,
+    clue: "Dan renamed this hit guessing game after buying it with overwhelming confidence.",
+    answer: "Disco Dandle",
+    options: ["Disco Dandle", "Danflix", "Taskbar Tennis", "Calendar Soup"],
+  },
+  {
+    id: "dan-400",
+    category: "DAN",
+    value: 400,
+    clue: "This streaming service suspended the account after it was shared with a man in a business suit.",
+    answer: "Danflix",
+    options: ["Danflix", "Crab Prime", "The New York Times", "Excel Plus"],
+  },
+  {
+    id: "dan-800",
+    category: "DAN",
+    value: 800,
+    clue: "This phrase is what someone should request after deeply upsetting Disco Dan.",
+    answer: "Dan's forgiveness",
+    options: ["Dan's forgiveness", "more potpourri", "a new spreadsheet", "a browser history"],
+  },
+  {
+    id: "dan-1000",
+    category: "DAN",
+    value: 1000,
+    clue: "This is what Dan does after the clock reaches eight in the evening.",
+    answer: "watch TV",
+    options: ["watch TV", "open Excel", "cite Wikipedia", "count animals"],
+  },
+];
+
+const getJeopardyQuestion = (category: string, value: number) =>
+  jeopardyQuestions.find((question) => question.category === category && question.value === value);
+
+function getPlayerJeopardyName(name: string) {
+  const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed : "funko";
+}
+
+function formatJeopardyMoney(score: number) {
+  const roundedScore = Math.round(score);
+  const prefix = roundedScore < 0 ? "-$" : "$";
+
+  return `${prefix}${Math.abs(roundedScore).toLocaleString("en-US")}`;
+}
+
+function getJeopardyQuestionWords(question: JeopardyQuestion | null) {
+  return question?.clue.match(/\S+/g) ?? [];
+}
+
+function getRandomDanIndex() {
+  return Math.random() > 0.5 ? 0 : 1;
+}
+
+function getPotpourriTileId(columnIndex: number, value: number) {
+  return `potpourri-${columnIndex}-${value}`;
+}
+
+function getAllPotpourriTileIds() {
+  return jeopardyCategories.flatMap((category, columnIndex) =>
+    category === "POTPOURRI"
+      ? jeopardyValues.map((value) => getPotpourriTileId(columnIndex, value))
+      : [],
+  );
+}
+
+function getJeopardyStandings(contestants: JeopardyContestant[], scores: number[]): JeopardyStanding[] {
+  return contestants
+    .map((contestant, contestantIndex) => ({
+      contestantIndex,
+      name: contestant.name,
+      score: scores[contestantIndex] ?? 0,
+    }))
+    .sort((a, b) => b.score - a.score || a.contestantIndex - b.contestantIndex)
+    .map((standing, index) => ({
+      ...standing,
+      place: index + 1,
+    }));
+}
+
+function ForgivenessScene({
+  performanceMode,
+  playerName,
+}: {
+  performanceMode: PerformanceMode;
+  playerName: string;
+}) {
+  const displayName = getPlayerJeopardyName(playerName);
+  const contestants: JeopardyContestant[] = useMemo(
+    () => [
+      { id: "dan-left", name: "Dan" },
+      { id: "dan-center", name: "Dan" },
+      { id: "player", name: displayName },
+    ],
+    [displayName],
+  );
+  const [phase, setPhase] = useState<JeopardyPhase>("clock");
+  const [showClockTime, setShowClockTime] = useState(false);
+  const [showClockCaption, setShowClockCaption] = useState(false);
+  const [isClockLeaving, setIsClockLeaving] = useState(false);
+  const [scores, setScores] = useState([0, 0, 0]);
+  const [scoreFlash, setScoreFlash] = useState<JeopardyScoreFlash | null>(null);
+  const [usedQuestionIds, setUsedQuestionIds] = useState<string[]>([]);
+  const [missingPotpourriIds, setMissingPotpourriIds] = useState<string[]>([]);
+  const [selectedQuestion, setSelectedQuestion] = useState<JeopardyQuestion | null>(null);
+  const [questionOrigin, setQuestionOrigin] = useState<JeopardyTileOrigin | null>(null);
+  const [revealedWordCount, setRevealedWordCount] = useState(0);
+  const [buzzState, setBuzzState] = useState<"ready" | "tooEarly">("ready");
+  const [choiceSeconds, setChoiceSeconds] = useState(8);
+  const [result, setResult] = useState<JeopardyResult | null>(null);
+  const timersRef = useRef<number[]>([]);
+
+  const questionWords = useMemo(() => getJeopardyQuestionWords(selectedQuestion), [selectedQuestion]);
+  const usedQuestionIdSet = useMemo(() => new Set(usedQuestionIds), [usedQuestionIds]);
+  const missingPotpourriIdSet = useMemo(() => new Set(missingPotpourriIds), [missingPotpourriIds]);
+
+  const clearJeopardyTimers = () => {
+    timersRef.current.forEach(window.clearTimeout);
+    timersRef.current = [];
+  };
+
+  useEffect(() => {
+    const timers = [
+      window.setTimeout(() => setShowClockTime(true), 5600),
+      window.setTimeout(() => setShowClockCaption(true), 6800),
+      window.setTimeout(() => setIsClockLeaving(true), 8600),
+      window.setTimeout(() => setPhase("logo"), 9500),
+    ];
+
+    return () => {
+      timers.forEach(window.clearTimeout);
+      clearJeopardyTimers();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "podiumsIntro") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setPhase("board"), 4000);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "question" || !selectedQuestion) {
+      return undefined;
+    }
+
+    setRevealedWordCount(0);
+    setBuzzState("ready");
+    const interval = window.setInterval(() => {
+      setRevealedWordCount((current) => {
+        if (current >= questionWords.length) {
+          window.clearInterval(interval);
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 333);
+
+    return () => window.clearInterval(interval);
+  }, [phase, questionWords.length, selectedQuestion]);
+
+  useEffect(() => {
+    if (phase !== "choice" || !selectedQuestion) {
+      return undefined;
+    }
+
+    setChoiceSeconds(8);
+    const interval = window.setInterval(() => {
+      setChoiceSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(interval);
+          handlePlayerChoice(null);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [phase, selectedQuestion]);
+
+  useEffect(() => {
+    if (phase !== "standings") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setPhase("finalIntro"), 6800);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "finalIntro") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setPhase("finalQuestion"), 4000);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  const addScore = (contestantIndex: number, amount: number) => {
+    setScores((current) =>
+      current.map((score, index) => (index === contestantIndex ? score + amount : score)),
+    );
+    setScoreFlash({ contestantIndex, tone: amount >= 0 ? "positive" : "negative" });
+    window.setTimeout(() => setScoreFlash(null), 1100);
+  };
+
+  const markQuestionResolved = (question: JeopardyQuestion) => {
+    const nextUsedQuestionIds = usedQuestionIds.includes(question.id)
+      ? usedQuestionIds
+      : [...usedQuestionIds, question.id];
+    const remainingQuestionCount = jeopardyQuestions.length - nextUsedQuestionIds.length;
+
+    setUsedQuestionIds(nextUsedQuestionIds);
+    setMissingPotpourriIds((current) => {
+      const allIds = getAllPotpourriTileIds();
+
+      if (remainingQuestionCount <= 1) {
+        return allIds;
+      }
+
+      const availableIds = allIds.filter((id) => !current.includes(id));
+      const nextIds = [...current];
+
+      for (let count = 0; count < 2 && availableIds.length > 0; count += 1) {
+        const pickIndex = Math.floor(Math.random() * availableIds.length);
+        const [nextId] = availableIds.splice(pickIndex, 1);
+
+        if (nextId) {
+          nextIds.push(nextId);
+        }
+      }
+
+      return nextIds;
+    });
+
+    return remainingQuestionCount <= 0;
+  };
+
+  const returnToBoard = () => {
+    setSelectedQuestion(null);
+    setQuestionOrigin(null);
+    setResult(null);
+    setPhase("board");
+  };
+
+  const showFinalCard = () => {
+    setSelectedQuestion(null);
+    setQuestionOrigin(null);
+    setResult(null);
+    setPhase("finalCard");
+  };
+
+  const showDanAnswer = (question: JeopardyQuestion) => {
+    const danIndex = getRandomDanIndex();
+    setResult({ contestantIndex: danIndex, text: `Dan says: ${question.answer}` });
+    setPhase("result");
+    addScore(danIndex, question.value);
+    const isFinalQuestion = markQuestionResolved(question);
+    timersRef.current.push(window.setTimeout(isFinalQuestion ? showFinalCard : returnToBoard, 2800));
+  };
+
+  const handleQuestionSelect = (
+    question: JeopardyQuestion,
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const frameElement = event.currentTarget.closest(".jeopardy-stage-frame") as HTMLElement | null;
+    const targetRect = frameElement?.getBoundingClientRect() ?? {
+      left: 0,
+      top: 0,
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+    clearJeopardyTimers();
+    setSelectedQuestion(question);
+    setQuestionOrigin({
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      targetLeft: targetRect.left,
+      targetTop: targetRect.top,
+      targetWidth: targetRect.width,
+      targetHeight: targetRect.height,
+    });
+    setPhase("question");
+  };
+
+  const handleBuzz = () => {
+    if (!selectedQuestion) {
+      return;
+    }
+
+    if (revealedWordCount < questionWords.length) {
+      setBuzzState("tooEarly");
+      timersRef.current.push(window.setTimeout(() => showDanAnswer(selectedQuestion), 900));
+      return;
+    }
+
+    setPhase("choice");
+  };
+
+  function handlePlayerChoice(choice: string | null) {
+    if (!selectedQuestion) {
+      return;
+    }
+
+    clearJeopardyTimers();
+
+    const saidAnswer = choice ?? "nothing";
+    const isCorrect = choice === selectedQuestion.answer;
+    setResult({ contestantIndex: 2, text: `${displayName} says: ${saidAnswer}` });
+    setPhase("result");
+
+    if (isCorrect) {
+      addScore(2, selectedQuestion.value);
+      const isFinalQuestion = markQuestionResolved(selectedQuestion);
+      timersRef.current.push(window.setTimeout(isFinalQuestion ? showFinalCard : returnToBoard, 2800));
+      return;
+    }
+
+    addScore(2, -selectedQuestion.value);
+    timersRef.current.push(window.setTimeout(() => showDanAnswer(selectedQuestion), 2100));
+  }
+
+  const updatePlayerFinalScore = (finalScore: number) => {
+    setScores((current) =>
+      current.map((score, index) => (index === 2 ? finalScore : score)),
+    );
+  };
+
+  const completeFinalJeopardy = (finalScore: number) => {
+    updatePlayerFinalScore(finalScore);
+    setPhase("charityGate");
+  };
+
   return (
     <motion.section
-      className="forgiveness-scene"
+      className="forgiveness-scene jeopardy-scene"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.45 }}
     >
-      <div>
-        <h1>To be continued...</h1>
-        <p>Stay tuned for more Disco Dan.</p>
-      </div>
+      <AnimatePresence mode="wait">
+        {phase === "clock" && (
+          <JeopardyClockIntro
+            isLeaving={isClockLeaving}
+            showCaption={showClockCaption}
+            showTime={showClockTime}
+          />
+        )}
+
+        {phase === "logo" && <JeopardyLogoIntro onStart={() => setPhase("podiumsIntro")} />}
+
+        {phase === "podiumsIntro" && (
+          <JeopardyPodiums
+            contestants={contestants}
+            result={null}
+            scoreFlash={scoreFlash}
+            scores={scores}
+          />
+        )}
+
+        {phase === "board" && (
+          <JeopardyBoard
+            missingPotpourriIdSet={missingPotpourriIdSet}
+            onSelectQuestion={handleQuestionSelect}
+            usedQuestionIdSet={usedQuestionIdSet}
+          />
+        )}
+
+        {phase === "question" && selectedQuestion && questionOrigin && (
+          <JeopardyQuestionPanel
+            buzzState={buzzState}
+            onBuzz={handleBuzz}
+            origin={questionOrigin}
+            question={selectedQuestion}
+            revealedWordCount={revealedWordCount}
+            words={questionWords}
+          />
+        )}
+
+        {phase === "choice" && selectedQuestion && (
+          <JeopardyPodiums
+            choiceSeconds={choiceSeconds}
+            contestants={contestants}
+            onChoose={handlePlayerChoice}
+            result={{ contestantIndex: 2, text: "" }}
+            scoreFlash={scoreFlash}
+            scores={scores}
+            selectedQuestion={selectedQuestion}
+          />
+        )}
+
+        {phase === "result" && (
+          <JeopardyPodiums
+            contestants={contestants}
+            result={result}
+            scoreFlash={scoreFlash}
+            scores={scores}
+          />
+        )}
+
+        {phase === "finalCard" && (
+          <JeopardyLogoIntro
+            alt="Final Jeopardy"
+            imageSrc="/jeopardy/final-jeopardy-300.jpg"
+            imageSrcSet="/jeopardy/final-jeopardy-300.jpg 300w"
+            key="jeopardy-final-card"
+            sceneKey="jeopardy-final-card"
+            onStart={() => setPhase("standings")}
+          />
+        )}
+
+        {phase === "standings" && (
+          <JeopardyStandings
+            contestants={contestants}
+            scores={scores}
+          />
+        )}
+
+        {phase === "finalIntro" && <JeopardyFinalIntro />}
+
+        {phase === "finalQuestion" && (
+          <JeopardyFinalQuestion
+            currentScore={scores[2] ?? 0}
+            onComplete={completeFinalJeopardy}
+            playerName={displayName}
+            onScoreSettled={updatePlayerFinalScore}
+          />
+        )}
+
+        {phase === "charityGate" && (
+          <CharityGate onStart={() => setPhase("charity")} />
+        )}
+
+        {phase === "charity" && (
+          <CharitySimulatorScene
+            initialBalance={scores[2] ?? 0}
+            performanceMode={performanceMode}
+          />
+        )}
+      </AnimatePresence>
     </motion.section>
   );
+}
+
+function JeopardyClockIntro({
+  isLeaving,
+  showCaption,
+  showTime,
+}: {
+  isLeaving: boolean;
+  showCaption: boolean;
+  showTime: boolean;
+}) {
+  return (
+    <motion.div
+      className={`jeopardy-clock-intro ${isLeaving ? "is-leaving" : ""}`}
+      key="jeopardy-clock"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isLeaving ? 0 : 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.75 }}
+    >
+      <div className="jeopardy-clock-anchor">
+        <div className="jeopardy-clock" aria-label="Clock stopping at 7:00 PM">
+          <span className="jeopardy-clock-tick tick-12" />
+          <span className="jeopardy-clock-tick tick-3" />
+          <span className="jeopardy-clock-tick tick-6" />
+          <span className="jeopardy-clock-tick tick-9" />
+          <span className="jeopardy-clock-hand jeopardy-clock-hour" />
+          <span className="jeopardy-clock-hand jeopardy-clock-minute" />
+          <span className="jeopardy-clock-pin" />
+        </div>
+      </div>
+      <div className="jeopardy-clock-copy" aria-live="polite">
+        <AnimatePresence>
+          {showTime && (
+            <motion.p
+              className="jeopardy-clock-time"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7 }}
+            >
+              8:00 PM
+            </motion.p>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {showCaption && (
+            <motion.p
+              className="jeopardy-clock-caption"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7 }}
+            >
+              Dan goes to watch TV...
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
+function JeopardyLogoIntro({
+  alt = "Jeopardy",
+  imageSrc = "/jeopardy/jeopardy-logo-880.jpg",
+  imageSrcSet = "/jeopardy/jeopardy-logo-560.jpg 560w, /jeopardy/jeopardy-logo-880.jpg 880w",
+  onStart,
+  sceneKey = "jeopardy-logo",
+}: {
+  alt?: string;
+  imageSrc?: string;
+  imageSrcSet?: string;
+  onStart: () => void;
+  sceneKey?: string;
+}) {
+  return (
+    <motion.div
+      className="jeopardy-logo-intro"
+      key={sceneKey}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      <button className="jeopardy-logo-button" type="button" onClick={onStart}>
+        <span className="jeopardy-logo-card">
+          <span className="jeopardy-logo-face is-front">
+            <img
+              src={imageSrc}
+              srcSet={imageSrcSet}
+              sizes="min(78vw, 42rem)"
+              alt={alt}
+              draggable={false}
+            />
+          </span>
+          <span className="jeopardy-logo-face is-back" aria-hidden="true">
+            <img src={imageSrc} alt="" draggable={false} />
+          </span>
+        </span>
+      </button>
+    </motion.div>
+  );
+}
+
+function JeopardyPodiums({
+  choiceSeconds,
+  contestants,
+  onChoose,
+  result,
+  scoreFlash,
+  scores,
+  selectedQuestion,
+}: {
+  choiceSeconds?: number;
+  contestants: JeopardyContestant[];
+  onChoose?: (choice: string) => void;
+  result: JeopardyResult | null;
+  scoreFlash: JeopardyScoreFlash | null;
+  scores: number[];
+  selectedQuestion?: JeopardyQuestion;
+}) {
+  const activeIndex = result?.contestantIndex;
+
+  return (
+    <motion.div
+      className="jeopardy-podium-scene"
+      key={`jeopardy-podiums-${selectedQuestion?.id ?? result?.text ?? "intro"}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.55 }}
+    >
+      <div className="jeopardy-stage-frame">
+        <img
+          className="jeopardy-podiums-image"
+          src="/jeopardy/podiums-1200.jpg"
+          srcSet="/jeopardy/podiums-900.jpg 900w, /jeopardy/podiums-1200.jpg 1200w"
+          sizes="min(100vw, 78rem)"
+          alt=""
+          draggable={false}
+        />
+        <div className="jeopardy-podium-overlays" aria-live="polite">
+          {contestants.map((contestant, index) => (
+            <div
+              className={`jeopardy-contestant-podium podium-${index}${
+                activeIndex === index ? " is-active" : ""
+              }`}
+              key={contestant.id}
+            >
+              <div
+                className={`jeopardy-money${
+                  scoreFlash?.contestantIndex === index ? ` is-${scoreFlash.tone}` : ""
+                }`}
+              >
+                {formatJeopardyMoney(scores[index] ?? 0)}
+              </div>
+              <div className="jeopardy-name">{contestant.name}</div>
+            </div>
+          ))}
+
+          {result?.text && activeIndex !== undefined && (
+            <div className={`jeopardy-speech-bubble speech-${activeIndex}`}>
+              {result.text}
+            </div>
+          )}
+
+          {selectedQuestion && onChoose && (
+            <div className="jeopardy-choice-panel">
+              <div className="jeopardy-choice-timer">{choiceSeconds}s</div>
+              <div className="jeopardy-choice-options">
+                {selectedQuestion.options.map((option) => (
+                  <button key={option} type="button" onClick={() => onChoose(option)}>
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function JeopardyBoard({
+  missingPotpourriIdSet,
+  onSelectQuestion,
+  usedQuestionIdSet,
+}: {
+  missingPotpourriIdSet: Set<string>;
+  onSelectQuestion: (question: JeopardyQuestion, event: MouseEvent<HTMLButtonElement>) => void;
+  usedQuestionIdSet: Set<string>;
+}) {
+  return (
+    <motion.div
+      className="jeopardy-board-scene"
+      key="jeopardy-board"
+      initial={{ opacity: 0, scale: 0.985 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.55 }}
+    >
+      <div className="jeopardy-stage-frame jeopardy-board-frame">
+        <div className="jeopardy-board" aria-label="Jeopardy board">
+          {jeopardyCategories.map((category, columnIndex) => (
+            <div className="jeopardy-category" key={`${category}-${columnIndex}`}>
+              {category}
+            </div>
+          ))}
+
+          {jeopardyValues.map((value) =>
+            jeopardyCategories.map((category, columnIndex) => {
+              const question = getJeopardyQuestion(category, value);
+              const isPotpourri = category === "POTPOURRI";
+              const tileId = isPotpourri
+                ? getPotpourriTileId(columnIndex, value)
+                : question?.id ?? `${category}-${value}`;
+              const isMissing =
+                (!isPotpourri && question && usedQuestionIdSet.has(question.id)) ||
+                (isPotpourri && missingPotpourriIdSet.has(tileId));
+
+              if (isMissing) {
+                return <div className="jeopardy-tile is-missing" key={tileId} />;
+              }
+
+              if (question) {
+                return (
+                  <button
+                    className="jeopardy-tile is-playable"
+                    key={tileId}
+                    type="button"
+                    onClick={(event) => onSelectQuestion(question, event)}
+                  >
+                    ${value}
+                  </button>
+                );
+              }
+
+              return <div className="jeopardy-tile" key={tileId} aria-disabled="true">${value}</div>;
+            }),
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function JeopardyQuestionPanel({
+  buzzState,
+  onBuzz,
+  origin,
+  question,
+  revealedWordCount,
+  words,
+}: {
+  buzzState: "ready" | "tooEarly";
+  onBuzz: () => void;
+  origin: JeopardyTileOrigin;
+  question: JeopardyQuestion;
+  revealedWordCount: number;
+  words: string[];
+}) {
+  return (
+    <motion.div
+      className="jeopardy-question-panel"
+      key={question.id}
+      initial={{
+        left: origin.left,
+        top: origin.top,
+        width: origin.width,
+        height: origin.height,
+      }}
+      animate={{
+        left: origin.targetLeft,
+        top: origin.targetTop,
+        width: origin.targetWidth,
+        height: origin.targetHeight,
+      }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="jeopardy-question-content">
+        <p className="jeopardy-question-value">
+          {question.category} / ${question.value}
+        </p>
+        <div className="jeopardy-clue">
+          {words.map((word, index) => (
+            <span
+              className={index < revealedWordCount ? "is-read" : ""}
+              key={`${word}-${index}`}
+            >
+              {word}
+            </span>
+          ))}
+        </div>
+        <button
+          className={`jeopardy-buzz-button ${buzzState === "tooEarly" ? "is-too-early" : ""}`}
+          type="button"
+          onClick={onBuzz}
+          disabled={buzzState === "tooEarly"}
+        >
+          {buzzState === "tooEarly" ? (
+            <>
+              TOO
+              <br />
+              EARLY
+            </>
+          ) : (
+            "BUZZ"
+          )}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+function JeopardyStandings({
+  contestants,
+  scores,
+}: {
+  contestants: JeopardyContestant[];
+  scores: number[];
+}) {
+  const standings = getJeopardyStandings(contestants, scores);
+
+  return (
+    <motion.div
+      className="jeopardy-standings-scene"
+      key="jeopardy-standings"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.65 }}
+    >
+      <h2>Current Standings</h2>
+      <div className="jeopardy-standings-list">
+        {standings.map((standing) => (
+          <div
+            className="jeopardy-standing-row"
+            key={`${standing.name}-${standing.contestantIndex}`}
+            style={
+              {
+                "--standing-delay": `${0.75 + (standings.length - standing.place) * 0.65}s`,
+              } as CSSProperties
+            }
+          >
+            <span>{standing.place === 1 ? "1st" : standing.place === 2 ? "2nd" : "3rd"}</span>
+            <strong>{standing.name}</strong>
+            <span>{formatJeopardyMoney(standing.score)}</span>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function JeopardyFinalIntro() {
+  return (
+    <motion.div
+      className="jeopardy-final-intro"
+      key="jeopardy-final-intro"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.45 }}
+    >
+      <p>AND NOW...</p>
+      <h2>
+        <span>FINAL</span>
+        <span>JEOPARDY</span>
+      </h2>
+    </motion.div>
+  );
+}
+
+function JeopardyFinalQuestion({
+  currentScore,
+  onComplete,
+  onScoreSettled,
+  playerName,
+}: {
+  currentScore: number;
+  onComplete: (score: number) => void;
+  onScoreSettled: (score: number) => void;
+  playerName: string;
+}) {
+  const [videoComplete, setVideoComplete] = useState(false);
+  const [choice, setChoice] = useState<FinalJeopardyChoice | null>(null);
+  const [displayedScore, setDisplayedScore] = useState(currentScore);
+  const [isSettled, setIsSettled] = useState(false);
+
+  useEffect(() => {
+    if (!choice) {
+      setDisplayedScore(currentScore);
+      setIsSettled(false);
+      return undefined;
+    }
+
+    const targetScore = choice === "yes" ? 999999999 : 0;
+    let animationFrame = 0;
+    let completeTimer = 0;
+    const startScore = currentScore;
+    const timer = window.setTimeout(() => {
+      const startedAt = performance.now();
+      const duration = 2300;
+
+      const tick = (now: number) => {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        const nextScore = Math.round(startScore + (targetScore - startScore) * easedProgress);
+
+        setDisplayedScore(nextScore);
+
+        if (progress < 1) {
+          animationFrame = window.requestAnimationFrame(tick);
+          return;
+        }
+
+        setDisplayedScore(targetScore);
+        setIsSettled(true);
+        onScoreSettled(targetScore);
+        completeTimer = window.setTimeout(() => onComplete(targetScore), 1900);
+      };
+
+      animationFrame = window.requestAnimationFrame(tick);
+    }, 850);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(completeTimer);
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [choice]);
+
+  return (
+    <motion.div
+      className="jeopardy-final-question-scene"
+      key="jeopardy-final-question"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <AnimatePresence mode="wait">
+        {!videoComplete ? (
+          <motion.video
+            className="jeopardy-final-video"
+            key="jeopardy-final-video"
+            src="/jeopardy/kickflip-low.mp4"
+            autoPlay
+            muted
+            playsInline
+            preload="metadata"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.55 }}
+            onEnded={() => setVideoComplete(true)}
+            onError={() => setVideoComplete(true)}
+          />
+        ) : (
+          <motion.div
+            className="jeopardy-final-question-card"
+            key="jeopardy-final-question-card"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.55 }}
+          >
+            <h2>Was that awesome?</h2>
+            {!choice ? (
+              <div className="jeopardy-final-answer-buttons">
+                <button type="button" onClick={() => setChoice("yes")}>
+                  Yes
+                </button>
+                <button type="button" onClick={() => setChoice("no")}>
+                  No
+                </button>
+              </div>
+            ) : (
+              <div className="jeopardy-final-score-reveal" aria-live="polite">
+                <p>{playerName}</p>
+                <strong className={choice === "no" && isSettled ? "is-zero" : ""}>
+                  {formatJeopardyMoney(displayedScore)}
+                </strong>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+const charityMilestones: Record<number, string> = {
+  10: "The poor are beginning to feel new strength...",
+  20: "That's worth your weight in gold...",
+  30: "The impoverish begin to feel the burden of wealth...",
+  40: "Seriously this stuff is heavy...",
+  50: "STOP PLEASE WE CAN'T MOVE IT'S SO MUCH GOLD",
+};
+
+function CharityGate({ onStart }: { onStart: () => void }) {
+  return (
+    <motion.div
+      className="charity-gate-scene"
+      key="charity-gate"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.7 }}
+    >
+      <button type="button" onClick={onStart}>
+        Charity Simulator
+      </button>
+      <p>(because of your greed)</p>
+    </motion.div>
+  );
+}
+
+function CharitySimulatorScene({
+  initialBalance,
+  performanceMode,
+}: {
+  initialBalance: number;
+  performanceMode: PerformanceMode;
+}) {
+  const [balance, setBalance] = useState(initialBalance);
+  const [donations, setDonations] = useState(0);
+  const [message, setMessage] = useState("");
+  const [iceHealth, setIceHealth] = useState(0);
+  const [hasFrozenButton, setHasFrozenButton] = useState(false);
+  const [hasIgnitedGold, setHasIgnitedGold] = useState(false);
+  const [isFlaming, setIsFlaming] = useState(false);
+  const physicsApiRef = useRef<CharityPhysicsApi | null>(null);
+  const messageTimerRef = useRef<number>(0);
+
+  const isButtonFrozen = hasFrozenButton && iceHealth > 0;
+  const canIgniteGold = hasFrozenButton && iceHealth <= 0 && !hasIgnitedGold;
+
+  useEffect(() => {
+    return () => window.clearTimeout(messageTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    physicsApiRef.current?.setFlaming(isFlaming && isButtonFrozen);
+  }, [isButtonFrozen, isFlaming]);
+
+  useEffect(() => {
+    if (!isFlaming || !isButtonFrozen) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      physicsApiRef.current?.shardIce();
+      setIceHealth((current) => Math.max(0, current - 4));
+    }, performanceMode === "reduced" ? 180 : 120);
+
+    return () => window.clearInterval(interval);
+  }, [isButtonFrozen, isFlaming, performanceMode]);
+
+  useEffect(() => {
+    if (iceHealth <= 0) {
+      setIsFlaming(false);
+      physicsApiRef.current?.setFlaming(false);
+    }
+  }, [iceHealth]);
+
+  const showCharityMessage = (nextMessage: string) => {
+    window.clearTimeout(messageTimerRef.current);
+    setMessage(nextMessage);
+    messageTimerRef.current = window.setTimeout(() => setMessage(""), 2600);
+  };
+
+  const handleDonate = () => {
+    if (isButtonFrozen) {
+      return;
+    }
+
+    if (canIgniteGold) {
+      setHasIgnitedGold(true);
+      physicsApiRef.current?.igniteGold();
+      return;
+    }
+
+    const nextDonations = donations + 1;
+    setDonations(nextDonations);
+    setBalance((current) => current - 1);
+    physicsApiRef.current?.spawnCoin();
+
+    const milestoneMessage = charityMilestones[nextDonations];
+    if (milestoneMessage) {
+      showCharityMessage(milestoneMessage);
+    }
+
+    if (nextDonations === 50) {
+      setHasFrozenButton(true);
+      setIceHealth(100);
+    }
+  };
+
+  const stopFlamethrower = () => {
+    setIsFlaming(false);
+    physicsApiRef.current?.setFlaming(false);
+  };
+
+  return (
+    <motion.div
+      className="charity-simulator-scene"
+      key="charity-simulator"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.7 }}
+    >
+      <CharityPhysicsCanvas apiRef={physicsApiRef} performanceMode={performanceMode} />
+      <h2>Charity Simulator</h2>
+      <AnimatePresence>
+        {message && (
+          <motion.p
+            className="charity-message"
+            key={message}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.35 }}
+          >
+            {message}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      <div className="charity-action-stack">
+        {hasFrozenButton && !hasIgnitedGold && (
+          <div className="charity-flamethrower-wrap">
+            <span>flamethrower</span>
+            <button
+              aria-label="flamethrower"
+              className="charity-flamethrower-button"
+              type="button"
+              onPointerCancel={stopFlamethrower}
+              onPointerDown={() => setIsFlaming(true)}
+              onPointerLeave={stopFlamethrower}
+              onPointerUp={stopFlamethrower}
+            />
+          </div>
+        )}
+
+        <div className="charity-donate-wrap">
+          <button
+            className="charity-donate-button"
+            disabled={isButtonFrozen || hasIgnitedGold}
+            type="button"
+            onClick={handleDonate}
+          >
+            Give to charity
+          </button>
+          {isButtonFrozen && (
+            <div
+              className="charity-ice-cube"
+              aria-hidden="true"
+              style={
+                {
+                  "--ice-opacity": `${0.24 + (iceHealth / 100) * 0.56}`,
+                  "--ice-scale": `${0.42 + (iceHealth / 100) * 0.58}`,
+                } as CSSProperties
+              }
+            />
+          )}
+        </div>
+        <p className={`charity-balance ${balance < 0 ? "is-negative" : ""}`}>
+          {formatJeopardyMoney(balance)}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+function CharityPhysicsCanvas({
+  apiRef,
+  performanceMode,
+}: {
+  apiRef: MutableRefObject<CharityPhysicsApi | null>;
+  performanceMode: PerformanceMode;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+
+    if (!canvas || !context) {
+      return;
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceEffects = performanceMode === "reduced" || reducedMotion;
+    const coins: CharityCoin[] = [];
+    const particles: CharityParticle[] = [];
+    const maxParticles = reduceEffects ? 90 : 170;
+    const maxCoins = 64;
+    const coinRadius = reduceEffects ? 10 : 13;
+    const frameIntervalMs = reduceEffects ? 33 : 16;
+    let width = 0;
+    let height = 0;
+    let animationFrame = 0;
+    let coinId = 0;
+    let isFlaming = false;
+    let lastFrame = performance.now();
+    let lastPaint = 0;
+
+    const resize = () => {
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, reduceEffects ? 1 : 1.4);
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = Math.floor(width * pixelRatio);
+      canvas.height = Math.floor(height * pixelRatio);
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    };
+
+    const addParticle = (
+      x: number,
+      y: number,
+      vx: number,
+      vy: number,
+      color: string,
+      radius: number,
+      life: number,
+    ) => {
+      if (particles.length >= maxParticles) {
+        particles.shift();
+      }
+
+      particles.push({
+        x,
+        y,
+        vx,
+        vy,
+        color,
+        radius,
+        life,
+        maxLife: life,
+      });
+    };
+
+    const spawnCoin = () => {
+      if (coins.length >= maxCoins) {
+        coins.shift();
+      }
+
+      coins.push({
+        id: coinId,
+        x: width * (0.38 + Math.random() * 0.24),
+        y: -coinRadius * 2,
+        vx: (Math.random() - 0.5) * 2.1,
+        vy: Math.random() * 1.3,
+        radius: coinRadius,
+        angle: Math.random() * Math.PI,
+        va: (Math.random() - 0.5) * 0.16,
+      });
+      coinId += 1;
+    };
+
+    const shardIce = () => {
+      const originX = width / 2 + (Math.random() - 0.5) * 92;
+      const originY = height * 0.5 + (Math.random() - 0.5) * 46;
+
+      for (let index = 0; index < (reduceEffects ? 1 : 2); index += 1) {
+        addParticle(
+          originX,
+          originY,
+          (Math.random() - 0.5) * 3.4,
+          -Math.random() * 2.4 - 0.4,
+          "rgba(198, 238, 255, 0.9)",
+          Math.random() * 3 + 2,
+          40 + Math.random() * 22,
+        );
+      }
+    };
+
+    const igniteGold = () => {
+      coins.forEach((coin) => {
+        const particleCount = reduceEffects ? 4 : 8;
+
+        for (let index = 0; index < particleCount; index += 1) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 4.8 + 1.2;
+          addParticle(
+            coin.x,
+            coin.y,
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed - 1.6,
+            index % 2 === 0 ? "#ffcc33" : "#ff3b1f",
+            Math.random() * 4 + 2,
+            52 + Math.random() * 28,
+          );
+        }
+      });
+      coins.length = 0;
+    };
+
+    const drawCoin = (coin: CharityCoin) => {
+      context.save();
+      context.translate(coin.x, coin.y);
+      context.rotate(coin.angle);
+      context.fillStyle = "#d8a51f";
+      context.strokeStyle = "#ffe082";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.ellipse(0, 0, coin.radius * 1.05, coin.radius * 0.82, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.fillStyle = "rgba(255, 243, 168, 0.72)";
+      context.beginPath();
+      context.ellipse(-coin.radius * 0.24, -coin.radius * 0.18, coin.radius * 0.3, coin.radius * 0.14, -0.2, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+    };
+
+    const resolveCoinCollisions = () => {
+      for (let outer = 0; outer < coins.length; outer += 1) {
+        for (let inner = outer + 1; inner < coins.length; inner += 1) {
+          const first = coins[outer];
+          const second = coins[inner];
+          const dx = second.x - first.x;
+          const dy = second.y - first.y;
+          const distance = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));
+          const minDistance = first.radius + second.radius;
+
+          if (distance >= minDistance) {
+            continue;
+          }
+
+          const nx = dx / distance;
+          const ny = dy / distance;
+          const overlap = minDistance - distance;
+          first.x -= nx * overlap * 0.5;
+          first.y -= ny * overlap * 0.5;
+          second.x += nx * overlap * 0.5;
+          second.y += ny * overlap * 0.5;
+
+          const relativeVelocity = (second.vx - first.vx) * nx + (second.vy - first.vy) * ny;
+          if (relativeVelocity > 0) {
+            continue;
+          }
+
+          const impulse = -relativeVelocity * 0.45;
+          first.vx -= impulse * nx;
+          first.vy -= impulse * ny;
+          second.vx += impulse * nx;
+          second.vy += impulse * ny;
+        }
+      }
+    };
+
+    const animate = (now: number) => {
+      if (document.hidden || now - lastPaint < frameIntervalMs) {
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      const delta = Math.min(2.3, (now - lastFrame) / 16.67);
+      lastFrame = now;
+      lastPaint = now;
+
+      context.clearRect(0, 0, width, height);
+
+      if (isFlaming) {
+        const flameCount = reduceEffects ? 2 : 5;
+        for (let index = 0; index < flameCount; index += 1) {
+          addParticle(
+            width / 2 + (Math.random() - 0.5) * 20,
+            height * 0.42 + Math.random() * 8,
+            (Math.random() - 0.5) * 1.8,
+            Math.random() * 4.4 + 2.4,
+            index % 2 === 0 ? "#ff3b1f" : "#ff9f1f",
+            Math.random() * 5 + 2,
+            24 + Math.random() * 16,
+          );
+        }
+      }
+
+      coins.forEach((coin) => {
+        coin.vy += 0.34 * delta;
+        coin.vx *= 0.994;
+        coin.vy *= 0.998;
+        coin.x += coin.vx * delta;
+        coin.y += coin.vy * delta;
+        coin.angle += coin.va * delta;
+        coin.va *= 0.992;
+
+        if (coin.x - coin.radius < 0) {
+          coin.x = coin.radius;
+          coin.vx *= -0.42;
+        } else if (coin.x + coin.radius > width) {
+          coin.x = width - coin.radius;
+          coin.vx *= -0.42;
+        }
+
+        const floorY = height - coin.radius - 10;
+        if (coin.y > floorY) {
+          coin.y = floorY;
+          coin.vy *= -0.22;
+          coin.vx *= 0.82;
+          coin.va *= 0.72;
+        }
+      });
+
+      resolveCoinCollisions();
+      coins.forEach(drawCoin);
+
+      for (let index = particles.length - 1; index >= 0; index -= 1) {
+        const particle = particles[index];
+        particle.life -= delta;
+        particle.vy += 0.05 * delta;
+        particle.x += particle.vx * delta;
+        particle.y += particle.vy * delta;
+
+        const alpha = Math.max(0, particle.life / particle.maxLife);
+        context.globalAlpha = alpha;
+        context.fillStyle = particle.color;
+        context.beginPath();
+        context.arc(particle.x, particle.y, particle.radius * (0.65 + alpha * 0.5), 0, Math.PI * 2);
+        context.fill();
+        context.globalAlpha = 1;
+
+        if (particle.life <= 0) {
+          particles.splice(index, 1);
+        }
+      }
+
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    resize();
+    apiRef.current = {
+      igniteGold,
+      setFlaming: (nextIsFlaming: boolean) => {
+        isFlaming = nextIsFlaming;
+      },
+      shardIce,
+      spawnCoin,
+    };
+    animationFrame = window.requestAnimationFrame(animate);
+    window.addEventListener("resize", resize);
+
+    return () => {
+      apiRef.current = null;
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", resize);
+    };
+  }, [apiRef, performanceMode]);
+
+  return <canvas ref={canvasRef} className="charity-physics-canvas" aria-hidden="true" />;
 }
 
 type WordSearchAxis = "horizontal" | "vertical";
@@ -909,7 +2512,13 @@ function WordSearchSelectionOutline({
   );
 }
 
-function WordSearchScene({ onNext }: { onNext: () => void }) {
+function WordSearchScene({
+  performanceMode,
+  onNext,
+}: {
+  performanceMode: PerformanceMode;
+  onNext: () => void;
+}) {
   const [levelIndex, setLevelIndex] = useState(0);
   const [puzzle, setPuzzle] = useState(() =>
     createWordSearchPuzzle(wordSearchLevels[0], 0),
@@ -930,12 +2539,15 @@ function WordSearchScene({ onNext }: { onNext: () => void }) {
   const selectionRef = useRef<WordSearchCoord[]>([]);
   const selectionStartRef = useRef<WordSearchCoord | null>(null);
   const selectionAxisRef = useRef<WordSearchAxis | null>(null);
+  const pendingDragPointRef = useRef<WordSearchPoint | null>(null);
+  const dragFrameRef = useRef<number | null>(null);
   const successOutlineIdRef = useRef(0);
   const timersRef = useRef<number[]>([]);
   const activeLevel = wordSearchLevels[levelIndex] ?? wordSearchLevels[wordSearchLevels.length - 1];
   const isFinale = phase === "finale";
   const isFinaleTransition = phase === "finaleFlip";
   const isLastLevel = levelIndex === wordSearchLevels.length - 1;
+  const isReducedPerformance = performanceMode === "reduced";
   const selectionKeys = useMemo(
     () => new Set(selection.map(wordSearchCoordKey)),
     [selection],
@@ -996,6 +2608,9 @@ function WordSearchScene({ onNext }: { onNext: () => void }) {
   useEffect(
     () => () => {
       timersRef.current.forEach(window.clearTimeout);
+      if (dragFrameRef.current !== null) {
+        window.cancelAnimationFrame(dragFrameRef.current);
+      }
     },
     [],
   );
@@ -1058,6 +2673,11 @@ function WordSearchScene({ onNext }: { onNext: () => void }) {
     }
 
     clearTimers();
+    pendingDragPointRef.current = null;
+    if (dragFrameRef.current !== null) {
+      window.cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = null;
+    }
     activePointerRef.current = pointerId;
     selectionStartRef.current = coord;
     selectionAxisRef.current = null;
@@ -1105,10 +2725,50 @@ function WordSearchScene({ onNext }: { onNext: () => void }) {
     setSelection(nextPath.coords);
   };
 
+  const scheduleDragUpdate = (point: WordSearchPoint) => {
+    pendingDragPointRef.current = point;
+
+    if (dragFrameRef.current !== null) {
+      return;
+    }
+
+    dragFrameRef.current = window.requestAnimationFrame(() => {
+      const nextPoint = pendingDragPointRef.current;
+      pendingDragPointRef.current = null;
+      dragFrameRef.current = null;
+
+      if (!nextPoint || phaseRef.current !== "selecting") {
+        return;
+      }
+
+      setDragPoint(nextPoint);
+      extendSelection(getWordSearchCoordFromPoint(nextPoint, puzzle.size));
+    });
+  };
+
+  const flushDragUpdate = () => {
+    const nextPoint = pendingDragPointRef.current;
+    pendingDragPointRef.current = null;
+
+    if (dragFrameRef.current !== null) {
+      window.cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = null;
+    }
+
+    if (!nextPoint || phaseRef.current !== "selecting") {
+      return;
+    }
+
+    setDragPoint(nextPoint);
+    extendSelection(getWordSearchCoordFromPoint(nextPoint, puzzle.size));
+  };
+
   const finishSelection = (pointerId: number) => {
     if (phaseRef.current !== "selecting" || activePointerRef.current !== pointerId) {
       return;
     }
+
+    flushDragUpdate();
 
     if (boardRef.current?.hasPointerCapture(pointerId)) {
       boardRef.current.releasePointerCapture(pointerId);
@@ -1259,8 +2919,7 @@ function WordSearchScene({ onNext }: { onNext: () => void }) {
                 const point = getWordSearchBoardPoint(event, boardRef.current, puzzle.size);
 
                 if (point) {
-                  setDragPoint(point);
-                  extendSelection(getWordSearchCoordFromPoint(point, puzzle.size));
+                  scheduleDragUpdate(point);
                 }
               }}
               onPointerUp={(event) => finishSelection(event.pointerId)}
@@ -1275,6 +2934,7 @@ function WordSearchScene({ onNext }: { onNext: () => void }) {
                   const pulseIndex = pulseIndexes.get(coordKey);
                   const shouldPulse =
                     shouldPulseSolution &&
+                    !isReducedPerformance &&
                     pulseIndex !== undefined &&
                     !isFoundLetter &&
                     phase !== "solved" &&
@@ -1483,8 +3143,13 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
         <div className="danflix-feature-art">
           <img
             className="danflix-feature-image"
-            src="/disco.jpg"
+            src="/disco-1280.jpg"
+            srcSet="/disco-800.jpg 800w, /disco-1280.jpg 1280w, /disco.jpg 3988w"
+            sizes="(max-width: 740px) 100vw, 56vw"
             alt="Disco ball glowing in orange light"
+            loading="eager"
+            decoding="async"
+            draggable={false}
           />
           <p>Disco Dan: The Dancumentary</p>
         </div>
@@ -1515,10 +3180,17 @@ function DanflixHome({ onPlay }: { onPlay: () => void }) {
                   style={
                     {
                       "--poster-delay": `${index * 0.035}s`,
-                      "--poster-image": `url("${poster.image}")`,
                     } as CSSProperties
                   }
                 >
+                  <img
+                    className="danflix-poster-image"
+                    src={poster.image}
+                    alt=""
+                    loading={index < 4 ? "eager" : "lazy"}
+                    decoding="async"
+                    draggable={false}
+                  />
                   <span className="danflix-poster-title" aria-label={title}>
                     {poster.words.map((word, wordIndex) => (
                       <span
@@ -1988,7 +3660,13 @@ function StoryScene({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function FinaleScene({ onStart }: { onStart: () => void }) {
+function FinaleScene({
+  performanceMode,
+  onStart,
+}: {
+  performanceMode: PerformanceMode;
+  onStart: () => void;
+}) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [showStart, setShowStart] = useState(false);
 
@@ -2004,8 +3682,8 @@ function FinaleScene({ onStart }: { onStart: () => void }) {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.1 }}
     >
-      <PaintBurstCanvas />
-      <RainbowFireCanvas targetRef={titleRef} />
+      <PaintBurstCanvas performanceMode={performanceMode} />
+      <RainbowFireCanvas performanceMode={performanceMode} targetRef={titleRef} />
       <div className="finale-content">
         <div className="title-anchor">
           <motion.h1
@@ -2066,7 +3744,13 @@ const discoReturnCountdown = [
 const discoReturnRevealAt = 5200;
 const discoReturnNextAt = discoReturnRevealAt + 2400;
 
-function DiscoReturnScene({ onNext }: { onNext: () => void }) {
+function DiscoReturnScene({
+  performanceMode,
+  onNext,
+}: {
+  performanceMode: PerformanceMode;
+  onNext: () => void;
+}) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [count, setCount] = useState(10);
   const [phase, setPhase] = useState<DiscoReturnPhase>("countdown");
@@ -2124,8 +3808,8 @@ function DiscoReturnScene({ onNext }: { onNext: () => void }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.1 }}
           >
-            <PaintBurstCanvas />
-            <RainbowFireCanvas targetRef={titleRef} />
+            <PaintBurstCanvas performanceMode={performanceMode} />
+            <RainbowFireCanvas performanceMode={performanceMode} targetRef={titleRef} />
             <div className="finale-content">
               <div className="title-anchor">
                 <motion.h1
@@ -2297,13 +3981,22 @@ const discoWikiLinkTerms = [
 const danSummary =
   'Disco Dan defeated 200 people to become the disco diva that we know today. After naming hundreds of animals without fail, he invented the New York Times and purchased the hit game Dandle, renaming it "Disco Dandle."';
 
-function DiscoChromeScene({ onNext }: { onNext: () => void }) {
+function DiscoChromeScene({
+  showDanflixReveal = true,
+  onExploded,
+  onNext,
+}: {
+  showDanflixReveal?: boolean;
+  onExploded?: () => void;
+  onNext?: () => void;
+}) {
   const [page, setPage] = useState<DiscoChromePage>("disco");
   const [animalizedDanPage, setAnimalizedDanPage] = useState<AnimalizedDanPage | null>(null);
   const [crabPhase, setCrabPhase] = useState<CrabPhase>("idle");
   const [crabWaveProgress, setCrabWaveProgress] = useState(0);
   const crabTimersRef = useRef<number[]>([]);
   const crabWaveIntervalRef = useRef<number | null>(null);
+  const didNotifyExplodedRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -2313,6 +4006,15 @@ function DiscoChromeScene({ onNext }: { onNext: () => void }) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (crabPhase !== "exploded" || !onExploded || didNotifyExplodedRef.current) {
+      return;
+    }
+
+    didNotifyExplodedRef.current = true;
+    onExploded();
+  }, [crabPhase, onExploded]);
 
   const navigateToDan = () => {
     setPage("dan");
@@ -2389,14 +4091,16 @@ function DiscoChromeScene({ onNext }: { onNext: () => void }) {
       exit={{ opacity: 0, filter: "blur(12px)" }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      <button
-        className={`danflix-reveal-button ${crabPhase === "exploded" ? "is-visible" : ""}`}
-        type="button"
-        onClick={onNext}
-        disabled={crabPhase !== "exploded"}
-      >
-        Danflix
-      </button>
+      {showDanflixReveal && (
+        <button
+          className={`danflix-reveal-button ${crabPhase === "exploded" ? "is-visible" : ""}`}
+          type="button"
+          onClick={onNext}
+          disabled={crabPhase !== "exploded"}
+        >
+          Danflix
+        </button>
+      )}
       {(crabPhase === "exploding" || crabPhase === "exploded") && (
         <ChromeFragmentExplosion animalizedPage={animalizedDanPage} />
       )}
@@ -3028,7 +4732,16 @@ function FloatingAnswer({ answer }: { answer: string }) {
   );
 }
 
-type WorkComputerStage = "login" | "loading" | "desktop" | "excel" | "money" | "bsod";
+type WorkComputerStage =
+  | "login"
+  | "loading"
+  | "desktop"
+  | "excel"
+  | "money"
+  | "chrome"
+  | "moneyBsod"
+  | "sourceBsod";
+type XpDesktopApp = "excel" | "discoChrome" | "danflix";
 
 const seededComputerRows = [
   ["Dell Optiplex 3010", "13456A", "$130"],
@@ -3040,26 +4753,47 @@ const excelColumnLetters = Array.from({ length: 10 }, (_, index) =>
   String.fromCharCode(65 + index),
 );
 
-function WorkComputerScene({ onComplete }: { onComplete: () => void }) {
+function WorkComputerScene({
+  performanceMode,
+  onComplete,
+}: {
+  performanceMode: PerformanceMode;
+  onComplete: () => void;
+}) {
   const [stage, setStage] = useState<WorkComputerStage>("login");
+  const [desktopApp, setDesktopApp] = useState<XpDesktopApp>("excel");
   const [isExcelOpen, setIsExcelOpen] = useState(false);
   const [showStickyNote, setShowStickyNote] = useState(true);
   const [moneyOrigin, setMoneyOrigin] = useState({ row: 4, col: 2 });
-  const crashTimerRef = useRef<number | null>(null);
+  const timersRef = useRef<number[]>([]);
+
+  const clearTimers = () => {
+    timersRef.current.forEach(window.clearTimeout);
+    timersRef.current = [];
+  };
 
   useEffect(() => {
     return () => {
-      if (crashTimerRef.current !== null) {
-        window.clearTimeout(crashTimerRef.current);
-      }
+      clearTimers();
     };
   }, []);
 
+  const loadDesktop = (nextDesktopApp: XpDesktopApp) => {
+    setDesktopApp(nextDesktopApp);
+    setIsExcelOpen(false);
+    setShowStickyNote(nextDesktopApp === "excel");
+    setStage("loading");
+    timersRef.current.push(window.setTimeout(() => setStage("desktop"), 2500));
+  };
+
+  const restartIntoDesktop = (nextDesktopApp: XpDesktopApp) => {
+    clearTimers();
+    loadDesktop(nextDesktopApp);
+  };
+
   const startLogin = () => {
-    window.setTimeout(() => {
-      setStage("loading");
-      window.setTimeout(() => setStage("desktop"), 2500);
-    }, 500);
+    clearTimers();
+    timersRef.current.push(window.setTimeout(() => loadDesktop("excel"), 500));
   };
 
   const openExcel = () => {
@@ -3069,22 +4803,14 @@ function WorkComputerScene({ onComplete }: { onComplete: () => void }) {
   };
 
   const triggerMoneyColumn = (row: number, col: number) => {
-    if (stage === "money" || stage === "bsod") {
+    if (stage === "money" || stage === "moneyBsod" || stage === "sourceBsod") {
       return;
     }
 
     setMoneyOrigin({ row, col });
     setShowStickyNote(false);
     setStage("money");
-    crashTimerRef.current = window.setTimeout(() => setStage("bsod"), 13500);
-  };
-
-  const completeComputer = () => {
-    if (crashTimerRef.current !== null) {
-      window.clearTimeout(crashTimerRef.current);
-    }
-
-    onComplete();
+    timersRef.current.push(window.setTimeout(() => setStage("moneyBsod"), 13500));
   };
 
   return (
@@ -3098,18 +4824,36 @@ function WorkComputerScene({ onComplete }: { onComplete: () => void }) {
       <div className="work-computer-frame">
         {stage === "login" && <XpLoginScreen onLogin={startLogin} />}
         {stage === "loading" && <XpLoadingScreen />}
-        {(stage === "desktop" || stage === "excel" || stage === "money" || stage === "bsod") && (
+        {(stage === "desktop" || stage === "excel" || stage === "money") && (
           <XpDesktop
+            desktopApp={desktopApp}
             isExcelOpen={isExcelOpen}
+            performanceMode={performanceMode}
             showStickyNote={showStickyNote}
             stage={stage}
             moneyOrigin={moneyOrigin}
             onCloseSticky={() => setShowStickyNote(false)}
+            onOpenDanflix={onComplete}
+            onOpenDiscoChrome={() => setStage("chrome")}
             onOpenExcel={openExcel}
             onTriggerMoney={triggerMoneyColumn}
           />
         )}
-        {stage === "bsod" && <BlueScreen onRestart={completeComputer} />}
+        {stage === "chrome" && (
+          <DiscoChromeScene
+            showDanflixReveal={false}
+            onExploded={() => setStage("sourceBsod")}
+          />
+        )}
+        {stage === "moneyBsod" && (
+          <BlueScreen onRestart={() => restartIntoDesktop("discoChrome")} />
+        )}
+        {stage === "sourceBsod" && (
+          <BlueScreen
+            error="ERROR: you may not use Wikipedia as a source."
+            onRestart={() => restartIntoDesktop("danflix")}
+          />
+        )}
       </div>
     </motion.section>
   );
@@ -3145,22 +4889,37 @@ function XpLoadingScreen() {
 }
 
 function XpDesktop({
+  desktopApp,
   isExcelOpen,
+  performanceMode,
   showStickyNote,
   stage,
   moneyOrigin,
   onCloseSticky,
+  onOpenDanflix,
+  onOpenDiscoChrome,
   onOpenExcel,
   onTriggerMoney,
 }: {
+  desktopApp: XpDesktopApp;
   isExcelOpen: boolean;
+  performanceMode: PerformanceMode;
   showStickyNote: boolean;
   stage: WorkComputerStage;
   moneyOrigin: { row: number; col: number };
   onCloseSticky: () => void;
+  onOpenDanflix: () => void;
+  onOpenDiscoChrome: () => void;
   onOpenExcel: () => void;
   onTriggerMoney: (row: number, col: number) => void;
 }) {
+  const taskLabel =
+    isExcelOpen || desktopApp === "excel"
+      ? "Excel"
+      : desktopApp === "discoChrome"
+        ? "Disco Chrome"
+        : "Danflix";
+
   return (
     <motion.div
       className="xp-desktop"
@@ -3169,11 +4928,50 @@ function XpDesktop({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.45 }}
     >
-      <div className="xp-wallpaper" />
-      {!isExcelOpen && (
-        <button className="desktop-excel-icon" type="button" onDoubleClick={onOpenExcel} onClick={onOpenExcel}>
+      <div className="xp-wallpaper" aria-hidden="true">
+        <img
+          src="/xp-1280.jpg"
+          srcSet="/xp-800.jpg 800w, /xp-1280.jpg 1280w, /xp.jpeg 4059w"
+          sizes="100vw"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+        />
+      </div>
+      {desktopApp === "excel" && !isExcelOpen && (
+        <button
+          className="desktop-app-icon desktop-excel-icon"
+          type="button"
+          onDoubleClick={onOpenExcel}
+          onClick={onOpenExcel}
+        >
           <span className="excel-icon" aria-hidden="true">X</span>
           <span>Excel</span>
+        </button>
+      )}
+      {desktopApp === "discoChrome" && (
+        <button
+          className="desktop-app-icon desktop-chrome-icon"
+          type="button"
+          onDoubleClick={onOpenDiscoChrome}
+          onClick={onOpenDiscoChrome}
+        >
+          <span className="disco-chrome-desktop-icon" aria-hidden="true">
+            <span />
+          </span>
+          <span>Disco Chrome</span>
+        </button>
+      )}
+      {desktopApp === "danflix" && (
+        <button
+          className="desktop-app-icon desktop-danflix-icon"
+          type="button"
+          onDoubleClick={onOpenDanflix}
+          onClick={onOpenDanflix}
+        >
+          <span className="danflix-desktop-icon" aria-hidden="true">D</span>
+          <span>Danflix</span>
         </button>
       )}
       {isExcelOpen && (
@@ -3185,15 +4983,15 @@ function XpDesktop({
           onTriggerMoney={onTriggerMoney}
         />
       )}
-      {stage === "money" && <MoneyPhysicsLayer />}
+      {stage === "money" && <MoneyPhysicsLayer performanceMode={performanceMode} />}
       <div className="xp-taskbar">
         <button className="xp-start-button" type="button">start</button>
         <button
           className={`xp-task-button ${isExcelOpen ? "is-active" : ""}`}
           type="button"
-          onClick={isExcelOpen ? undefined : onOpenExcel}
+          onClick={desktopApp === "excel" && !isExcelOpen ? onOpenExcel : undefined}
         >
-          Excel
+          {taskLabel}
         </button>
         <div className="xp-clock">4:59 PM</div>
       </div>
@@ -3361,7 +5159,7 @@ type MoneyBill = {
   seed: number;
 };
 
-function MoneyPhysicsLayer() {
+function MoneyPhysicsLayer({ performanceMode }: { performanceMode: PerformanceMode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -3372,20 +5170,25 @@ function MoneyPhysicsLayer() {
       return;
     }
 
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceEffects = performanceMode === "reduced" || reducedMotion;
     const bills: MoneyBill[] = [];
-    const pileHeights: number[] = Array.from({ length: 16 }, () => 0);
-    const maxBills = 320;
+    const pileHeights: number[] = Array.from({ length: reduceEffects ? 10 : 16 }, () => 0);
+    const maxBills = reduceEffects ? 120 : 320;
+    const spawnEveryMs = reduceEffects ? 85 : 35;
+    const frameIntervalMs = reduceEffects ? 33 : 16;
     let width = 0;
     let height = 0;
     let animationFrame = 0;
     let startedAt = performance.now();
     let lastFrame = startedAt;
+    let lastPaint = 0;
     let lastSpawn = 0;
     let firstBillSpawned = false;
     let rainStarted = false;
 
     const resize = () => {
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, reduceEffects ? 1 : 1.5);
       width = canvas.clientWidth;
       height = canvas.clientHeight;
       canvas.width = Math.floor(width * pixelRatio);
@@ -3444,6 +5247,19 @@ function MoneyPhysicsLayer() {
     };
 
     const animate = (now: number) => {
+      if (document.hidden) {
+        lastFrame = now;
+        lastPaint = now;
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      if (now - lastPaint < frameIntervalMs) {
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      lastPaint = now;
       const elapsed = now - startedAt;
       const delta = Math.min(2.2, (now - lastFrame) / 16.67);
       lastFrame = now;
@@ -3457,8 +5273,17 @@ function MoneyPhysicsLayer() {
         rainStarted = true;
       }
 
-      if (rainStarted && now - lastSpawn > 35 && bills.length < maxBills) {
-        const spawnCount = elapsed > 9000 ? 6 : elapsed > 6600 ? 4 : 2;
+      if (rainStarted && now - lastSpawn > spawnEveryMs && bills.length < maxBills) {
+        let spawnCount = 2;
+
+        if (reduceEffects) {
+          spawnCount = elapsed > 9000 ? 2 : 1;
+        } else if (elapsed > 9000) {
+          spawnCount = 6;
+        } else if (elapsed > 6600) {
+          spawnCount = 4;
+        }
+
         for (let index = 0; index < spawnCount && bills.length < maxBills; index += 1) {
           spawnBill(Math.random() * (width + 260) - 130, -36 - Math.random() * 120);
         }
@@ -3508,12 +5333,18 @@ function MoneyPhysicsLayer() {
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [performanceMode]);
 
   return <canvas ref={canvasRef} className="money-physics-layer" aria-hidden="true" />;
 }
 
-function BlueScreen({ onRestart }: { onRestart: () => void }) {
+function BlueScreen({
+  error = "ERROR: mo money mo problems",
+  onRestart,
+}: {
+  error?: string;
+  onRestart: () => void;
+}) {
   const [showText, setShowText] = useState(false);
 
   useEffect(() => {
@@ -3529,7 +5360,7 @@ function BlueScreen({ onRestart }: { onRestart: () => void }) {
         <>
           <div className="bsod-copy">
             <p>Your computer ran into a problem</p>
-            <h2>ERROR: mo money mo problems</h2>
+            <h2>{error}</h2>
           </div>
           <button className="bsod-restart-button" type="button" onClick={onRestart}>Restart</button>
         </>
@@ -3666,23 +5497,37 @@ function AnimalGameScene({ onNext }: { onNext: () => void }) {
           >
             {phase === "crumbling" && <WindDustField />}
             <div className="game-heading">
-              <AnimatePresence>
-                {showHint && (
-                  <motion.p
-                    className="game-hint"
-                    initial={{ opacity: 0, y: -12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.45 }}
-                  >
-                    {phase === "crumbling" ? (
-                      <CrumblingText text="did you try disco dan?" />
-                    ) : (
-                      "did you try disco dan?"
-                    )}
-                  </motion.p>
-                )}
-              </AnimatePresence>
+              <div className="game-status-line" aria-live="polite">
+                <AnimatePresence mode="wait">
+                  {showHint ? (
+                    <motion.p
+                      key="animal-game-hint"
+                      className="game-hint"
+                      initial={{ opacity: 0, y: -12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.45 }}
+                    >
+                      {phase === "crumbling" ? (
+                        <CrumblingText text="did you try disco dan?" />
+                      ) : (
+                        "did you try disco dan?"
+                      )}
+                    </motion.p>
+                  ) : message ? (
+                    <motion.p
+                      key={message}
+                      className="game-message"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.28 }}
+                    >
+                      {message}
+                    </motion.p>
+                  ) : null}
+                </AnimatePresence>
+              </div>
               <h2>
                 {phase === "crumbling" ? (
                   <CrumblingText text={animalGameTitle} />
@@ -3745,21 +5590,6 @@ function AnimalGameScene({ onNext }: { onNext: () => void }) {
                 ))}
               </AnimatePresence>
             </div>
-
-            <AnimatePresence>
-              {message && (
-                <motion.p
-                  key={message}
-                  className="game-message"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.28 }}
-                >
-                  {message}
-                </motion.p>
-              )}
-            </AnimatePresence>
           </motion.div>
         ) : (
           <motion.div
@@ -3964,8 +5794,10 @@ const paintColors = [
 ];
 
 function RainbowFireCanvas({
+  performanceMode,
   targetRef,
 }: {
+  performanceMode: PerformanceMode;
   targetRef: { current: HTMLHeadingElement | null };
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -3979,17 +5811,20 @@ function RainbowFireCanvas({
     }
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceEffects = performanceMode === "reduced" || reducedMotion;
     const particles: FireParticle[] = [];
-    const maxParticles = reducedMotion ? 80 : 260;
-    const emitEveryMs = reducedMotion ? 96 : 28;
+    const maxParticles = reduceEffects ? 42 : 180;
+    const emitEveryMs = reduceEffects ? 160 : 40;
+    const frameIntervalMs = reduceEffects ? 66 : 16;
     let width = 0;
     let height = 0;
     let animationFrame = 0;
     let lastFrame = performance.now();
+    let lastPaint = 0;
     let lastEmit = 0;
 
     const resize = () => {
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, reduceEffects ? 1 : 1.5);
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = Math.floor(width * pixelRatio);
@@ -4025,9 +5860,9 @@ function RainbowFireCanvas({
       particles.push({
         x,
         y,
-        vx: (Math.random() - 0.5) * 1.45,
-        vy: -(Math.random() * 1.45 + 0.65),
-        radius: Math.random() * 20 + 16,
+        vx: (Math.random() - 0.5) * (reduceEffects ? 0.9 : 1.45),
+        vy: -(Math.random() * (reduceEffects ? 0.9 : 1.45) + 0.65),
+        radius: Math.random() * (reduceEffects ? 10 : 20) + (reduceEffects ? 8 : 16),
         hue: (now * 0.035 + across * 250 + Math.random() * 70) % 360,
         life: 0,
         maxLife: Math.random() * 55 + 42,
@@ -4056,6 +5891,19 @@ function RainbowFireCanvas({
     };
 
     const animate = (now: number) => {
+      if (document.hidden) {
+        lastFrame = now;
+        lastPaint = now;
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      if (now - lastPaint < frameIntervalMs) {
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      lastPaint = now;
       const delta = Math.min(2, (now - lastFrame) / 16.67);
       lastFrame = now;
 
@@ -4064,7 +5912,7 @@ function RainbowFireCanvas({
 
       if (now - lastEmit > emitEveryMs) {
         const bounds = getEmissionBounds();
-        const emitCount = reducedMotion ? 2 : 7;
+        const emitCount = reduceEffects ? 1 : 5;
 
         for (
           let index = 0;
@@ -4109,12 +5957,12 @@ function RainbowFireCanvas({
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", resize);
     };
-  }, [targetRef]);
+  }, [performanceMode, targetRef]);
 
   return <canvas ref={canvasRef} className="rainbow-fire-canvas" aria-hidden="true" />;
 }
 
-function PaintBurstCanvas() {
+function PaintBurstCanvas({ performanceMode }: { performanceMode: PerformanceMode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -4126,14 +5974,17 @@ function PaintBurstCanvas() {
     }
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceEffects = performanceMode === "reduced" || reducedMotion;
     const particles: Particle[] = [];
+    const frameIntervalMs = reduceEffects ? 33 : 16;
     let width = 0;
     let height = 0;
     let animationFrame = 0;
     let startedAt = performance.now();
+    let lastPaint = 0;
 
     const resize = () => {
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, reduceEffects ? 1 : 1.5);
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = Math.floor(width * pixelRatio);
@@ -4167,7 +6018,7 @@ function PaintBurstCanvas() {
     const burst = () => {
       const centerX = width / 2;
       const centerY = height / 2;
-      const count = reducedMotion ? 80 : 340;
+      const count = reduceEffects ? 70 : 260;
 
       for (let index = 0; index < count; index += 1) {
         addParticle(
@@ -4177,7 +6028,9 @@ function PaintBurstCanvas() {
         );
       }
 
-      for (let index = 0; index < 72; index += 1) {
+      const secondaryCount = reduceEffects ? 18 : 72;
+
+      for (let index = 0; index < secondaryCount; index += 1) {
         const x = centerX + (Math.random() - 0.5) * width * 0.72;
         const y = centerY + (Math.random() - 0.5) * height * 0.36;
         addParticle(x, y, 0.34);
@@ -4201,6 +6054,18 @@ function PaintBurstCanvas() {
     };
 
     const animate = (now: number) => {
+      if (document.hidden) {
+        lastPaint = now;
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      if (now - lastPaint < frameIntervalMs) {
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      lastPaint = now;
       const elapsed = now - startedAt;
 
       context.globalCompositeOperation = "source-over";
@@ -4229,10 +6094,14 @@ function PaintBurstCanvas() {
         }
       }
 
-      if (!reducedMotion && elapsed > 700 && elapsed < 2600 && particles.length < 520) {
+      if (!reduceEffects && elapsed > 700 && elapsed < 2600 && particles.length < 420) {
         for (let index = 0; index < 10; index += 1) {
           addParticle(width / 2, height / 2, 0.58);
         }
+      }
+
+      if (particles.length === 0 && elapsed > (reduceEffects ? 2600 : 5200)) {
+        return;
       }
 
       animationFrame = window.requestAnimationFrame(animate);
@@ -4248,7 +6117,7 @@ function PaintBurstCanvas() {
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [performanceMode]);
 
   return <canvas ref={canvasRef} className="paint-canvas" aria-hidden="true" />;
 }
