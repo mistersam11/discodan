@@ -1,4 +1,4 @@
-import { type CSSProperties, type FormEvent, type MouseEvent, type MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, type MouseEvent, type MutableRefObject, type PointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 type AnswerKey = "name" | "date" | "time";
@@ -6,6 +6,7 @@ type Scene =
   | AnswerKey
   | "code"
   | "story"
+  | "discoReveal"
   | "finale"
   | "animalGame"
   | "wordleGame"
@@ -15,7 +16,8 @@ type Scene =
   | "danflixLogo"
   | "danflix"
   | "forgiveness"
-  | "wordSearch";
+  | "wordSearch"
+  | "charity";
 
 type Answers = Record<AnswerKey, string>;
 type PerformanceMode = "full" | "reduced";
@@ -58,7 +60,7 @@ const storyLines = [
   "His name was...",
 ];
 
-const sceneOrder: Scene[] = ["name", "date", "time", "code", "story", "finale"];
+const sceneOrder: Scene[] = ["name", "date", "time", "code", "story", "discoReveal"];
 
 const animalWords = new Set([
   "aardvark",
@@ -177,6 +179,8 @@ const devSceneShortcuts: Record<string, Scene> = {
   danflix: "danflixLogo",
   netflix: "danflixLogo",
   jeopardy: "forgiveness",
+  charity: "charity",
+  finale: "finale",
   search: "wordSearch",
   wordsearch: "wordSearch",
   "word search": "wordSearch",
@@ -417,11 +421,18 @@ function App() {
 
         {scene === "story" && <StoryScene key="story" onComplete={advance} />}
 
+        {scene === "discoReveal" && (
+          <DiscoDanRevealScene
+            key="disco-reveal"
+            performanceMode={performanceMode}
+            onStart={() => setScene("animalGame")}
+          />
+        )}
+
         {scene === "finale" && (
           <FinaleScene
             key="finale"
             performanceMode={performanceMode}
-            onStart={() => setScene("animalGame")}
           />
         )}
 
@@ -476,8 +487,18 @@ function App() {
         {scene === "forgiveness" && (
           <ForgivenessScene
             key="forgiveness"
+            onFinale={() => setScene("finale")}
             performanceMode={performanceMode}
             playerName={answers.name}
+          />
+        )}
+
+        {scene === "charity" && (
+          <CharitySimulatorScene
+            key="charity-shortcut"
+            initialBalance={0}
+            onNext={() => setScene("finale")}
+            performanceMode={performanceMode}
           />
         )}
       </AnimatePresence>
@@ -561,11 +582,20 @@ type JeopardyQuestion = {
   clue: string;
   answer: string;
   options: string[];
+  allAnswersWrong?: boolean;
+};
+
+type JeopardyQuestionSeed = Omit<JeopardyQuestion, "category" | "value">;
+
+type JeopardySpeechBubble = {
+  contestantIndex: number;
+  text: string;
 };
 
 type JeopardyResult = {
   contestantIndex: number;
   text: string;
+  speechBubbles?: JeopardySpeechBubble[];
 };
 
 type JeopardyScoreFlash = {
@@ -583,10 +613,19 @@ type JeopardyStanding = {
 type FinalJeopardyChoice = "yes" | "no";
 
 type CharityPhysicsApi = {
-  igniteGold: () => void;
+  setCleanupFlamethrower: (state: CharityCleanupFlamethrowerState) => void;
   setFlaming: (isFlaming: boolean) => void;
   shardIce: () => void;
   spawnCoin: () => void;
+  startGoldCleanup: () => void;
+};
+
+type CharityCleanupFlamethrowerState = {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  active: boolean;
 };
 
 type CharityCoin = {
@@ -609,6 +648,8 @@ type CharityParticle = {
   life: number;
   maxLife: number;
   color: string;
+  canBurnCoin?: boolean;
+  canBurnItem?: boolean;
 };
 
 type JeopardyTileOrigin = {
@@ -624,89 +665,99 @@ type JeopardyTileOrigin = {
 
 const jeopardyCategories = ["POTPOURRI", "POTPOURRI", "DISCO", "DAN", "POTPOURRI", "POTPOURRI"] as const;
 const jeopardyValues = [100, 200, 400, 800, 1000];
+const jeopardyPlayableCategories = ["DISCO", "DAN"] as const;
 
-const jeopardyQuestions: JeopardyQuestion[] = [
+function shuffleItems<T>(items: T[]) {
+  const shuffledItems = [...items];
+
+  for (let index = shuffledItems.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const currentItem = shuffledItems[index];
+    shuffledItems[index] = shuffledItems[swapIndex];
+    shuffledItems[swapIndex] = currentItem;
+  }
+
+  return shuffledItems;
+}
+
+const jeopardyQuestionSeeds: JeopardyQuestionSeed[] = [
   {
-    id: "disco-100",
-    category: "DISCO",
-    value: 100,
-    clue: "This sparkling dance floor object makes Dan believe every room can become a party.",
-    answer: "disco ball",
-    options: ["disco ball", "spreadsheet", "blue screen", "potpourri"],
-  },
-  {
-    id: "disco-200",
-    category: "DISCO",
-    value: 200,
-    clue: "This four beat pulse keeps the club moving while Dan points dramatically at the ceiling.",
-    answer: "four on the floor",
-    options: ["four on the floor", "two in the chair", "one under the desk", "zero on purpose"],
-  },
-  {
-    id: "disco-400",
-    category: "DISCO",
-    value: 400,
-    clue: "This kind of venue gave disco its name and gave Dan somewhere to stand under lights.",
-    answer: "discotheque",
-    options: ["discotheque", "library card", "spreadsheet cell", "forgiveness office"],
-  },
-  {
-    id: "disco-800",
-    category: "DISCO",
-    value: 800,
-    clue: "This feverish Saturday movie helped make disco a pop culture phenomenon.",
-    answer: "Saturday Night Fever",
-    options: ["Saturday Night Fever", "Monday Morning Printer", "Thursday Lunch Email", "Sunday Tax Folder"],
-  },
-  {
-    id: "disco-1000",
-    category: "DISCO",
-    value: 1000,
-    clue: "This famous New York nightclub is where celebrities danced while Dan studied the mirror ball.",
-    answer: "Studio 54",
-    options: ["Studio 54", "Cubicle 12", "Room 404", "Spreadsheet 7"],
-  },
-  {
-    id: "dan-100",
-    category: "DAN",
-    value: 100,
-    clue: "This is the first name of the man whose disco forgiveness has become urgently important.",
-    answer: "Dan",
-    options: ["Dan", "Crab", "Excel", "Wikipedia"],
-  },
-  {
-    id: "dan-200",
-    category: "DAN",
-    value: 200,
-    clue: "Dan renamed this hit guessing game after buying it with overwhelming confidence.",
+    id: "disco-dandle",
+    clue: "This is the hit game purchased and renamed by Disco Dan.",
     answer: "Disco Dandle",
-    options: ["Disco Dandle", "Danflix", "Taskbar Tennis", "Calendar Soup"],
+    options: ["Disco Dandle", "Dandle Disco", "Dan Discodle", "Discodle Dan"],
   },
   {
-    id: "dan-400",
-    category: "DAN",
-    value: 400,
-    clue: "This streaming service suspended the account after it was shared with a man in a business suit.",
+    id: "dan-died",
+    clue: "Dan died on this day.",
+    answer: "1965",
+    options: ["Wednesday", "1965", "Wednesday", "Wednesday"],
+  },
+  {
+    id: "dan-born",
+    clue: "Dan was born on this day.",
+    answer: "1965",
+    options: ["Black Friday", "Good Friday", "Maundy Friday", "1965"],
+  },
+  {
+    id: "danflix-suspension",
+    clue: "This streaming service suspends accounts which were shared with a man in a business suit.",
     answer: "Danflix",
-    options: ["Danflix", "Crab Prime", "The New York Times", "Excel Plus"],
+    options: ["Michaelsoft Excel", "Michaelsoft Excel", "The New York Times", "Danflix"],
   },
   {
-    id: "dan-800",
-    category: "DAN",
-    value: 800,
-    clue: "This phrase is what someone should request after deeply upsetting Disco Dan.",
-    answer: "Dan's forgiveness",
-    options: ["Dan's forgiveness", "more potpourri", "a new spreadsheet", "a browser history"],
-  },
-  {
-    id: "dan-1000",
-    category: "DAN",
-    value: 1000,
+    id: "eight-pm",
     clue: "This is what Dan does after the clock reaches eight in the evening.",
-    answer: "watch TV",
-    options: ["watch TV", "open Excel", "cite Wikipedia", "count animals"],
+    answer: "Watch TV",
+    options: ["Watch TV", "Observe the telly", "Eat in front of the tv", "Dance (tv)"],
+  },
+  {
+    id: "favorite-animal",
+    clue: "This is Disco Dan's favorite animal.",
+    answer: "disco dan",
+    options: ["pig", "cat", "disco dan", "sheep"],
+  },
+  {
+    id: "probability-paradox",
+    clue: "If you choose an answer to this question at random, what is the probability that you will be correct?",
+    answer: "",
+    options: ["25%", "50%", "60%", "25%."],
+    allAnswersWrong: true,
+  },
+  {
+    id: "map-riddle",
+    clue: "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish.",
+    answer: "not a map",
+    options: ["a map", "a map", "a map", "not a map"],
+  },
+  {
+    id: "hair-gel",
+    clue: "This is Disco Dan's favorite hair gel.",
+    answer: "Crisco",
+    options: ["Dan's Hair Gel", "Dapper Dan", "Crisco", "Dancumentary Sauce"],
+  },
+  {
+    id: "jeopardy-feeling",
+    clue: "This is how you feel about Jeopardy.",
+    answer: "well",
+    options: ["good", "real good", "pretty good", "well"],
   },
 ];
+
+const jeopardyQuestionSlots = jeopardyPlayableCategories.flatMap((category) =>
+  jeopardyValues.map((value) => ({ category, value })),
+);
+
+const jeopardyQuestions: JeopardyQuestion[] = shuffleItems(jeopardyQuestionSeeds).map((question, index) => {
+  const slot = jeopardyQuestionSlots[index % jeopardyQuestionSlots.length];
+
+  return {
+    ...question,
+    category: slot.category,
+    value: slot.value,
+    id: `${slot.category.toLowerCase()}-${slot.value}-${question.id}`,
+  };
+});
 
 const getJeopardyQuestion = (category: string, value: number) =>
   jeopardyQuestions.find((question) => question.category === category && question.value === value);
@@ -758,9 +809,11 @@ function getJeopardyStandings(contestants: JeopardyContestant[], scores: number[
 }
 
 function ForgivenessScene({
+  onFinale,
   performanceMode,
   playerName,
 }: {
+  onFinale: () => void;
   performanceMode: PerformanceMode;
   playerName: string;
 }) {
@@ -841,6 +894,20 @@ function ForgivenessScene({
 
     return () => window.clearInterval(interval);
   }, [phase, questionWords.length, selectedQuestion]);
+
+  useEffect(() => {
+    if (
+      phase !== "question" ||
+      !selectedQuestion ||
+      buzzState !== "ready" ||
+      revealedWordCount < questionWords.length
+    ) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => showDanAnswer(selectedQuestion), 500);
+    return () => window.clearTimeout(timer);
+  }, [buzzState, phase, questionWords.length, revealedWordCount, selectedQuestion]);
 
   useEffect(() => {
     if (phase !== "choice" || !selectedQuestion) {
@@ -935,7 +1002,26 @@ function ForgivenessScene({
     setPhase("finalCard");
   };
 
+  const showParadoxResult = (question: JeopardyQuestion) => {
+    setResult({
+      contestantIndex: 0,
+      text: "Dan says u r dum",
+      speechBubbles: [
+        { contestantIndex: 0, text: "Dan says u r dum" },
+        { contestantIndex: 1, text: "Ha nerd" },
+      ],
+    });
+    setPhase("result");
+    const isFinalQuestion = markQuestionResolved(question);
+    timersRef.current.push(window.setTimeout(isFinalQuestion ? showFinalCard : returnToBoard, 3200));
+  };
+
   const showDanAnswer = (question: JeopardyQuestion) => {
+    if (question.allAnswersWrong) {
+      showParadoxResult(question);
+      return;
+    }
+
     const danIndex = getRandomDanIndex();
     setResult({ contestantIndex: danIndex, text: `Dan says: ${question.answer}` });
     setPhase("result");
@@ -994,6 +1080,12 @@ function ForgivenessScene({
 
     const saidAnswer = choice ?? "nothing";
     const isCorrect = choice === selectedQuestion.answer;
+
+    if (selectedQuestion.allAnswersWrong) {
+      showParadoxResult(selectedQuestion);
+      return;
+    }
+
     setResult({ contestantIndex: 2, text: `${displayName} says: ${saidAnswer}` });
     setPhase("result");
 
@@ -1123,6 +1215,7 @@ function ForgivenessScene({
         {phase === "charity" && (
           <CharitySimulatorScene
             initialBalance={scores[2] ?? 0}
+            onNext={onFinale}
             performanceMode={performanceMode}
           />
         )}
@@ -1252,6 +1345,11 @@ function JeopardyPodiums({
   selectedQuestion?: JeopardyQuestion;
 }) {
   const activeIndex = result?.contestantIndex;
+  const speechBubbles =
+    result?.speechBubbles ??
+    (result?.text && activeIndex !== undefined
+      ? [{ contestantIndex: activeIndex, text: result.text }]
+      : []);
 
   return (
     <motion.div
@@ -1266,7 +1364,7 @@ function JeopardyPodiums({
         <img
           className="jeopardy-podiums-image"
           src="/jeopardy/podiums-1200.jpg"
-          srcSet="/jeopardy/podiums-900.jpg 900w, /jeopardy/podiums-1200.jpg 1200w"
+          srcSet="/jeopardy/podiums-1200.jpg 1200w"
           sizes="min(100vw, 78rem)"
           alt=""
           draggable={false}
@@ -1290,18 +1388,21 @@ function JeopardyPodiums({
             </div>
           ))}
 
-          {result?.text && activeIndex !== undefined && (
-            <div className={`jeopardy-speech-bubble speech-${activeIndex}`}>
-              {result.text}
+          {speechBubbles.map((speechBubble) => (
+            <div
+              className={`jeopardy-speech-bubble speech-${speechBubble.contestantIndex}`}
+              key={`${speechBubble.contestantIndex}-${speechBubble.text}`}
+            >
+              {speechBubble.text}
             </div>
-          )}
+          ))}
 
           {selectedQuestion && onChoose && (
             <div className="jeopardy-choice-panel">
               <div className="jeopardy-choice-timer">{choiceSeconds}s</div>
               <div className="jeopardy-choice-options">
-                {selectedQuestion.options.map((option) => (
-                  <button key={option} type="button" onClick={() => onChoose(option)}>
+                {selectedQuestion.options.map((option, index) => (
+                  <button key={`${option}-${index}`} type="button" onClick={() => onChoose(option)}>
                     {option}
                   </button>
                 ))}
@@ -1627,10 +1728,30 @@ function JeopardyFinalQuestion({
 const charityMilestones: Record<number, string> = {
   10: "The poor are beginning to feel new strength...",
   20: "That's worth your weight in gold...",
-  30: "The impoverish begin to feel the burden of wealth...",
+  30: "The impoverished begin to feel the burden of wealth...",
   40: "Seriously this stuff is heavy...",
   50: "STOP PLEASE WE CAN'T MOVE IT'S SO MUCH GOLD",
 };
+
+function getCleanupFlamethrowerLandingPosition() {
+  if (typeof window === "undefined") {
+    return { x: 0, y: 0 };
+  }
+
+  return {
+    x: window.innerWidth / 2,
+    y: Math.max(48, window.innerHeight - 58),
+  };
+}
+
+function clampFlamethrowerPosition(x: number, y: number) {
+  const margin = 34;
+
+  return {
+    x: Math.min(window.innerWidth - margin, Math.max(margin, x)),
+    y: Math.min(window.innerHeight - margin, Math.max(margin, y)),
+  };
+}
 
 function CharityGate({ onStart }: { onStart: () => void }) {
   return (
@@ -1652,9 +1773,11 @@ function CharityGate({ onStart }: { onStart: () => void }) {
 
 function CharitySimulatorScene({
   initialBalance,
+  onNext,
   performanceMode,
 }: {
   initialBalance: number;
+  onNext: () => void;
   performanceMode: PerformanceMode;
 }) {
   const [balance, setBalance] = useState(initialBalance);
@@ -1662,13 +1785,27 @@ function CharitySimulatorScene({
   const [message, setMessage] = useState("");
   const [iceHealth, setIceHealth] = useState(0);
   const [hasFrozenButton, setHasFrozenButton] = useState(false);
-  const [hasIgnitedGold, setHasIgnitedGold] = useState(false);
+  const [hasStartedGoldCleanup, setHasStartedGoldCleanup] = useState(false);
+  const [isGoldCleanupComplete, setIsGoldCleanupComplete] = useState(false);
   const [isFlaming, setIsFlaming] = useState(false);
+  const [isCleanupFlamethrowerDragging, setIsCleanupFlamethrowerDragging] = useState(false);
+  const [showGoldCleanupTitle, setShowGoldCleanupTitle] = useState(false);
+  const [cleanupFlamethrowerPosition, setCleanupFlamethrowerPosition] = useState(
+    getCleanupFlamethrowerLandingPosition,
+  );
   const physicsApiRef = useRef<CharityPhysicsApi | null>(null);
   const messageTimerRef = useRef<number>(0);
+  const cleanupFlamethrowerRef = useRef({
+    dragging: false,
+    directionX: 0,
+    directionY: -1,
+    lastPointerX: 0,
+    lastPointerY: 0,
+    ...getCleanupFlamethrowerLandingPosition(),
+  });
 
   const isButtonFrozen = hasFrozenButton && iceHealth > 0;
-  const canIgniteGold = hasFrozenButton && iceHealth <= 0 && !hasIgnitedGold;
+  const canStartGoldCleanup = hasFrozenButton && iceHealth <= 0 && !hasStartedGoldCleanup;
 
   useEffect(() => {
     return () => window.clearTimeout(messageTimerRef.current);
@@ -1692,11 +1829,112 @@ function CharitySimulatorScene({
   }, [isButtonFrozen, isFlaming, performanceMode]);
 
   useEffect(() => {
+    if (!isButtonFrozen) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      for (let index = 0; index < 3; index += 1) {
+        physicsApiRef.current?.spawnCoin();
+      }
+    }, 100);
+
+    return () => window.clearInterval(interval);
+  }, [isButtonFrozen]);
+
+  useEffect(() => {
+    if (!showGoldCleanupTitle) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setShowGoldCleanupTitle(false), 1700);
+    return () => window.clearTimeout(timer);
+  }, [showGoldCleanupTitle]);
+
+  useEffect(() => {
     if (iceHealth <= 0) {
       setIsFlaming(false);
       physicsApiRef.current?.setFlaming(false);
     }
   }, [iceHealth]);
+
+  const updateCleanupFlamethrower = (
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    active: boolean,
+  ) => {
+    const directionLength = Math.hypot(dx, dy);
+    const nextDirectionX =
+      directionLength > 0.4 ? dx / directionLength : cleanupFlamethrowerRef.current.directionX;
+    const nextDirectionY =
+      directionLength > 0.4 ? dy / directionLength : cleanupFlamethrowerRef.current.directionY;
+
+    cleanupFlamethrowerRef.current = {
+      ...cleanupFlamethrowerRef.current,
+      directionX: nextDirectionX,
+      directionY: nextDirectionY,
+      x,
+      y,
+    };
+    setCleanupFlamethrowerPosition({ x, y });
+    physicsApiRef.current?.setCleanupFlamethrower({
+      active,
+      dx: nextDirectionX,
+      dy: nextDirectionY,
+      x,
+      y,
+    });
+  };
+
+  const stopCleanupFlamethrower = () => {
+    cleanupFlamethrowerRef.current.dragging = false;
+    setIsCleanupFlamethrowerDragging(false);
+    physicsApiRef.current?.setCleanupFlamethrower({
+      active: false,
+      dx: cleanupFlamethrowerRef.current.directionX,
+      dy: cleanupFlamethrowerRef.current.directionY,
+      x: cleanupFlamethrowerRef.current.x,
+      y: cleanupFlamethrowerRef.current.y,
+    });
+  };
+
+  const handleCleanupFlamethrowerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const nextPosition = clampFlamethrowerPosition(event.clientX, event.clientY);
+
+    cleanupFlamethrowerRef.current.dragging = true;
+    setIsCleanupFlamethrowerDragging(true);
+    cleanupFlamethrowerRef.current.lastPointerX = event.clientX;
+    cleanupFlamethrowerRef.current.lastPointerY = event.clientY;
+    updateCleanupFlamethrower(
+      nextPosition.x,
+      nextPosition.y,
+      cleanupFlamethrowerRef.current.directionX,
+      cleanupFlamethrowerRef.current.directionY,
+      true,
+    );
+  };
+
+  const handleCleanupFlamethrowerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!cleanupFlamethrowerRef.current.dragging) {
+      return;
+    }
+
+    const dx = event.clientX - cleanupFlamethrowerRef.current.lastPointerX;
+    const dy = event.clientY - cleanupFlamethrowerRef.current.lastPointerY;
+    const nextPosition = clampFlamethrowerPosition(event.clientX, event.clientY);
+
+    cleanupFlamethrowerRef.current.lastPointerX = event.clientX;
+    cleanupFlamethrowerRef.current.lastPointerY = event.clientY;
+    updateCleanupFlamethrower(nextPosition.x, nextPosition.y, dx, dy, true);
+  };
+
+  const handleGoldCleanupComplete = () => {
+    stopCleanupFlamethrower();
+    setIsGoldCleanupComplete(true);
+  };
 
   const showCharityMessage = (nextMessage: string) => {
     window.clearTimeout(messageTimerRef.current);
@@ -1709,16 +1947,36 @@ function CharitySimulatorScene({
       return;
     }
 
-    if (canIgniteGold) {
-      setHasIgnitedGold(true);
-      physicsApiRef.current?.igniteGold();
+    if (canStartGoldCleanup) {
+      const landingPosition = getCleanupFlamethrowerLandingPosition();
+      cleanupFlamethrowerRef.current = {
+        dragging: false,
+        directionX: 0,
+        directionY: -1,
+        lastPointerX: landingPosition.x,
+        lastPointerY: landingPosition.y,
+        ...landingPosition,
+      };
+      setCleanupFlamethrowerPosition(landingPosition);
+      setHasStartedGoldCleanup(true);
+      setIsGoldCleanupComplete(false);
+      setShowGoldCleanupTitle(true);
+      physicsApiRef.current?.setCleanupFlamethrower({
+        active: false,
+        dx: 0,
+        dy: -1,
+        ...landingPosition,
+      });
+      physicsApiRef.current?.startGoldCleanup();
       return;
     }
 
     const nextDonations = donations + 1;
     setDonations(nextDonations);
     setBalance((current) => current - 1);
-    physicsApiRef.current?.spawnCoin();
+    for (let index = 0; index < 5; index += 1) {
+      physicsApiRef.current?.spawnCoin();
+    }
 
     const milestoneMessage = charityMilestones[nextDonations];
     if (milestoneMessage) {
@@ -1745,8 +2003,28 @@ function CharitySimulatorScene({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.7 }}
     >
-      <CharityPhysicsCanvas apiRef={physicsApiRef} performanceMode={performanceMode} />
-      <h2>Charity Simulator</h2>
+      <CharityPhysicsCanvas
+        apiRef={physicsApiRef}
+        onCoinsCleared={handleGoldCleanupComplete}
+        performanceMode={performanceMode}
+      />
+      {!hasStartedGoldCleanup && <h2>Charity Simulator</h2>}
+      <AnimatePresence>
+        {showGoldCleanupTitle && !isGoldCleanupComplete && (
+          <motion.div
+            aria-level={2}
+            className="charity-cleanup-title"
+            key="charity-cleanup-title"
+            role="heading"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.35 }}
+          >
+            MOVE THE FLAMETHROWER
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {message && (
           <motion.p
@@ -1762,10 +2040,10 @@ function CharitySimulatorScene({
         )}
       </AnimatePresence>
 
-      <div className="charity-action-stack">
-        {hasFrozenButton && !hasIgnitedGold && (
+      {!hasStartedGoldCleanup && (
+        <div className="charity-action-stack">
+          {isButtonFrozen && (
           <div className="charity-flamethrower-wrap">
-            <span>flamethrower</span>
             <button
               aria-label="flamethrower"
               className="charity-flamethrower-button"
@@ -1776,46 +2054,80 @@ function CharitySimulatorScene({
               onPointerUp={stopFlamethrower}
             />
           </div>
-        )}
-
-        <div className="charity-donate-wrap">
-          <button
-            className="charity-donate-button"
-            disabled={isButtonFrozen || hasIgnitedGold}
-            type="button"
-            onClick={handleDonate}
-          >
-            Give to charity
-          </button>
-          {isButtonFrozen && (
-            <div
-              className="charity-ice-cube"
-              aria-hidden="true"
-              style={
-                {
-                  "--ice-opacity": `${0.24 + (iceHealth / 100) * 0.56}`,
-                  "--ice-scale": `${0.42 + (iceHealth / 100) * 0.58}`,
-                } as CSSProperties
-              }
-            />
           )}
+
+          <div className="charity-donate-wrap">
+            <button
+              className="charity-donate-button"
+              disabled={isButtonFrozen}
+              type="button"
+              onClick={handleDonate}
+            >
+              Give to charity
+            </button>
+            {isButtonFrozen && (
+              <div
+                className="charity-ice-cube"
+                aria-hidden="true"
+                style={
+                  {
+                    "--ice-opacity": `${0.24 + (iceHealth / 100) * 0.56}`,
+                    "--ice-scale": `${0.42 + (iceHealth / 100) * 0.58}`,
+                  } as CSSProperties
+                }
+              />
+            )}
+          </div>
+          <p className={`charity-balance ${balance < 0 ? "is-negative" : ""}`}>
+            {formatJeopardyMoney(balance)}
+          </p>
         </div>
-        <p className={`charity-balance ${balance < 0 ? "is-negative" : ""}`}>
-          {formatJeopardyMoney(balance)}
-        </p>
-      </div>
+      )}
+
+      {hasStartedGoldCleanup && !isGoldCleanupComplete && (
+        <button
+          aria-label="Move the flamethrower"
+          className={`charity-cleanup-flamethrower-button${
+            isCleanupFlamethrowerDragging ? " is-dragging" : ""
+          }`}
+          style={
+            {
+              "--flamethrower-x": `${cleanupFlamethrowerPosition.x}px`,
+              "--flamethrower-y": `${cleanupFlamethrowerPosition.y}px`,
+            } as CSSProperties
+          }
+          type="button"
+          onPointerCancel={stopCleanupFlamethrower}
+          onPointerDown={handleCleanupFlamethrowerDown}
+          onPointerMove={handleCleanupFlamethrowerMove}
+          onPointerUp={stopCleanupFlamethrower}
+        />
+      )}
+
+      {isGoldCleanupComplete && (
+        <button className="charity-next-button" type="button" onClick={onNext}>
+          Next
+        </button>
+      )}
     </motion.div>
   );
 }
 
 function CharityPhysicsCanvas({
   apiRef,
+  onCoinsCleared,
   performanceMode,
 }: {
   apiRef: MutableRefObject<CharityPhysicsApi | null>;
+  onCoinsCleared: () => void;
   performanceMode: PerformanceMode;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const onCoinsClearedRef = useRef(onCoinsCleared);
+
+  useEffect(() => {
+    onCoinsClearedRef.current = onCoinsCleared;
+  }, [onCoinsCleared]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1826,11 +2138,13 @@ function CharityPhysicsCanvas({
     }
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobileDevice = window.matchMedia("(pointer: coarse), (max-width: 740px)").matches;
     const reduceEffects = performanceMode === "reduced" || reducedMotion;
     const coins: CharityCoin[] = [];
     const particles: CharityParticle[] = [];
-    const maxParticles = reduceEffects ? 90 : 170;
-    const maxCoins = 64;
+    const maxParticles = reduceEffects ? 120 : 260;
+    const baseMaxCoins = reduceEffects ? 96 : 180;
+    const maxCoins = isMobileDevice ? baseMaxCoins : baseMaxCoins * 3;
     const coinRadius = reduceEffects ? 10 : 13;
     const frameIntervalMs = reduceEffects ? 33 : 16;
     let width = 0;
@@ -1838,6 +2152,15 @@ function CharityPhysicsCanvas({
     let animationFrame = 0;
     let coinId = 0;
     let isFlaming = false;
+    let isGoldCleanup = false;
+    let hasNotifiedGoldCleanupComplete = false;
+    const cleanupFlamethrower = {
+      active: false,
+      dx: 0,
+      dy: -1,
+      x: 0,
+      y: 0,
+    };
     let lastFrame = performance.now();
     let lastPaint = 0;
 
@@ -1850,6 +2173,22 @@ function CharityPhysicsCanvas({
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     };
 
+    const normalizeCleanupDirection = (dx: number, dy: number) => {
+      const length = Math.hypot(dx, dy);
+
+      if (length <= 0.4) {
+        return {
+          dx: cleanupFlamethrower.dx,
+          dy: cleanupFlamethrower.dy,
+        };
+      }
+
+      return {
+        dx: dx / length,
+        dy: dy / length,
+      };
+    };
+
     const addParticle = (
       x: number,
       y: number,
@@ -1858,6 +2197,7 @@ function CharityPhysicsCanvas({
       color: string,
       radius: number,
       life: number,
+      canBurnCoin = false,
     ) => {
       if (particles.length >= maxParticles) {
         particles.shift();
@@ -1872,6 +2212,7 @@ function CharityPhysicsCanvas({
         radius,
         life,
         maxLife: life,
+        canBurnCoin,
       });
     };
 
@@ -1882,10 +2223,10 @@ function CharityPhysicsCanvas({
 
       coins.push({
         id: coinId,
-        x: width * (0.38 + Math.random() * 0.24),
-        y: -coinRadius * 2,
-        vx: (Math.random() - 0.5) * 2.1,
-        vy: Math.random() * 1.3,
+        x: width * (0.32 + Math.random() * 0.36),
+        y: -coinRadius * (2 + Math.random() * 3.5),
+        vx: (Math.random() - 0.5) * 2.7,
+        vy: Math.random() * 1.7,
         radius: coinRadius,
         angle: Math.random() * Math.PI,
         va: (Math.random() - 0.5) * 0.16,
@@ -1910,8 +2251,7 @@ function CharityPhysicsCanvas({
       }
     };
 
-    const igniteGold = () => {
-      coins.forEach((coin) => {
+    const burstCoin = (coin: CharityCoin) => {
         const particleCount = reduceEffects ? 4 : 8;
 
         for (let index = 0; index < particleCount; index += 1) {
@@ -1927,8 +2267,20 @@ function CharityPhysicsCanvas({
             52 + Math.random() * 28,
           );
         }
+    };
+
+    const startGoldCleanup = () => {
+      isGoldCleanup = true;
+      isFlaming = false;
+      hasNotifiedGoldCleanupComplete = false;
+      cleanupFlamethrower.active = false;
+
+      coins.forEach((coin) => {
+        coin.vx = (Math.random() - 0.5) * 2.4;
+        coin.vy = -Math.random() * 2 - 0.35;
+        coin.va += (Math.random() - 0.5) * 0.1;
+        coin.y = Math.min(Math.max(coin.radius, coin.y), height - coin.radius);
       });
-      coins.length = 0;
     };
 
     const drawCoin = (coin: CharityCoin) => {
@@ -1998,24 +2350,54 @@ function CharityPhysicsCanvas({
       context.clearRect(0, 0, width, height);
 
       if (isFlaming) {
-        const flameCount = reduceEffects ? 2 : 5;
+        const flameCount = reduceEffects ? 4 : 11;
         for (let index = 0; index < flameCount; index += 1) {
           addParticle(
-            width / 2 + (Math.random() - 0.5) * 20,
-            height * 0.42 + Math.random() * 8,
-            (Math.random() - 0.5) * 1.8,
-            Math.random() * 4.4 + 2.4,
-            index % 2 === 0 ? "#ff3b1f" : "#ff9f1f",
-            Math.random() * 5 + 2,
-            24 + Math.random() * 16,
+            width / 2 + (Math.random() - 0.5) * 34,
+            height * 0.34 + Math.random() * 12,
+            (Math.random() - 0.5) * 2.8,
+            Math.random() * 6.4 + 4.6,
+            index % 4 === 0 ? "#fff4cf" : index % 2 === 0 ? "#ff3b1f" : "#ff9f1f",
+            Math.random() * 7 + 3,
+            36 + Math.random() * 22,
+          );
+        }
+      }
+
+      if (isGoldCleanup && cleanupFlamethrower.active) {
+        const flameCount = reduceEffects ? 4 : 12;
+        const perpendicularX = -cleanupFlamethrower.dy;
+        const perpendicularY = cleanupFlamethrower.dx;
+
+        for (let index = 0; index < flameCount; index += 1) {
+          const spread = (Math.random() - 0.5) * 3.8;
+          const speed = Math.random() * 4.8 + 7.2;
+
+          addParticle(
+            cleanupFlamethrower.x + perpendicularX * spread + (Math.random() - 0.5) * 5,
+            cleanupFlamethrower.y + perpendicularY * spread + (Math.random() - 0.5) * 5,
+            cleanupFlamethrower.dx * speed + perpendicularX * spread * 0.28,
+            cleanupFlamethrower.dy * speed + perpendicularY * spread * 0.28,
+            index % 5 === 0 ? "#fff4cf" : index % 2 === 0 ? "#ff3b1f" : "#ff9f1f",
+            Math.random() * 5 + 3,
+            28 + Math.random() * 16,
+            true,
           );
         }
       }
 
       coins.forEach((coin) => {
-        coin.vy += 0.34 * delta;
-        coin.vx *= 0.994;
-        coin.vy *= 0.998;
+        if (isGoldCleanup) {
+          coin.vx += Math.sin(now * 0.0017 + coin.id) * 0.014 * delta;
+          coin.vy += Math.cos(now * 0.0013 + coin.id * 1.7) * 0.014 * delta;
+          coin.vx *= 0.998;
+          coin.vy *= 0.998;
+        } else {
+          coin.vy += 0.34 * delta;
+          coin.vx *= 0.994;
+          coin.vy *= 0.998;
+        }
+
         coin.x += coin.vx * delta;
         coin.y += coin.vy * delta;
         coin.angle += coin.va * delta;
@@ -2023,18 +2405,28 @@ function CharityPhysicsCanvas({
 
         if (coin.x - coin.radius < 0) {
           coin.x = coin.radius;
-          coin.vx *= -0.42;
+          coin.vx *= isGoldCleanup ? -0.72 : -0.42;
         } else if (coin.x + coin.radius > width) {
           coin.x = width - coin.radius;
-          coin.vx *= -0.42;
+          coin.vx *= isGoldCleanup ? -0.72 : -0.42;
         }
 
-        const floorY = height - coin.radius - 10;
-        if (coin.y > floorY) {
-          coin.y = floorY;
-          coin.vy *= -0.22;
-          coin.vx *= 0.82;
-          coin.va *= 0.72;
+        if (isGoldCleanup) {
+          if (coin.y - coin.radius < 0) {
+            coin.y = coin.radius;
+            coin.vy *= -0.72;
+          } else if (coin.y + coin.radius > height) {
+            coin.y = height - coin.radius;
+            coin.vy *= -0.72;
+          }
+        } else {
+          const floorY = height - coin.radius - 10;
+          if (coin.y > floorY) {
+            coin.y = floorY;
+            coin.vy *= -0.22;
+            coin.vx *= 0.82;
+            coin.va *= 0.72;
+          }
         }
       });
 
@@ -2047,6 +2439,22 @@ function CharityPhysicsCanvas({
         particle.vy += 0.05 * delta;
         particle.x += particle.vx * delta;
         particle.y += particle.vy * delta;
+
+        if (isGoldCleanup && particle.canBurnCoin) {
+          for (let coinIndex = coins.length - 1; coinIndex >= 0; coinIndex -= 1) {
+            const coin = coins[coinIndex];
+            const dx = particle.x - coin.x;
+            const dy = particle.y - coin.y;
+            const hitDistance = coin.radius + particle.radius * 0.9;
+
+            if (dx * dx + dy * dy <= hitDistance * hitDistance) {
+              burstCoin(coin);
+              coins.splice(coinIndex, 1);
+              particle.life = 0;
+              break;
+            }
+          }
+        }
 
         const alpha = Math.max(0, particle.life / particle.maxLife);
         context.globalAlpha = alpha;
@@ -2061,17 +2469,31 @@ function CharityPhysicsCanvas({
         }
       }
 
+      if (isGoldCleanup && coins.length === 0 && !hasNotifiedGoldCleanupComplete) {
+        hasNotifiedGoldCleanupComplete = true;
+        cleanupFlamethrower.active = false;
+        window.setTimeout(() => onCoinsClearedRef.current(), 350);
+      }
+
       animationFrame = window.requestAnimationFrame(animate);
     };
 
     resize();
     apiRef.current = {
-      igniteGold,
+      setCleanupFlamethrower: (nextState: CharityCleanupFlamethrowerState) => {
+        const direction = normalizeCleanupDirection(nextState.dx, nextState.dy);
+        cleanupFlamethrower.active = nextState.active;
+        cleanupFlamethrower.dx = direction.dx;
+        cleanupFlamethrower.dy = direction.dy;
+        cleanupFlamethrower.x = nextState.x;
+        cleanupFlamethrower.y = nextState.y;
+      },
       setFlaming: (nextIsFlaming: boolean) => {
         isFlaming = nextIsFlaming;
       },
       shardIce,
       spawnCoin,
+      startGoldCleanup,
     };
     animationFrame = window.requestAnimationFrame(animate);
     window.addEventListener("resize", resize);
@@ -3660,7 +4082,7 @@ function StoryScene({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function FinaleScene({
+function DiscoDanRevealScene({
   performanceMode,
   onStart,
 }: {
@@ -3680,6 +4102,7 @@ function FinaleScene({
       className="finale-scene"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.1 }}
     >
       <PaintBurstCanvas performanceMode={performanceMode} />
@@ -3707,11 +4130,11 @@ function FinaleScene({
           {showStart && (
             <div className="start-button-anchor">
               <motion.button
-              className="start-button"
-              type="button"
-              onClick={onStart}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+                className="start-button"
+                type="button"
+                onClick={onStart}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 12 }}
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               >
@@ -3723,6 +4146,1828 @@ function FinaleScene({
       </div>
     </motion.section>
   );
+}
+
+type FinalePhase = "intro" | "destruction" | "ending";
+type FinaleStageKey =
+  | "animals"
+  | "dandle"
+  | "wordSearch"
+  | "xp"
+  | "wiki"
+  | "danflix"
+  | "jeopardy"
+  | "charity";
+type FinaleLength = number | string;
+type FinaleBurnStyle = CSSProperties & Record<`--${string}`, string | number>;
+
+type FinaleBurnItem = {
+  id: string;
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+  content: ReactNode;
+  burnRadius?: number;
+  className?: string;
+  driftDelay?: number;
+  driftDuration?: number;
+  driftRotate?: number;
+  driftX?: number;
+  driftY?: number;
+  isAnchored?: boolean;
+  style?: CSSProperties;
+};
+
+type FinaleBurnBurst = {
+  id: number;
+  x: number;
+  y: number;
+  intensity: number;
+};
+
+const finaleIntroLines = [
+  "50 years ago, Disco Dan won a competition...",
+  "Now, you must do the same...",
+  "Achieve. Disco. Glory",
+];
+
+const finaleStageKeys: FinaleStageKey[] = [
+  "animals",
+  "dandle",
+  "wordSearch",
+  "xp",
+  "wiki",
+  "danflix",
+  "jeopardy",
+  "charity",
+];
+
+const finaleStageClassNames: Record<FinaleStageKey, string> = {
+  animals: "finale-stage-animals",
+  dandle: "finale-stage-dandle",
+  wordSearch: "finale-stage-word-search",
+  xp: "finale-stage-xp",
+  wiki: "finale-stage-wiki",
+  danflix: "finale-stage-danflix",
+  jeopardy: "finale-stage-jeopardy",
+  charity: "finale-stage-charity",
+};
+
+const finaleStageLabels: Record<FinaleStageKey, string> = {
+  animals: "Name animals until failure",
+  dandle: "Disco Dandle",
+  wordSearch: "Word Search",
+  xp: "Windows XP desktop",
+  wiki: "Wikipedia",
+  danflix: "Danflix",
+  jeopardy: "Jeopardy board",
+  charity: "Charity Simulator",
+};
+
+function FinaleScene({ performanceMode }: { performanceMode: PerformanceMode }) {
+  const [phase, setPhase] = useState<FinalePhase>("intro");
+
+  return (
+    <motion.section
+      className="finale-scene finale-long-scene"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.45 }}
+    >
+      <AnimatePresence mode="wait">
+        {phase === "intro" && (
+          <FinaleIntro key="finale-intro" onNext={() => setPhase("destruction")} />
+        )}
+
+        {phase === "destruction" && (
+          <FinaleDestructionSequence
+            key="finale-destruction"
+            performanceMode={performanceMode}
+            onComplete={() => setPhase("ending")}
+          />
+        )}
+
+        {phase === "ending" && (
+          <FinaleEnding key="finale-ending" performanceMode={performanceMode} />
+        )}
+      </AnimatePresence>
+    </motion.section>
+  );
+}
+
+function FinaleIntro({ onNext }: { onNext: () => void }) {
+  const [visibleLineCount, setVisibleLineCount] = useState(0);
+  const [showNext, setShowNext] = useState(false);
+
+  useEffect(() => {
+    const timers = [
+      window.setTimeout(() => setVisibleLineCount(1), 850),
+      window.setTimeout(() => setVisibleLineCount(2), 2900),
+      window.setTimeout(() => setVisibleLineCount(3), 5000),
+      window.setTimeout(() => setShowNext(true), 7400),
+    ];
+
+    return () => timers.forEach(window.clearTimeout);
+  }, []);
+
+  return (
+    <motion.div
+      className="finale-intro-scene"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, filter: "blur(10px)" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="finale-intro-lines" aria-live="polite">
+        {finaleIntroLines.map((line, index) => (
+          <div className="finale-intro-line-slot" key={line}>
+            <AnimatePresence>
+              {visibleLineCount > index && (
+                <motion.p
+                  className={index === finaleIntroLines.length - 1 ? "is-glory" : ""}
+                  initial={{ opacity: 0, y: 12, filter: "blur(8px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {line}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+        <div className="finale-intro-button-slot">
+          <AnimatePresence>
+            {showNext && visibleLineCount === finaleIntroLines.length && (
+              <motion.button
+                className="finale-intro-next"
+                type="button"
+                onClick={onNext}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              >
+                Next
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function FinaleDestructionSequence({
+  onComplete,
+  performanceMode,
+}: {
+  onComplete: () => void;
+  performanceMode: PerformanceMode;
+}) {
+  const [stageIndex, setStageIndex] = useState(0);
+  const stageKey = finaleStageKeys[stageIndex] ?? "charity";
+
+  const completeStage = () => {
+    if (stageIndex >= finaleStageKeys.length - 1) {
+      onComplete();
+      return;
+    }
+
+    setStageIndex((current) => current + 1);
+  };
+
+  return (
+    <FinaleBurnStage
+      key={stageKey}
+      performanceMode={performanceMode}
+      stageKey={stageKey}
+      onComplete={completeStage}
+    />
+  );
+}
+
+function FinaleEnding({ performanceMode }: { performanceMode: PerformanceMode }) {
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  return (
+    <motion.div
+      className="finale-ending-scene"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.1 }}
+    >
+      <PaintBurstCanvas performanceMode={performanceMode} />
+      <RainbowFireCanvas performanceMode={performanceMode} targetRef={titleRef} />
+      <div className="finale-content">
+        <div className="title-anchor">
+          <motion.h1
+            ref={titleRef}
+            className="finale-ending-title"
+            aria-label="You are Disco Dan"
+            initial={{ y: -260, scale: 1.55, rotate: -4 }}
+            animate={{
+              y: [-260, 34, -9, 0],
+              scale: [1.55, 1.07, 1.02, 1],
+              rotate: [-4, 2, -1, 0],
+            }}
+            transition={{
+              duration: 1.18,
+              times: [0, 0.62, 0.82, 1],
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          >
+            {["YOU.", "ARE.", "DISCO.", "DAN."].map((word) => (
+              <span key={word}>{word}</span>
+            ))}
+          </motion.h1>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function FinaleBurnStage({
+  onComplete,
+  performanceMode,
+  stageKey,
+}: {
+  onComplete: () => void;
+  performanceMode: PerformanceMode;
+  stageKey: FinaleStageKey;
+}) {
+  const items = useMemo(
+    () => createFinaleBurnItems(stageKey, performanceMode),
+    [performanceMode, stageKey],
+  );
+  const [destroyedIds, setDestroyedIds] = useState<Set<string>>(() => new Set());
+  const [burnBursts, setBurnBursts] = useState<FinaleBurnBurst[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [flamethrowerPosition, setFlamethrowerPosition] = useState(
+    getCleanupFlamethrowerLandingPosition,
+  );
+  const [flamethrowerState, setFlamethrowerState] = useState<CharityCleanupFlamethrowerState>(() => ({
+    ...getCleanupFlamethrowerLandingPosition(),
+    active: false,
+    dx: 0,
+    dy: -1,
+  }));
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const destroyedIdsRef = useRef(destroyedIds);
+  const burnBurstIdRef = useRef(0);
+  const flamethrowerRef = useRef({
+    dragging: false,
+    directionX: 0,
+    directionY: -1,
+    lastPointerX: flamethrowerPosition.x,
+    lastPointerY: flamethrowerPosition.y,
+    x: flamethrowerPosition.x,
+    y: flamethrowerPosition.y,
+  });
+  const burnAtRef = useRef<(x: number, y: number, radius?: number) => void>(() => {});
+
+  useEffect(() => {
+    destroyedIdsRef.current = destroyedIds;
+  }, [destroyedIds]);
+
+  burnAtRef.current = (x: number, y: number, radius = 0) => {
+    const nextDestroyedIds: string[] = [];
+    const nextBurnBursts: FinaleBurnBurst[] = [];
+
+    items.forEach((item) => {
+      if (destroyedIdsRef.current.has(item.id)) {
+        return;
+      }
+
+      const element = itemRefs.current[item.id];
+      if (!element) {
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      const closestX = Math.min(rect.right, Math.max(rect.left, x));
+      const closestY = Math.min(rect.bottom, Math.max(rect.top, y));
+      const dx = x - closestX;
+      const dy = y - closestY;
+      const burnRadius = (item.burnRadius ?? 48) + radius;
+
+      if (dx * dx + dy * dy <= burnRadius * burnRadius) {
+        nextDestroyedIds.push(item.id);
+        nextBurnBursts.push({
+          id: burnBurstIdRef.current,
+          intensity: Math.max(0.7, Math.min(3.4, Math.sqrt(rect.width * rect.height) / 42)),
+          x: closestX,
+          y: closestY,
+        });
+        burnBurstIdRef.current += 1;
+      }
+    });
+
+    if (nextDestroyedIds.length === 0) {
+      return;
+    }
+
+    const nextDestroyedSet = new Set(destroyedIdsRef.current);
+    nextDestroyedIds.forEach((id) => nextDestroyedSet.add(id));
+    destroyedIdsRef.current = nextDestroyedSet;
+
+    setDestroyedIds(nextDestroyedSet);
+    setBurnBursts((current) => [...current, ...nextBurnBursts].slice(-160));
+  };
+
+  useEffect(() => {
+    if (!isDragging) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      burnAtRef.current(flamethrowerRef.current.x, flamethrowerRef.current.y, 12);
+    }, performanceMode === "reduced" ? 140 : 80);
+
+    return () => window.clearInterval(interval);
+  }, [isDragging, performanceMode]);
+
+  useEffect(() => {
+    if (items.length === 0 || destroyedIds.size < items.length) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(onComplete, 720);
+    return () => window.clearTimeout(timer);
+  }, [destroyedIds.size, items.length, onComplete]);
+
+  const updateFlamethrowerFromPointer = (
+    event: PointerEvent<HTMLButtonElement>,
+    shouldBurn: boolean,
+  ) => {
+    const nextPosition = clampFlamethrowerPosition(event.clientX, event.clientY);
+    const dx = event.clientX - flamethrowerRef.current.lastPointerX;
+    const dy = event.clientY - flamethrowerRef.current.lastPointerY;
+    const directionLength = Math.hypot(dx, dy);
+    const directionX =
+      directionLength > 0.4 ? dx / directionLength : flamethrowerRef.current.directionX;
+    const directionY =
+      directionLength > 0.4 ? dy / directionLength : flamethrowerRef.current.directionY;
+
+    flamethrowerRef.current = {
+      ...flamethrowerRef.current,
+      directionX,
+      directionY,
+      lastPointerX: event.clientX,
+      lastPointerY: event.clientY,
+      x: nextPosition.x,
+      y: nextPosition.y,
+    };
+
+    setFlamethrowerPosition(nextPosition);
+    setFlamethrowerState({
+      active: shouldBurn && flamethrowerRef.current.dragging,
+      dx: directionX,
+      dy: directionY,
+      x: nextPosition.x,
+      y: nextPosition.y,
+    });
+
+    if (shouldBurn) {
+      burnAtRef.current(nextPosition.x, nextPosition.y, 12);
+    }
+  };
+
+  const handleFlamethrowerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    flamethrowerRef.current.dragging = true;
+    flamethrowerRef.current.lastPointerX = event.clientX;
+    flamethrowerRef.current.lastPointerY = event.clientY;
+    setIsDragging(true);
+    updateFlamethrowerFromPointer(event, true);
+  };
+
+  const handleFlamethrowerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!flamethrowerRef.current.dragging) {
+      return;
+    }
+
+    updateFlamethrowerFromPointer(event, true);
+  };
+
+  const stopFlamethrower = () => {
+    flamethrowerRef.current.dragging = false;
+    setIsDragging(false);
+    setFlamethrowerState({
+      active: false,
+      dx: flamethrowerRef.current.directionX,
+      dy: flamethrowerRef.current.directionY,
+      x: flamethrowerRef.current.x,
+      y: flamethrowerRef.current.y,
+    });
+  };
+
+  return (
+    <motion.div
+      className={`finale-destruction-scene ${finaleStageClassNames[stageKey]}`}
+      initial={{ opacity: 0, filter: "blur(10px)" }}
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, filter: "blur(12px)" }}
+      transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
+      aria-label={finaleStageLabels[stageKey]}
+    >
+      <div className="finale-destruction-stage">
+        <AnimatePresence>
+          {items
+            .filter((item) => !destroyedIds.has(item.id))
+            .map((item) => {
+              const itemStyle = {
+                left: item.left,
+                top: item.top,
+                width: item.width,
+                height: item.height,
+                ...item.style,
+                "--drift-delay": `${item.driftDelay ?? 0.5}s`,
+                "--drift-duration": `${item.driftDuration ?? 6}s`,
+                "--drift-rotate": `${item.driftRotate ?? 0}deg`,
+                "--drift-x": `${item.driftX ?? 0}px`,
+                "--drift-y": `${item.driftY ?? 0}px`,
+              } as FinaleBurnStyle;
+
+              return (
+                <motion.div
+                  className={`finale-burn-item${item.isAnchored ? " finale-anchored-piece" : ""} ${item.className ?? ""}`}
+                  key={item.id}
+                  ref={(element) => {
+                    itemRefs.current[item.id] = element;
+                  }}
+                  style={itemStyle}
+                  initial={{ opacity: 1, filter: "blur(0px)" }}
+                  animate={{ opacity: 1, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, filter: "blur(14px)" }}
+                  transition={{ duration: 0.34, ease: [0.33, 1, 0.68, 1] }}
+                >
+                  <div className="finale-burn-item-inner">{item.content}</div>
+                </motion.div>
+              );
+            })}
+        </AnimatePresence>
+      </div>
+      <FinaleFlamethrowerParticles
+        burnBursts={burnBursts}
+        flamethrower={flamethrowerState}
+        onBurn={(x, y, radius) => burnAtRef.current(x, y, radius)}
+        performanceMode={performanceMode}
+      />
+      <button
+        aria-label="Move the flamethrower"
+        className={`charity-cleanup-flamethrower-button finale-flamethrower-button${
+          isDragging ? " is-dragging" : ""
+        }`}
+        style={
+          {
+            "--flamethrower-x": `${flamethrowerPosition.x}px`,
+            "--flamethrower-y": `${flamethrowerPosition.y}px`,
+          } as CSSProperties
+        }
+        type="button"
+        onPointerCancel={stopFlamethrower}
+        onPointerDown={handleFlamethrowerDown}
+        onPointerMove={handleFlamethrowerMove}
+        onPointerUp={stopFlamethrower}
+      />
+    </motion.div>
+  );
+}
+
+function FinaleFlamethrowerParticles({
+  burnBursts,
+  flamethrower,
+  onBurn,
+  performanceMode,
+}: {
+  burnBursts: FinaleBurnBurst[];
+  flamethrower: CharityCleanupFlamethrowerState;
+  onBurn: (x: number, y: number, radius: number) => void;
+  performanceMode: PerformanceMode;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const flamethrowerRef = useRef(flamethrower);
+  const onBurnRef = useRef(onBurn);
+  const pendingBurnBurstsRef = useRef<FinaleBurnBurst[]>([]);
+  const seenBurnBurstIdsRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    flamethrowerRef.current = flamethrower;
+  }, [flamethrower]);
+
+  useEffect(() => {
+    onBurnRef.current = onBurn;
+  }, [onBurn]);
+
+  useEffect(() => {
+    const seenBurnBurstIds = seenBurnBurstIdsRef.current;
+    const activeBurnBurstIds = new Set(burnBursts.map((burnBurst) => burnBurst.id));
+
+    burnBursts.forEach((burnBurst) => {
+      if (seenBurnBurstIds.has(burnBurst.id)) {
+        return;
+      }
+
+      seenBurnBurstIds.add(burnBurst.id);
+      pendingBurnBurstsRef.current.push(burnBurst);
+    });
+
+    seenBurnBurstIds.forEach((id) => {
+      if (!activeBurnBurstIds.has(id)) {
+        seenBurnBurstIds.delete(id);
+      }
+    });
+  }, [burnBursts]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+
+    if (!canvas || !context) {
+      return;
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceEffects = performanceMode === "reduced" || reducedMotion;
+    const particles: CharityParticle[] = [];
+    const maxParticles = reduceEffects ? 120 : 260;
+    const frameIntervalMs = reduceEffects ? 33 : 16;
+    let width = 0;
+    let height = 0;
+    let animationFrame = 0;
+    let lastFrame = performance.now();
+    let lastPaint = 0;
+
+    const resize = () => {
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, reduceEffects ? 1 : 1.4);
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = Math.floor(width * pixelRatio);
+      canvas.height = Math.floor(height * pixelRatio);
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    };
+
+    const addParticle = (
+      x: number,
+      y: number,
+      vx: number,
+      vy: number,
+      color: string,
+      radius: number,
+      life: number,
+      canBurnItem = true,
+    ) => {
+      if (particles.length >= maxParticles) {
+        particles.shift();
+      }
+
+      particles.push({
+        x,
+        y,
+        vx,
+        vy,
+        color,
+        radius,
+        life,
+        maxLife: life,
+        canBurnItem,
+      });
+    };
+
+    const emitFlame = () => {
+      const current = flamethrowerRef.current;
+
+      if (!current.active) {
+        return;
+      }
+
+      const flameCount = reduceEffects ? 4 : 12;
+      const perpendicularX = -current.dy;
+      const perpendicularY = current.dx;
+
+      for (let index = 0; index < flameCount; index += 1) {
+        const spread = (Math.random() - 0.5) * 3.8;
+        const speed = Math.random() * 4.8 + 7.2;
+
+        addParticle(
+          current.x + perpendicularX * spread + (Math.random() - 0.5) * 5,
+          current.y + perpendicularY * spread + (Math.random() - 0.5) * 5,
+          current.dx * speed + perpendicularX * spread * 0.28,
+          current.dy * speed + perpendicularY * spread * 0.28,
+          index % 5 === 0 ? "#fff4cf" : index % 2 === 0 ? "#ff3b1f" : "#ff9f1f",
+          Math.random() * 5 + 3,
+          28 + Math.random() * 16,
+        );
+      }
+    };
+
+    const emitBurnBurst = (burnBurst: FinaleBurnBurst) => {
+      const burstCount = Math.round((reduceEffects ? 10 : 24) * burnBurst.intensity);
+
+      for (let index = 0; index < burstCount; index += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * (reduceEffects ? 3.8 : 6.6) + 1.6;
+        const lift = Math.random() * (reduceEffects ? 1.6 : 2.5);
+        const color =
+          index % 7 === 0 ? "#fff4cf" : index % 2 === 0 ? "#ff3b1f" : "#ff9f1f";
+
+        addParticle(
+          burnBurst.x + (Math.random() - 0.5) * 10,
+          burnBurst.y + (Math.random() - 0.5) * 10,
+          Math.cos(angle) * speed,
+          Math.sin(angle) * speed - lift,
+          color,
+          Math.random() * 5 + 2.5,
+          26 + Math.random() * 24,
+          false,
+        );
+      }
+    };
+
+    const animate = (now: number) => {
+      if (document.hidden || now - lastPaint < frameIntervalMs) {
+        animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      const delta = Math.min(2.3, (now - lastFrame) / 16.67);
+      lastFrame = now;
+      lastPaint = now;
+
+      context.clearRect(0, 0, width, height);
+      emitFlame();
+      const pendingBurnBursts = pendingBurnBurstsRef.current;
+      pendingBurnBurstsRef.current = [];
+      pendingBurnBursts.forEach(emitBurnBurst);
+
+      for (let index = particles.length - 1; index >= 0; index -= 1) {
+        const particle = particles[index];
+        particle.life -= delta;
+        particle.vy += 0.05 * delta;
+        particle.x += particle.vx * delta;
+        particle.y += particle.vy * delta;
+
+        if (particle.canBurnItem !== false) {
+          onBurnRef.current(particle.x, particle.y, particle.radius * 1.35);
+        }
+
+        const alpha = Math.max(0, particle.life / particle.maxLife);
+        context.globalAlpha = alpha;
+        context.fillStyle = particle.color;
+        context.beginPath();
+        context.arc(particle.x, particle.y, particle.radius * (0.65 + alpha * 0.5), 0, Math.PI * 2);
+        context.fill();
+        context.globalAlpha = 1;
+
+        if (particle.life <= 0) {
+          particles.splice(index, 1);
+        }
+      }
+
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    resize();
+    animationFrame = window.requestAnimationFrame(animate);
+    window.addEventListener("resize", resize);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", resize);
+    };
+  }, [performanceMode]);
+
+  return <canvas ref={canvasRef} className="finale-flamethrower-particles" aria-hidden="true" />;
+}
+
+function finaleLength(value: FinaleLength) {
+  return typeof value === "number" ? `${value}%` : value;
+}
+
+function finaleItem(
+  id: string,
+  left: FinaleLength,
+  top: FinaleLength,
+  width: string,
+  height: string,
+  content: ReactNode,
+  options: Partial<Omit<FinaleBurnItem, "content" | "height" | "id" | "left" | "top" | "width">> = {},
+): FinaleBurnItem {
+  return {
+    id,
+    left: finaleLength(left),
+    top: finaleLength(top),
+    width,
+    height,
+    content,
+    ...options,
+  };
+}
+
+function createFinaleTextItems(
+  id: string,
+  text: string,
+  left: FinaleLength,
+  top: FinaleLength,
+  {
+    burnRadius = 26,
+    height = "1.6rem",
+    letterClassName = "",
+    step = "0.72rem",
+    width = "0.75rem",
+  }: {
+    burnRadius?: number;
+    height?: string;
+    letterClassName?: string;
+    step?: string;
+    width?: string;
+  } = {},
+) {
+  const characters = Array.from(text);
+  const centerOffset = (characters.length - 1) / 2;
+
+  return characters.flatMap((letter, index) => {
+    if (letter === " ") {
+      return [];
+    }
+
+    return [
+      finaleItem(
+        `${id}-letter-${index}`,
+        `calc(${finaleLength(left)} + (${index - centerOffset} * ${step}))`,
+        top,
+        width,
+        height,
+        <span className={`finale-text-letter ${letterClassName}`}>{letter}</span>,
+        {
+          burnRadius,
+          className: "finale-letter-item",
+        },
+      ),
+    ];
+  });
+}
+
+function createFinaleWrappedTextItems(
+  id: string,
+  text: string,
+  left: FinaleLength,
+  top: FinaleLength,
+  {
+    burnRadius = 20,
+    columns,
+    height = "1.05rem",
+    letterClassName = "",
+    maxChars,
+    stepX = "0.46rem",
+    stepY = "0.95rem",
+    width = "0.48rem",
+  }: {
+    burnRadius?: number;
+    columns: number;
+    height?: string;
+    letterClassName?: string;
+    maxChars: number;
+    stepX?: string;
+    stepY?: string;
+    width?: string;
+  },
+) {
+  return Array.from(text.slice(0, maxChars)).flatMap((letter, index) => {
+    if (letter === " ") {
+      return [];
+    }
+
+    const row = Math.floor(index / columns);
+    const col = index % columns;
+    const centerOffset = (columns - 1) / 2;
+
+    return [
+      finaleItem(
+        `${id}-letter-${index}`,
+        `calc(${finaleLength(left)} + (${col - centerOffset} * ${stepX}))`,
+        `calc(${finaleLength(top)} + ${row} * ${stepY})`,
+        width,
+        height,
+        <span className={`finale-text-letter ${letterClassName}`}>{letter}</span>,
+        {
+          burnRadius,
+          className: "finale-letter-item",
+        },
+      ),
+    ];
+  });
+}
+
+function createFinaleTextLineSet(
+  id: string,
+  lines: string[],
+  left: FinaleLength,
+  top: FinaleLength,
+  options: Parameters<typeof createFinaleTextItems>[4] & {
+    lineGap?: string;
+  } = {},
+) {
+  const { lineGap = "1.35rem", ...textOptions } = options;
+
+  return lines.flatMap((line, index) =>
+    createFinaleTextItems(
+      `${id}-line-${index}`,
+      line,
+      left,
+      `calc(${finaleLength(top)} + ${index} * ${lineGap})`,
+      textOptions,
+    ),
+  );
+}
+
+function createFinaleJaggedClipPath(index: number) {
+  const topA = 4 + ((index * 17) % 13);
+  const topB = 34 + ((index * 23) % 17);
+  const topC = 64 + ((index * 19) % 16);
+  const rightA = 8 + ((index * 29) % 18);
+  const rightB = 57 + ((index * 31) % 19);
+  const bottomA = 72 + ((index * 11) % 18);
+  const bottomB = 38 + ((index * 37) % 18);
+  const bottomC = 9 + ((index * 13) % 18);
+  const leftA = 60 + ((index * 41) % 22);
+  const leftB = 20 + ((index * 43) % 19);
+
+  return `polygon(0 ${leftB}%, ${topA}% 0, ${topB}% ${index % 2 === 0 ? 0 : 3}%, ${topC}% 0, 100 ${rightA}%, ${98 - (index % 4)}% ${rightB}%, 100 100%, ${bottomA}% ${98 - (index % 5)}%, ${bottomB}% 100%, ${bottomC}% ${97 - (index % 3)}%, 0 ${leftA}%)`;
+}
+
+function createAnchoredPieceOptions(
+  index: number,
+  className = "",
+  style: CSSProperties = {},
+) {
+  return {
+    burnRadius: 44,
+    className: `finale-jagged-piece ${className}`.trim(),
+    isAnchored: true,
+    style: {
+      ...style,
+      clipPath: createFinaleJaggedClipPath(index),
+    },
+  };
+}
+
+function addFinaleDrift(items: FinaleBurnItem[], stageKey: FinaleStageKey) {
+  const stageSeed = finaleStageKeys.indexOf(stageKey) + 1;
+
+  return items.map((item, index) => {
+    if (item.isAnchored) {
+      return {
+        ...item,
+        driftDelay: item.driftDelay ?? 999,
+        driftDuration: item.driftDuration ?? 999,
+        driftRotate: item.driftRotate ?? 0,
+        driftX: item.driftX ?? 0,
+        driftY: item.driftY ?? 0,
+      };
+    }
+
+    const seed = (index + 1) * (stageSeed * 19 + 31);
+    const driftX = (((seed * 37) % 101) - 50) * 0.22;
+    const driftY = (((seed * 53) % 101) - 50) * 0.18;
+    const driftRotate = (((seed * 29) % 101) - 50) * 0.035;
+
+    return {
+      ...item,
+      driftDelay: item.driftDelay ?? 2.8 + (seed % 23) * 0.08,
+      driftDuration: item.driftDuration ?? 7.6 + (seed % 47) * 0.08,
+      driftRotate: item.driftRotate ?? driftRotate,
+      driftX: item.driftX ?? driftX,
+      driftY: item.driftY ?? driftY,
+    };
+  });
+}
+
+function createFinaleBurnItems(stageKey: FinaleStageKey, performanceMode: PerformanceMode) {
+  const items =
+    stageKey === "animals"
+      ? createAnimalFinaleItems()
+      : stageKey === "dandle"
+        ? createDandleFinaleItems()
+        : stageKey === "wordSearch"
+          ? createWordSearchFinaleItems()
+          : stageKey === "xp"
+            ? createXpFinaleItems(performanceMode)
+            : stageKey === "wiki"
+              ? createWikiFinaleItems(performanceMode)
+              : stageKey === "danflix"
+                ? createDanflixFinaleItems()
+                : stageKey === "jeopardy"
+                  ? createJeopardyFinaleItems()
+                  : createCharityFinaleItems();
+
+  return addFinaleDrift(items, stageKey);
+}
+
+function createAnimalFinaleItems() {
+  return [
+    ...createFinaleTextItems(
+      "animal-title",
+      animalGameTitle,
+      50,
+      "calc(50% - 5.65rem)",
+      {
+        burnRadius: 32,
+        height: "3.4rem",
+        letterClassName: "finale-letter-animal-title",
+        step: "clamp(0.72rem, 2.1vw, 1.14rem)",
+        width: "clamp(0.68rem, 2vw, 1.08rem)",
+      },
+    ),
+    ...createFinaleTextItems(
+      "animal-score",
+      "score 0",
+      50,
+      "calc(50% - 2.8rem)",
+      {
+        burnRadius: 24,
+        height: "1.4rem",
+        letterClassName: "finale-letter-game-score",
+        step: "0.48rem",
+        width: "0.45rem",
+      },
+    ),
+    finaleItem(
+      "animal-input-line",
+      50,
+      50,
+      "min(calc(100vw - 2.5rem), 30rem)",
+      "3.35rem",
+      <div className="game-input-shell finale-static-input">
+        <input aria-label="Name animals until failure" disabled />
+      </div>,
+      { burnRadius: 64 },
+    ),
+    ...createFinaleTextItems(
+      "animal-input-placeholder",
+      "type here",
+      50,
+      50,
+      {
+        burnRadius: 24,
+        height: "1.5rem",
+        letterClassName: "finale-letter-input-placeholder",
+        step: "0.72rem",
+        width: "0.62rem",
+      },
+    ),
+  ];
+}
+
+function createDandleFinaleItems() {
+  const cellSize = "clamp(2.12rem, 6.2vmin, 3.25rem)";
+  const cells = Array.from({ length: 6 * 5 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const col = index % 5;
+
+    return finaleItem(
+      `dandle-cell-${row}-${col}`,
+      `calc(50% + (${col - 2} * clamp(2.55rem, 7.25vmin, 3.95rem)))`,
+      `calc(50% - clamp(7.8rem, 22vmin, 12.8rem) + (${row} * clamp(2.55rem, 7.25vmin, 3.95rem)))`,
+      cellSize,
+      cellSize,
+      <span className="wordle-cell" />,
+      { burnRadius: 58 },
+    );
+  });
+
+  return [
+    ...createFinaleTextItems(
+      "dandle-title",
+      "disco dandle",
+      50,
+      "calc(50% - clamp(11.9rem, 32vmin, 18rem))",
+      {
+        burnRadius: 32,
+        height: "2.8rem",
+        letterClassName: "finale-letter-dandle-title",
+        step: "clamp(0.82rem, 2.6vw, 1.28rem)",
+        width: "clamp(0.76rem, 2.2vw, 1.18rem)",
+      },
+    ),
+    ...cells,
+    finaleItem(
+      "dandle-input-line",
+      50,
+      "calc(50% + clamp(9.2rem, 26vmin, 14.6rem))",
+      "min(calc(100vw - 2.5rem), 19rem)",
+      "3rem",
+      <form className="wordle-form finale-static-wordle-form">
+        <input aria-label="Wordle guess" disabled />
+      </form>,
+      { burnRadius: 66 },
+    ),
+    ...createFinaleTextItems(
+      "dandle-input-placeholder",
+      "guess",
+      50,
+      "calc(50% + clamp(9.2rem, 26vmin, 14.6rem))",
+      {
+        burnRadius: 24,
+        height: "1.5rem",
+        letterClassName: "finale-letter-input-placeholder",
+        step: "0.72rem",
+        width: "0.62rem",
+      },
+    ),
+  ];
+}
+
+function createWordSearchFinaleItems() {
+  const levelIndex = wordSearchLevels.length - 1;
+  const puzzle = createWordSearchPuzzle(wordSearchLevels[levelIndex], levelIndex);
+  const cells = puzzle.grid.flatMap((row, rowIndex) =>
+    row.map((letter, colIndex) =>
+      finaleItem(
+        `word-search-cell-${rowIndex}-${colIndex}`,
+        `calc(50% - var(--finale-word-search-board-size) / 2 + var(--finale-word-search-cell) * ${colIndex + 0.5})`,
+        `calc(50% - var(--finale-word-search-board-size) / 2 + var(--finale-word-search-cell) * ${rowIndex + 0.5})`,
+        "var(--finale-word-search-cell)",
+        "var(--finale-word-search-cell)",
+        <span className="word-search-cell" role="gridcell" aria-label={letter}>
+          <span className="word-search-letter-glyph" data-letter={letter}>{letter}</span>
+        </span>,
+        { burnRadius: 58 },
+      ),
+    ),
+  );
+  const clues = puzzle.targets.map((target, index) =>
+    createFinaleTextItems(
+      `word-search-clue-${target.id}`,
+      target.clue,
+      `calc(50% - min(17rem, 39vw) + ${index} * min(8.5rem, 19vw))`,
+      `calc(50% + var(--finale-word-search-board-size) / 2 + 2.1rem)`,
+      {
+        burnRadius: 20,
+        height: "1.5rem",
+        letterClassName: "finale-letter-word-search-clue",
+        step: "0.42rem",
+        width: "0.38rem",
+      },
+    ),
+  ).flat();
+
+  return [
+    ...createFinaleTextItems(
+      "word-search-title",
+      "Word Search",
+      50,
+      `calc(50% - var(--finale-word-search-board-size) / 2 - 3.5rem)`,
+      {
+        burnRadius: 30,
+        height: "3rem",
+        letterClassName: "finale-letter-word-search-title",
+        step: "clamp(0.82rem, 2.6vw, 1.22rem)",
+        width: "clamp(0.74rem, 2.1vw, 1.12rem)",
+      },
+    ),
+    ...cells,
+    ...clues,
+  ];
+}
+
+function createXpFinaleItems(performanceMode: PerformanceMode) {
+  const columns = performanceMode === "reduced" ? 13 : 20;
+  const rows = performanceMode === "reduced" ? 8 : 12;
+  const wallpaperHeight = 94;
+  const wallpaperTiles = Array.from({ length: columns * rows }, (_, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const backgroundPositionX = (column / Math.max(1, columns - 1)) * 100;
+    const backgroundPositionY = (row / Math.max(1, rows - 1)) * 100;
+
+    return finaleItem(
+      `xp-wallpaper-${row}-${column}`,
+      `${(column + 0.5) * (100 / columns)}%`,
+      `${(row + 0.5) * (wallpaperHeight / rows)}%`,
+      `${100 / columns}%`,
+      `${wallpaperHeight / rows}%`,
+      <span
+        className="finale-xp-wallpaper-tile"
+        style={
+          {
+            "--xp-bg-position": `${backgroundPositionX}% ${backgroundPositionY}%`,
+            "--xp-bg-size": `${columns * 100}% ${rows * 100}%`,
+          } as FinaleBurnStyle
+        }
+      />,
+      createAnchoredPieceOptions(index, "finale-xp-wallpaper-piece"),
+    );
+  });
+
+  return [
+    ...wallpaperTiles,
+    finaleItem(
+      "xp-excel-icon",
+      50,
+      50,
+      "6.5rem",
+      "5.8rem",
+      <div className="desktop-app-icon desktop-excel-icon finale-xp-icon">
+        <span className="excel-icon finale-empty-excel-icon" aria-hidden="true" />
+        <span className="finale-label-spacer">Excel</span>
+      </div>,
+      { burnRadius: 68 },
+    ),
+    ...createFinaleTextItems(
+      "xp-excel-x",
+      "X",
+      50,
+      "calc(50% - 0.72rem)",
+      {
+        burnRadius: 24,
+        height: "3.2rem",
+        letterClassName: "finale-letter-excel-icon",
+        step: "1rem",
+        width: "2.2rem",
+      },
+    ),
+    ...createFinaleTextItems(
+      "xp-excel-label",
+      "Excel",
+      50,
+      "calc(50% + 2.45rem)",
+      {
+        burnRadius: 24,
+        height: "1.1rem",
+        letterClassName: "finale-letter-xp-label",
+        step: "0.42rem",
+        width: "0.42rem",
+      },
+    ),
+    finaleItem(
+      "xp-start-button",
+      "4.8rem",
+      "calc(100% - 1.08rem)",
+      "9.6rem",
+      "2.15rem",
+      <div className="xp-start-button finale-xp-taskbar-piece" />,
+      { burnRadius: 64 },
+    ),
+    ...createFinaleTextItems(
+      "xp-start-text",
+      "start",
+      "4.8rem",
+      "calc(100% - 1.08rem)",
+      {
+        burnRadius: 22,
+        height: "1.2rem",
+        letterClassName: "finale-letter-xp-start",
+        step: "0.46rem",
+        width: "0.42rem",
+      },
+    ),
+    finaleItem(
+      "xp-task-button",
+      "17rem",
+      "calc(100% - 1.08rem)",
+      "13rem",
+      "2.15rem",
+      <div className="xp-task-button is-active finale-xp-taskbar-piece" />,
+      { burnRadius: 68 },
+    ),
+    ...createFinaleTextItems(
+      "xp-task-text",
+      "Excel",
+      "14.3rem",
+      "calc(100% - 1.08rem)",
+      {
+        burnRadius: 22,
+        height: "1.2rem",
+        letterClassName: "finale-letter-xp-task",
+        step: "0.46rem",
+        width: "0.42rem",
+      },
+    ),
+    finaleItem(
+      "xp-clock",
+      "calc(100% - 3rem)",
+      "calc(100% - 1.08rem)",
+      "6rem",
+      "2.15rem",
+      <div className="xp-clock finale-xp-taskbar-piece" />,
+      { burnRadius: 62 },
+    ),
+    ...createFinaleTextItems(
+      "xp-clock-text",
+      "4:59 PM",
+      "calc(100% - 3rem)",
+      "calc(100% - 1.08rem)",
+      {
+        burnRadius: 22,
+        height: "1rem",
+        letterClassName: "finale-letter-xp-clock",
+        step: "0.38rem",
+        width: "0.34rem",
+      },
+    ),
+  ];
+}
+
+function createWikiFinaleItems(performanceMode: PerformanceMode) {
+  const columns = performanceMode === "reduced" ? 9 : 14;
+  const rows = performanceMode === "reduced" ? 6 : 9;
+  const pageTiles = Array.from({ length: columns * rows }, (_, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+
+    return finaleItem(
+      `wiki-page-tile-${row}-${column}`,
+      `${14 + (column + 0.5) * (72 / columns)}%`,
+      `${23 + (row + 0.5) * (63 / rows)}%`,
+      `${72 / columns}%`,
+      `${63 / rows}%`,
+      <span className="finale-wiki-page-tile" />,
+      createAnchoredPieceOptions(index, "finale-wiki-page-piece"),
+    );
+  });
+
+  return [
+    finaleItem(
+      "wiki-tab",
+      31,
+      8,
+      "31rem",
+      "2.2rem",
+      <div className="disco-browser-tab is-active finale-wiki-tab">
+        <span className="disco-tab-dot" aria-hidden="true" />
+      </div>,
+      { burnRadius: 68 },
+    ),
+    ...createFinaleTextItems(
+      "wiki-tab-text",
+      "Disco - Wikipedia",
+      31,
+      8,
+      {
+        burnRadius: 20,
+        height: "1rem",
+        letterClassName: "finale-letter-wiki-tab",
+        step: "0.42rem",
+        width: "0.36rem",
+      },
+    ),
+    finaleItem(
+      "wiki-title-bar",
+      66,
+      8,
+      "28rem",
+      "2.2rem",
+      <div className="disco-browser-title finale-wiki-title" />,
+      { burnRadius: 68 },
+    ),
+    ...createFinaleTextItems(
+      "wiki-title-bar-text",
+      "Disco Chrome",
+      66,
+      8,
+      {
+        burnRadius: 20,
+        height: "1rem",
+        letterClassName: "finale-letter-wiki-title",
+        step: "0.46rem",
+        width: "0.4rem",
+      },
+    ),
+    finaleItem(
+      "wiki-toolbar",
+      50,
+      13,
+      "72%",
+      "2.4rem",
+      <div className="finale-wiki-toolbar">
+        <span>&lt;</span>
+        <span>&gt;</span>
+        <span>r</span>
+        <div className="disco-address-bar" />
+      </div>,
+      { burnRadius: 72 },
+    ),
+    ...createFinaleTextItems(
+      "wiki-address-text",
+      "https://en.wikipedia.org/wiki/Disco",
+      55,
+      13,
+      {
+        burnRadius: 18,
+        height: "0.95rem",
+        letterClassName: "finale-letter-wiki-address",
+        step: "0.34rem",
+        width: "0.3rem",
+      },
+    ),
+    ...pageTiles,
+    finaleItem(
+      "wiki-sidebar",
+      20,
+      49,
+      "13rem",
+      "26rem",
+      <aside className="fake-wiki-sidebar finale-wiki-sidebar" />,
+      { burnRadius: 76 },
+    ),
+    ...createFinaleTextLineSet(
+      "wiki-sidebar-text",
+      ["Contents", "Etymology", "Musical characteristics", "Club culture", "History", "Legacy"],
+      20,
+      37,
+      {
+        burnRadius: 18,
+        height: "0.95rem",
+        letterClassName: "finale-letter-wiki-sidebar",
+        lineGap: "2.2rem",
+        step: "0.32rem",
+        width: "0.28rem",
+      },
+    ),
+    finaleItem(
+      "wiki-heading",
+      44,
+      25,
+      "21rem",
+      "5rem",
+      <div className="fake-wiki-main finale-wiki-heading" />,
+      { burnRadius: 74 },
+    ),
+    ...createFinaleTextItems(
+      "wiki-source-text",
+      "From Wikipedia, the free encyclopedia",
+      44,
+      23,
+      {
+        burnRadius: 18,
+        height: "0.9rem",
+        letterClassName: "finale-letter-wiki-source",
+        step: "0.28rem",
+        width: "0.25rem",
+      },
+    ),
+    ...createFinaleTextItems(
+      "wiki-heading-text",
+      "Disco",
+      36,
+      25.5,
+      {
+        burnRadius: 24,
+        height: "2.8rem",
+        letterClassName: "finale-letter-wiki-heading",
+        step: "0.82rem",
+        width: "0.72rem",
+      },
+    ),
+    ...createFinaleTextItems(
+      "wiki-description-text",
+      "Music genre and subculture",
+      43,
+      29,
+      {
+        burnRadius: 18,
+        height: "0.95rem",
+        letterClassName: "finale-letter-wiki-description",
+        step: "0.34rem",
+        width: "0.3rem",
+      },
+    ),
+    finaleItem(
+      "wiki-notice",
+      48,
+      38,
+      "30rem",
+      "4.2rem",
+      <div className="fake-wiki-notice finale-wiki-notice" />,
+      { burnRadius: 70 },
+    ),
+    ...createFinaleWrappedTextItems(
+      "wiki-notice-text",
+      "For more information on disco, see the page on Dance Pants Revolution.",
+      48,
+      37.2,
+      {
+        burnRadius: 16,
+        columns: 58,
+        height: "0.9rem",
+        letterClassName: "finale-letter-wiki-body",
+        maxChars: 116,
+        stepX: "0.28rem",
+        stepY: "0.9rem",
+        width: "0.24rem",
+      },
+    ),
+    finaleItem(
+      "wiki-infobox",
+      75,
+      48,
+      "16rem",
+      "26rem",
+      <div className="fake-wiki-infobox finale-wiki-infobox" />,
+      { burnRadius: 78 },
+    ),
+    ...createFinaleTextLineSet(
+      "wiki-infobox-text",
+      [
+        "Disco",
+        "Stylistic origins",
+        ...discoInfoLinks.slice(0, 5),
+        "Derivative forms",
+        ...discoInfoLinks.slice(7, 11),
+      ],
+      75,
+      37,
+      {
+        burnRadius: 16,
+        height: "0.9rem",
+        letterClassName: "finale-letter-wiki-infobox",
+        lineGap: "1.55rem",
+        step: "0.26rem",
+        width: "0.24rem",
+      },
+    ),
+    ...discoWikiSections.flatMap((section, sectionIndex) =>
+      section.paragraphs.slice(0, 2).flatMap((paragraph, paragraphIndex) =>
+        createFinaleWrappedTextItems(
+          `wiki-paragraph-${sectionIndex}-${paragraphIndex}`,
+          paragraph,
+          46,
+          49.5 + sectionIndex * 16.5 + paragraphIndex * 7.6,
+          {
+            burnRadius: 15,
+            columns: 74,
+            height: "0.86rem",
+            letterClassName: "finale-letter-wiki-body",
+            maxChars: 296,
+            stepX: "0.28rem",
+            stepY: "0.84rem",
+            width: "0.24rem",
+          },
+        ),
+      ),
+    ),
+  ];
+}
+
+function createDanflixFinaleItems() {
+  const heroColumns = 12;
+  const heroRows = 8;
+  const heroTiles = Array.from({ length: heroColumns * heroRows }, (_, index) => {
+    const column = index % heroColumns;
+    const row = Math.floor(index / heroColumns);
+    const backgroundPositionX = (column / Math.max(1, heroColumns - 1)) * 100;
+    const backgroundPositionY = (row / Math.max(1, heroRows - 1)) * 100;
+
+    return finaleItem(
+      `danflix-hero-tile-${row}-${column}`,
+      `${44 + (column + 0.5) * (54 / heroColumns)}%`,
+      `${18 + (row + 0.5) * (40 / heroRows)}%`,
+      `${54 / heroColumns}%`,
+      `${40 / heroRows}%`,
+      <span
+        className="finale-danflix-hero-tile"
+        style={
+          {
+            "--danflix-hero-position": `${backgroundPositionX}% ${backgroundPositionY}%`,
+            "--danflix-hero-size": `${heroColumns * 100}% ${heroRows * 100}%`,
+          } as FinaleBurnStyle
+        }
+      />,
+      createAnchoredPieceOptions(index, "finale-danflix-hero-piece"),
+    );
+  });
+  const posters = danflixPosters.slice(0, 10).map((poster, index) => {
+    const title = poster.words.map((word) => word.text).join(" ");
+
+    return finaleItem(
+      `danflix-poster-${poster.id}`,
+      `${9 + index * 9.1}%`,
+      78,
+      "8.4%",
+      "25%",
+      <article
+        aria-label={`${title} poster`}
+        className={`danflix-poster ${poster.className} finale-danflix-poster`}
+      >
+        <img className="danflix-poster-image" src={poster.image} alt="" draggable={false} />
+      </article>,
+      { burnRadius: 64 },
+    );
+  });
+  const posterLetters = danflixPosters.slice(0, 10).flatMap((poster, index) =>
+    createFinaleTextItems(
+      `danflix-poster-title-${poster.id}`,
+      poster.words.map((word) => word.text).join(" "),
+      `${9 + index * 9.1}%`,
+      85,
+      {
+        burnRadius: 18,
+        height: "1.2rem",
+        letterClassName: "finale-letter-poster",
+        step: "0.26rem",
+        width: "0.24rem",
+      },
+    ),
+  );
+
+  return [
+    finaleItem(
+      "danflix-logo",
+      "5.3rem",
+      "2.35rem",
+      "8rem",
+      "2.4rem",
+      <div className="danflix-logo finale-logo-spacer" />,
+      { burnRadius: 64 },
+    ),
+    ...createFinaleTextItems(
+      "danflix-logo-text",
+      "Danflix",
+      "5.3rem",
+      "2.35rem",
+      {
+        burnRadius: 24,
+        height: "2rem",
+        letterClassName: "finale-letter-danflix-logo",
+        step: "0.58rem",
+        width: "0.52rem",
+      },
+    ),
+    finaleItem(
+      "danflix-nav-links",
+      26,
+      "2.35rem",
+      "22rem",
+      "2.4rem",
+      <nav className="danflix-nav-links finale-danflix-links">
+        <button type="button" disabled />
+        <button type="button" disabled />
+        <button type="button" disabled />
+      </nav>,
+      { burnRadius: 68 },
+    ),
+    ...createFinaleTextItems("danflix-nav-tv", "TV Shows", 20, "2.35rem", {
+      burnRadius: 18,
+      height: "1rem",
+      letterClassName: "finale-letter-danflix-nav",
+      step: "0.36rem",
+      width: "0.32rem",
+    }),
+    ...createFinaleTextItems("danflix-nav-movies", "Movies", 27, "2.35rem", {
+      burnRadius: 18,
+      height: "1rem",
+      letterClassName: "finale-letter-danflix-nav",
+      step: "0.36rem",
+      width: "0.32rem",
+    }),
+    ...createFinaleTextItems("danflix-nav-lists", "My Lists", 34, "2.35rem", {
+      burnRadius: 18,
+      height: "1rem",
+      letterClassName: "finale-letter-danflix-nav",
+      step: "0.36rem",
+      width: "0.32rem",
+    }),
+    finaleItem(
+      "danflix-feature-copy",
+      21,
+      35,
+      "34%",
+      "42%",
+      <div className="finale-danflix-feature-copy">
+        <p className="danflix-original finale-label-spacer">A Danflix Original</p>
+        <h1 className="danflix-title-logo finale-label-spacer">
+          <span>Disco Dan</span>
+          <span>The Dancumentary</span>
+        </h1>
+        <p className="danflix-description finale-label-spacer">{danflixDescription}</p>
+        <div className="danflix-actions">
+          <button className="danflix-play-button" type="button" disabled />
+          <button className="danflix-info-button" type="button" disabled>
+            <span />
+            <span className="danflix-info-icon" aria-hidden="true">i</span>
+          </button>
+        </div>
+      </div>,
+      { burnRadius: 80 },
+    ),
+    ...createFinaleTextItems("danflix-original-text", "A Danflix Original", 20.5, 23, {
+      burnRadius: 18,
+      height: "1rem",
+      letterClassName: "finale-letter-danflix-original",
+      step: "0.34rem",
+      width: "0.3rem",
+    }),
+    ...createFinaleTextItems("danflix-title-main-text", "Disco Dan", 20.5, 29, {
+      burnRadius: 28,
+      height: "3.8rem",
+      letterClassName: "finale-letter-danflix-title",
+      step: "1.04rem",
+      width: "0.94rem",
+    }),
+    ...createFinaleTextItems("danflix-title-sub-text", "The Dancumentary", 20.5, 34.5, {
+      burnRadius: 18,
+      height: "1.2rem",
+      letterClassName: "finale-letter-danflix-subtitle",
+      step: "0.38rem",
+      width: "0.34rem",
+    }),
+    ...createFinaleWrappedTextItems("danflix-description-text", danflixDescription, 21, 40, {
+      burnRadius: 15,
+      columns: 58,
+      height: "0.9rem",
+      letterClassName: "finale-letter-danflix-description",
+      maxChars: 174,
+      stepX: "0.28rem",
+      stepY: "0.88rem",
+      width: "0.24rem",
+    }),
+    ...createFinaleTextItems("danflix-play-text", "Play", 14.8, 54, {
+      burnRadius: 18,
+      height: "1rem",
+      letterClassName: "finale-letter-danflix-play",
+      step: "0.38rem",
+      width: "0.34rem",
+    }),
+    ...createFinaleTextItems("danflix-info-text", "More Info", 24, 54, {
+      burnRadius: 18,
+      height: "1rem",
+      letterClassName: "finale-letter-danflix-info",
+      step: "0.34rem",
+      width: "0.3rem",
+    }),
+    ...heroTiles,
+    ...createFinaleTextItems(
+      "danflix-feature-caption",
+      "Disco Dan: The Dancumentary",
+      78,
+      57,
+      {
+        burnRadius: 18,
+        height: "1.2rem",
+        letterClassName: "finale-letter-danflix-caption",
+        step: "0.42rem",
+        width: "0.38rem",
+      },
+    ),
+    ...createFinaleTextItems(
+      "danflix-row-title",
+      "Popular on Danflix",
+      11,
+      63,
+      {
+        burnRadius: 20,
+        height: "1.4rem",
+        letterClassName: "finale-letter-danflix-row-title",
+        step: "0.42rem",
+        width: "0.38rem",
+      },
+    ),
+    ...posters,
+    ...posterLetters,
+  ];
+}
+
+function createJeopardyFinaleItems() {
+  const columnCount = jeopardyCategories.length;
+  const rowCount = jeopardyValues.length + 1;
+  const boardLeft = 5;
+  const boardTop = 8;
+  const boardWidth = 90;
+  const boardHeight = 84;
+  const columnWidth = boardWidth / columnCount;
+  const rowHeight = boardHeight / rowCount;
+  const categoryItems = jeopardyCategories.flatMap((category, columnIndex) =>
+    [
+      finaleItem(
+        `jeopardy-category-${columnIndex}`,
+        `${boardLeft + columnWidth * (columnIndex + 0.5)}%`,
+        `${boardTop + rowHeight * 0.5}%`,
+        `${columnWidth}%`,
+        `${rowHeight}%`,
+        <div className="jeopardy-category" />,
+        { burnRadius: 66 },
+      ),
+      ...createFinaleTextItems(
+        `jeopardy-category-${columnIndex}-text`,
+        category,
+        `${boardLeft + columnWidth * (columnIndex + 0.5)}%`,
+        `${boardTop + rowHeight * 0.5}%`,
+        {
+          burnRadius: 22,
+          height: "1.3rem",
+          letterClassName: "finale-letter-jeopardy-category",
+          step: "0.4rem",
+          width: "0.36rem",
+        },
+      ),
+    ],
+  );
+  const tileItems = jeopardyValues.flatMap((value, valueIndex) =>
+    jeopardyCategories.flatMap((_, columnIndex) =>
+      [
+        finaleItem(
+          `jeopardy-tile-${value}-${columnIndex}`,
+          `${boardLeft + columnWidth * (columnIndex + 0.5)}%`,
+          `${boardTop + rowHeight * (valueIndex + 1.5)}%`,
+          `${columnWidth}%`,
+          `${rowHeight}%`,
+          <div className="jeopardy-tile" />,
+          { burnRadius: 70 },
+        ),
+        ...createFinaleTextItems(
+          `jeopardy-tile-${value}-${columnIndex}-text`,
+          `$${value}`,
+          `${boardLeft + columnWidth * (columnIndex + 0.5)}%`,
+          `${boardTop + rowHeight * (valueIndex + 1.5)}%`,
+          {
+            burnRadius: 26,
+            height: "2.4rem",
+            letterClassName: "finale-letter-jeopardy-value",
+            step: "0.64rem",
+            width: "0.58rem",
+          },
+        ),
+      ],
+    ),
+  );
+
+  return [...categoryItems, ...tileItems];
+}
+
+function createCharityFinaleItems() {
+  const coins = Array.from({ length: 30 }, (_, index) => {
+    const ring = Math.floor(index / 10);
+    const angle = (index % 10) * (Math.PI * 2 / 10) + ring * 0.32;
+    const radiusX = 18 + ring * 8;
+    const radiusY = 13 + ring * 5;
+
+    return finaleItem(
+      `charity-coin-${index}`,
+      `${50 + Math.cos(angle) * radiusX}%`,
+      `${52 + Math.sin(angle) * radiusY}%`,
+      "1.6rem",
+      "1.6rem",
+      <span className="finale-charity-coin" />,
+      { burnRadius: 54 },
+    );
+  });
+
+  return [
+    ...createFinaleTextItems(
+      "charity-title",
+      "Charity Simulator",
+      50,
+      "clamp(2.5rem, 8vh, 4.2rem)",
+      {
+        burnRadius: 30,
+        height: "3.5rem",
+        letterClassName: "finale-letter-charity-title",
+        step: "clamp(0.72rem, 2.2vw, 1.18rem)",
+        width: "clamp(0.66rem, 2vw, 1.1rem)",
+      },
+    ),
+    ...coins,
+    finaleItem(
+      "charity-donate",
+      50,
+      50,
+      "clamp(11rem, 30vw, 16rem)",
+      "3.35rem",
+      <button className="charity-donate-button" type="button" disabled />,
+      { burnRadius: 70 },
+    ),
+    ...createFinaleTextItems(
+      "charity-donate-text",
+      "Give to charity",
+      50,
+      50,
+      {
+        burnRadius: 22,
+        height: "1.3rem",
+        letterClassName: "finale-letter-charity-button",
+        step: "0.52rem",
+        width: "0.46rem",
+      },
+    ),
+    ...createFinaleTextItems(
+      "charity-balance",
+      "$0",
+      50,
+      "calc(50% + 4.5rem)",
+      {
+        burnRadius: 24,
+        height: "2.4rem",
+        letterClassName: "finale-letter-charity-balance",
+        step: "0.8rem",
+        width: "0.72rem",
+      },
+    ),
+  ];
 }
 
 type DiscoReturnPhase = "countdown" | "reveal";

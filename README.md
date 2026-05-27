@@ -24,6 +24,56 @@ Interactive site with clear direction thanks to a neat onboarding page that show
 For the first puzzle, make it 5x5. the clue is at the bottom. The clue for the first puzzle is "1. Dan's favorite thing." Once they solve it, create a 10x10 puzzle. The clue is "1. The best type of music." The next puzzle is 20x20. The clue is "1. A cd-form, plus o". The next puzzle is 50x50 (you may need to resize the letters in the puzzles to make them fit the same space), and the clue is "1. DAN DAN DAN" Once they solve that one, change all the letters in the puzzle to the words "DAN" and "DISCO" repeating (they can be incomplete if the row or column runs out). 
 - After clicking request dan's forgiveness after the danflix section, next section. Black screen. A vector-art clock fades in to the center. The hands are already spinning very fast around and around. They gradually slow after about 5 seconds to stop at 7:00 pm. The text "8:00 PM" appears under the clock (the clock is in the exact center of the screen, and when the text appears, its position shouldn't change). Under "8:00 PM" fades in the text: "Dan goes to watch TV...". Everyhing on the screen fades out. Then, the JEOPARDY logo appears (provided here, optimize it) and spins slowly on the y axis in the center of the screen (so it should rotate so that we can see the back, which is just the same as the front). The player clicks on it, and the podiums image appears (provided here, optimize it) "fullscreen" (the same kind of fullscreen that the windows xp has). The left podium has the name "Dan" written, the center one has the name "Dan" written, and the last one has the name that the player entered into the name field at the very beginning (for these names, try to find a handwriting-like font). These podiums, if you examine the images, have two main sections of the front. The top is for the money of each player, and the middle/bottom one is for their name. Each player will start with $0. After 4 seconds of looking at this scene, show the jeopary board (you will just need to create this.) There will be 6 categories, DISCO and DAN as the middle two, and the 2 on each side will all say POTPOURRI, and each category with answers worth 100, 200, 400, 800, and 1000 dollars. The potpourri categories are spoofs, you can't click on them. The way the questions will function is this. When you click on one, a blue square animates in an expanding manner from that tile to fill the screen. The question will be on it. Under the question in the center will be a red round button with a gold border that says "BUZZ". Here is how the question will work. Starting with the first word, the words will turn yellow in order, as is they're being read. They should turn yellow about 3 per second. If the player presses buzz before the last word turns yellow, turn the button grey and change the text on it to "TOO EARLY" (make sure it fits, it can be on two rows). If they're too early, show the podiums again, and highlight one of the Dan's podiums at random (put a border around it or something). Above that podium, put "Dan says: {answer}" where the answer is the correct answer, and then change their money value to be the correct value (whatever they had plus whatever they won.) The money value should be green for a second to indicate the change, then go back to white. After that, show the jeopardy board again, with the one that was already chosen missing, plus, a couple of random potpourri tiles missing just to make it look good. If the player waits until the last word turns yellow, then show the podiums and highlight their podium, with a multiple choice menu above the podiums (overlayed on the image). If they answer in 8 seconds (show a little times at the top of the multiple choice), remove the multiple choice and show the text "{name} says {answer}". If it was right, give them the points. If it was wrong, subtract that question money value from their score and make it red for a second, then highlight one of the dan's podiums and do the same as before. Let's start with that, and probably i'll have to iterate. I'll give the actual questions and multiple choice options/answers later
 - After final jeopardy, fade out everything a put a button that says "Charity Simulator" and under that "(because of your greed)". This leads to the next thing. Title at the top: Charity Simulator. Button in the center that says "Give to charity". Your money balance from jeopardy is below it. Every time you press the button, a gold coin drops from the sky and lands on the bottom of the screen (it's physics based). The gold coins can hit each other. Try to optimize this as best as you can. The balance goes down by $1 each time (it can go negative if you're at 0 because you lost jeopardy). Once you donate 10 times, a message appears for a moment in the middle above the button "The poor are beginning to feel new strength...", and fades out. After 20 times, "That's worth your weight in gold...". After 30, "The impoverish begin to feel the burden of wealth...", after 40 "Seriously this stuff is heavy..." and at 50 "STOP PLEASE WE CAN'T MOVE IT'S SO MUCH GOLD" and block the button in an ice cube (just a very simple thing, don't go fancy). Put a small circle (just a white outline, black center) above where the button it, and above it, label it "flamethrower". They click and hold on the button and flames shoot out (physics based red and orange particles) and slowly chunks of the icecube break off and melt away. Once the ice is gone, if they press the button again, it causes all the gold to turn to fire (just turn into gold and red particles then disappear)
-- Make the charity text that pops up be centered, right now it's over to the right. The flamethrower is too close to the ice, it should be higher. Label the icecube "ICE" in big white letters. The buttons at the end of jeopardy and the give to charity button shouldn't have a white fill on hover, keep it simple. Each press of the donate to charity button should drop 5 gold coins (still only counts as one donation, i just like physics). The jeopardy final scene after the was that cool prompt and buttons, everything is too high, it needs to be centered in the screen.
-- Jeopardy questions (doesn't matter where they go)
-1. 
+- Make the charity text that pops up be centered, right now it's over to the right. The flamethrower is too close to the ice, it should be higher. Label the icecube "ICE" in big white letters. The buttons at the end of jeopardy and the give to charity button shouldn't have a white fill on hover, keep it simple. Each press of the donate to charity button should drop 5 gold coins (still only counts as one donation, i just like physics). The jeopardy final scene after the was that cool prompt and buttons, everything is too high, it needs to be centered in the screen. On mobile, the jeopardy podiums background is super zoomed in, so the text isn't sitting on top of anything. I think it just needs to fit the viewport, even if it makes the image small. Some of the text, like "funko says Dan", those boxes go off the edge on mobile too.
+- Jeopardy questions (doesn't matter where they go, randomize them)
+1. This is the hit game purchased and renamed by Disco Dan
+    a. Disco Dandle - correct
+    b. Dandle Disco
+    c. Dan Discodle
+    d. Discodle Dan
+2. Dan died on this day.
+    a. Wednesday
+    b. 1965 - correct
+    c. Wednesday
+    d. Wednesday
+3. Dan was born on this day.
+    a. Black Friday
+    b. Good Friday
+    c. Maundy Friday
+    d. 1965 - correct
+4. This streaming service suspends accounts which were shared with a man in a business suit.
+    a. Michaelsoft Excel
+    b. Michaelsoft Excel
+    c. The New York Times
+    d. Danflix - Correct
+5. This is what Dan does after the clock reaches eight in the evening.
+    a. Watch TV - correct
+    b. Observe the telly
+    c. Eat in front of the tv
+    d. Dance (tv)
+6. This is Disco Dan's favorite animal
+    a. pig
+    b. cat
+    c. disco dan - correct
+    d. sheep
+7.  If you choose an answer to this question at random, what is the probability that you will be correct?
+    a. 25%
+    b. 50%
+    c. 60%
+    d. 25%.
+    (this one's a paradox, they're all wrong. When the player gets it wrong, the left dan should say the text "Dan says u r dum") and the middle dan says "Ha nerd" no points to anyone.
+8. I have cities, but no houses. I have mountains, but no trees. I have water, but no fish.
+    a. a map
+    b. a map
+    c. a map
+    d. not a map - correct
+9. This is Disco Dan's favorite hair gel
+    a. Dan's Hair Gel
+    b. Dapper Dan
+    c. Crisco - correct
+    d. Dancumentary Sauce
+10. This is how you feel about Jeopardy
+    a. good
+    b. real good
+    c. pretty good
+    d. well - correct
