@@ -1,4 +1,4 @@
-import { type CSSProperties, type FormEvent, type MouseEvent, type MutableRefObject, type PointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { memo, type CSSProperties, type FormEvent, type MouseEvent, type MutableRefObject, type PointerEvent, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 type AnswerKey = "name" | "date" | "time";
@@ -1750,6 +1750,36 @@ function clampFlamethrowerPosition(x: number, y: number) {
   return {
     x: Math.min(window.innerWidth - margin, Math.max(margin, x)),
     y: Math.min(window.innerHeight - margin, Math.max(margin, y)),
+  };
+}
+
+function getContinuousFlamethrowerDirection(
+  dx: number,
+  dy: number,
+  fallbackDx: number,
+  fallbackDy: number,
+) {
+  const directionLength = Math.hypot(dx, dy);
+
+  if (directionLength > 0.01) {
+    return {
+      dx: dx / directionLength,
+      dy: dy / directionLength,
+    };
+  }
+
+  const fallbackLength = Math.hypot(fallbackDx, fallbackDy);
+
+  if (fallbackLength > 0.01) {
+    return {
+      dx: fallbackDx / fallbackLength,
+      dy: fallbackDy / fallbackLength,
+    };
+  }
+
+  return {
+    dx: 0,
+    dy: -1,
   };
 }
 
@@ -4179,12 +4209,125 @@ type FinaleBurnItem = {
   style?: CSSProperties;
 };
 
+type FinaleFlamethrowerState = CharityCleanupFlamethrowerState & {
+  dragging: boolean;
+  lastPointerX: number;
+  lastPointerY: number;
+  pointerId: number | null;
+};
+
 type FinaleBurnBurst = {
   id: number;
   x: number;
   y: number;
   intensity: number;
 };
+
+type FinaleItemMeasurement = {
+  id: string;
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+  burnRadius: number;
+};
+
+type FinaleHitGrid = {
+  cellSize: number;
+  cells: Map<string, FinaleItemMeasurement[]>;
+};
+
+const FINALE_BURN_REMOVAL_DELAY_MS = 360;
+const FINALE_HIT_GRID_CELL_SIZE = 128;
+const FINALE_HIT_GRID_PADDING = 48;
+
+function finaleHitGridKey(column: number, row: number) {
+  return `${column}:${row}`;
+}
+
+function createFinaleItemMeasurement(
+  item: FinaleBurnItem,
+  element: HTMLElement,
+): FinaleItemMeasurement {
+  const rect = element.getBoundingClientRect();
+
+  return {
+    id: item.id,
+    left: rect.left,
+    top: rect.top,
+    right: rect.right,
+    bottom: rect.bottom,
+    width: rect.width,
+    height: rect.height,
+    burnRadius: item.burnRadius ?? 48,
+  };
+}
+
+function createFinaleHitGrid(measurements: Iterable<FinaleItemMeasurement>): FinaleHitGrid {
+  const cells = new Map<string, FinaleItemMeasurement[]>();
+
+  for (const measurement of measurements) {
+    const padding = measurement.burnRadius + FINALE_HIT_GRID_PADDING;
+    const minColumn = Math.floor((measurement.left - padding) / FINALE_HIT_GRID_CELL_SIZE);
+    const maxColumn = Math.floor((measurement.right + padding) / FINALE_HIT_GRID_CELL_SIZE);
+    const minRow = Math.floor((measurement.top - padding) / FINALE_HIT_GRID_CELL_SIZE);
+    const maxRow = Math.floor((measurement.bottom + padding) / FINALE_HIT_GRID_CELL_SIZE);
+
+    for (let column = minColumn; column <= maxColumn; column += 1) {
+      for (let row = minRow; row <= maxRow; row += 1) {
+        const key = finaleHitGridKey(column, row);
+        const cell = cells.get(key);
+
+        if (cell) {
+          cell.push(measurement);
+        } else {
+          cells.set(key, [measurement]);
+        }
+      }
+    }
+  }
+
+  return {
+    cellSize: FINALE_HIT_GRID_CELL_SIZE,
+    cells,
+  };
+}
+
+function getFinaleHitCandidates(
+  grid: FinaleHitGrid,
+  x: number,
+  y: number,
+  radius: number,
+) {
+  const candidates: FinaleItemMeasurement[] = [];
+  const seenIds = new Set<string>();
+  const centerColumn = Math.floor(x / grid.cellSize);
+  const centerRow = Math.floor(y / grid.cellSize);
+  const range = Math.max(1, Math.ceil((radius + FINALE_HIT_GRID_PADDING) / grid.cellSize));
+
+  for (let column = centerColumn - range; column <= centerColumn + range; column += 1) {
+    for (let row = centerRow - range; row <= centerRow + range; row += 1) {
+      const cell = grid.cells.get(finaleHitGridKey(column, row));
+
+      if (!cell) {
+        continue;
+      }
+
+      cell.forEach((measurement) => {
+        if (seenIds.has(measurement.id)) {
+          return;
+        }
+
+        seenIds.add(measurement.id);
+        candidates.push(measurement);
+      });
+    }
+  }
+
+  return candidates;
+}
 
 const finaleIntroLines = [
   "50 years ago, Disco Dan won a competition...",
@@ -4328,7 +4471,54 @@ function FinaleDestructionSequence({
   performanceMode: PerformanceMode;
 }) {
   const [stageIndex, setStageIndex] = useState(0);
+  const initialFlamethrowerPosition = useMemo(getCleanupFlamethrowerLandingPosition, []);
+  const [isFlamethrowerDragging, setIsFlamethrowerDragging] = useState(false);
+  const flamethrowerStateRef = useRef<FinaleFlamethrowerState>({
+    ...initialFlamethrowerPosition,
+    active: false,
+    dragging: false,
+    dx: 0,
+    dy: -1,
+    lastPointerX: initialFlamethrowerPosition.x,
+    lastPointerY: initialFlamethrowerPosition.y,
+    pointerId: null,
+  });
   const stageKey = finaleStageKeys[stageIndex] ?? "charity";
+
+  const stopPersistedFlamethrower = useCallback((pointerId?: number) => {
+    const flamethrower = flamethrowerStateRef.current;
+
+    if (
+      typeof pointerId === "number" &&
+      flamethrower.pointerId !== null &&
+      flamethrower.pointerId !== pointerId
+    ) {
+      return;
+    }
+
+    flamethrower.active = false;
+    flamethrower.dragging = false;
+    flamethrower.pointerId = null;
+    setIsFlamethrowerDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isFlamethrowerDragging) {
+      return undefined;
+    }
+
+    const handlePointerEnd = (event: globalThis.PointerEvent) => {
+      stopPersistedFlamethrower(event.pointerId);
+    };
+
+    window.addEventListener("pointerup", handlePointerEnd, true);
+    window.addEventListener("pointercancel", handlePointerEnd, true);
+
+    return () => {
+      window.removeEventListener("pointerup", handlePointerEnd, true);
+      window.removeEventListener("pointercancel", handlePointerEnd, true);
+    };
+  }, [isFlamethrowerDragging, stopPersistedFlamethrower]);
 
   const completeStage = () => {
     if (stageIndex >= finaleStageKeys.length - 1) {
@@ -4342,7 +4532,10 @@ function FinaleDestructionSequence({
   return (
     <FinaleBurnStage
       key={stageKey}
+      flamethrowerStateRef={flamethrowerStateRef}
+      isFlamethrowerDragging={isFlamethrowerDragging}
       performanceMode={performanceMode}
+      setIsFlamethrowerDragging={setIsFlamethrowerDragging}
       stageKey={stageKey}
       onComplete={completeStage}
     />
@@ -4391,12 +4584,18 @@ function FinaleEnding({ performanceMode }: { performanceMode: PerformanceMode })
 }
 
 function FinaleBurnStage({
+  flamethrowerStateRef,
+  isFlamethrowerDragging,
   onComplete,
   performanceMode,
+  setIsFlamethrowerDragging,
   stageKey,
 }: {
+  flamethrowerStateRef: MutableRefObject<FinaleFlamethrowerState>;
+  isFlamethrowerDragging: boolean;
   onComplete: () => void;
   performanceMode: PerformanceMode;
+  setIsFlamethrowerDragging: (isDragging: boolean) => void;
   stageKey: FinaleStageKey;
 }) {
   const items = useMemo(
@@ -4404,61 +4603,142 @@ function FinaleBurnStage({
     [performanceMode, stageKey],
   );
   const [destroyedIds, setDestroyedIds] = useState<Set<string>>(() => new Set());
+  const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
   const [burnBursts, setBurnBursts] = useState<FinaleBurnBurst[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [flamethrowerPosition, setFlamethrowerPosition] = useState(
-    getCleanupFlamethrowerLandingPosition,
-  );
-  const [flamethrowerState, setFlamethrowerState] = useState<CharityCleanupFlamethrowerState>(() => ({
-    ...getCleanupFlamethrowerLandingPosition(),
-    active: false,
-    dx: 0,
-    dy: -1,
-  }));
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const itemMeasurementsRef = useRef<Map<string, FinaleItemMeasurement>>(new Map());
+  const itemHitGridRef = useRef<FinaleHitGrid>({
+    cellSize: FINALE_HIT_GRID_CELL_SIZE,
+    cells: new Map(),
+  });
   const destroyedIdsRef = useRef(destroyedIds);
   const burnBurstIdRef = useRef(0);
-  const flamethrowerRef = useRef({
-    dragging: false,
-    directionX: 0,
-    directionY: -1,
-    lastPointerX: flamethrowerPosition.x,
-    lastPointerY: flamethrowerPosition.y,
-    x: flamethrowerPosition.x,
-    y: flamethrowerPosition.y,
-  });
+  const removalTimerIdsRef = useRef<number[]>([]);
+  const flamethrowerButtonRef = useRef<HTMLButtonElement | null>(null);
   const burnAtRef = useRef<(x: number, y: number, radius?: number) => void>(() => {});
 
   useEffect(() => {
     destroyedIdsRef.current = destroyedIds;
   }, [destroyedIds]);
 
-  burnAtRef.current = (x: number, y: number, radius = 0) => {
-    const nextDestroyedIds: string[] = [];
-    const nextBurnBursts: FinaleBurnBurst[] = [];
+  useEffect(
+    () => () => {
+      removalTimerIdsRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    },
+    [],
+  );
+
+  const visibleItems = useMemo(
+    () => items.filter((item) => !removedIds.has(item.id)),
+    [items, removedIds],
+  );
+
+  const registerItem = useCallback((id: string, element: HTMLDivElement | null) => {
+    itemRefs.current[id] = element;
+  }, []);
+
+  const measureItems = useCallback(() => {
+    const nextMeasurements = new Map<string, FinaleItemMeasurement>();
 
     items.forEach((item) => {
-      if (destroyedIdsRef.current.has(item.id)) {
-        return;
-      }
-
       const element = itemRefs.current[item.id];
+
       if (!element) {
         return;
       }
 
-      const rect = element.getBoundingClientRect();
-      const closestX = Math.min(rect.right, Math.max(rect.left, x));
-      const closestY = Math.min(rect.bottom, Math.max(rect.top, y));
+      nextMeasurements.set(item.id, createFinaleItemMeasurement(item, element));
+    });
+
+    itemMeasurementsRef.current = nextMeasurements;
+    itemHitGridRef.current = createFinaleHitGrid(nextMeasurements.values());
+  }, [items]);
+
+  useLayoutEffect(() => {
+    measureItems();
+    const frame = window.requestAnimationFrame(measureItems);
+
+    window.addEventListener("resize", measureItems);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", measureItems);
+    };
+  }, [measureItems]);
+
+  const updateFlamethrowerVisual = useCallback((x: number, y: number) => {
+    const button = flamethrowerButtonRef.current;
+
+    if (!button) {
+      return;
+    }
+
+    button.style.setProperty("--flamethrower-x", `${x}px`);
+    button.style.setProperty("--flamethrower-y", `${y}px`);
+  }, []);
+
+  const updateFlamethrowerParticleState = useCallback(
+    (active: boolean, dx: number, dy: number, x: number, y: number) => {
+      const particleState = flamethrowerStateRef.current;
+      particleState.active = active;
+      particleState.dx = dx;
+      particleState.dy = dy;
+      particleState.x = x;
+      particleState.y = y;
+    },
+    [flamethrowerStateRef],
+  );
+
+  useLayoutEffect(() => {
+    const flamethrower = flamethrowerStateRef.current;
+    flamethrower.active = flamethrower.dragging;
+    updateFlamethrowerVisual(flamethrower.x, flamethrower.y);
+  }, [flamethrowerStateRef, stageKey, updateFlamethrowerVisual]);
+
+  const handleParticleBurn = useCallback(
+    (x: number, y: number, radius: number) => burnAtRef.current(x, y, radius),
+    [],
+  );
+
+  burnAtRef.current = (x: number, y: number, radius = 0) => {
+    const nextDestroyedIds: string[] = [];
+    const nextDestroyedIdSet = new Set<string>();
+    const nextBurnBursts: FinaleBurnBurst[] = [];
+
+    if (itemMeasurementsRef.current.size === 0) {
+      measureItems();
+    }
+
+    const measurements = itemMeasurementsRef.current;
+    const hitGrid = itemHitGridRef.current;
+    const candidates =
+      hitGrid.cells.size > 0
+        ? getFinaleHitCandidates(hitGrid, x, y, radius)
+        : Array.from(measurements.values());
+
+    candidates.forEach((measurement) => {
+      if (
+        destroyedIdsRef.current.has(measurement.id) ||
+        nextDestroyedIdSet.has(measurement.id)
+      ) {
+        return;
+      }
+
+      const closestX = Math.min(measurement.right, Math.max(measurement.left, x));
+      const closestY = Math.min(measurement.bottom, Math.max(measurement.top, y));
       const dx = x - closestX;
       const dy = y - closestY;
-      const burnRadius = (item.burnRadius ?? 48) + radius;
+      const burnRadius = measurement.burnRadius + radius;
 
       if (dx * dx + dy * dy <= burnRadius * burnRadius) {
-        nextDestroyedIds.push(item.id);
+        nextDestroyedIdSet.add(measurement.id);
+        nextDestroyedIds.push(measurement.id);
         nextBurnBursts.push({
           id: burnBurstIdRef.current,
-          intensity: Math.max(0.7, Math.min(3.4, Math.sqrt(rect.width * rect.height) / 42)),
+          intensity: Math.max(
+            0.7,
+            Math.min(3.4, Math.sqrt(measurement.width * measurement.height) / 42),
+          ),
           x: closestX,
           y: closestY,
         });
@@ -4476,19 +4756,40 @@ function FinaleBurnStage({
 
     setDestroyedIds(nextDestroyedSet);
     setBurnBursts((current) => [...current, ...nextBurnBursts].slice(-160));
+
+    const removalTimerId = window.setTimeout(() => {
+      setRemovedIds((current) => {
+        let didChange = false;
+        const nextRemovedSet = new Set(current);
+
+        nextDestroyedIds.forEach((id) => {
+          if (nextRemovedSet.has(id)) {
+            return;
+          }
+
+          nextRemovedSet.add(id);
+          didChange = true;
+        });
+
+        return didChange ? nextRemovedSet : current;
+      });
+    }, FINALE_BURN_REMOVAL_DELAY_MS);
+
+    removalTimerIdsRef.current.push(removalTimerId);
   };
 
   useEffect(() => {
-    if (!isDragging) {
+    if (!isFlamethrowerDragging) {
       return undefined;
     }
 
     const interval = window.setInterval(() => {
-      burnAtRef.current(flamethrowerRef.current.x, flamethrowerRef.current.y, 12);
+      const flamethrower = flamethrowerStateRef.current;
+      burnAtRef.current(flamethrower.x, flamethrower.y, 12);
     }, performanceMode === "reduced" ? 140 : 80);
 
     return () => window.clearInterval(interval);
-  }, [isDragging, performanceMode]);
+  }, [flamethrowerStateRef, isFlamethrowerDragging, performanceMode]);
 
   useEffect(() => {
     if (items.length === 0 || destroyedIds.size < items.length) {
@@ -4499,71 +4800,125 @@ function FinaleBurnStage({
     return () => window.clearTimeout(timer);
   }, [destroyedIds.size, items.length, onComplete]);
 
-  const updateFlamethrowerFromPointer = (
-    event: PointerEvent<HTMLButtonElement>,
-    shouldBurn: boolean,
-  ) => {
-    const nextPosition = clampFlamethrowerPosition(event.clientX, event.clientY);
-    const dx = event.clientX - flamethrowerRef.current.lastPointerX;
-    const dy = event.clientY - flamethrowerRef.current.lastPointerY;
-    const directionLength = Math.hypot(dx, dy);
-    const directionX =
-      directionLength > 0.4 ? dx / directionLength : flamethrowerRef.current.directionX;
-    const directionY =
-      directionLength > 0.4 ? dy / directionLength : flamethrowerRef.current.directionY;
+  const updateFlamethrowerFromPoint = useCallback(
+    (clientX: number, clientY: number, shouldBurn: boolean) => {
+      const nextPosition = clampFlamethrowerPosition(clientX, clientY);
+      const flamethrower = flamethrowerStateRef.current;
+      const direction = getContinuousFlamethrowerDirection(
+        clientX - flamethrower.lastPointerX,
+        clientY - flamethrower.lastPointerY,
+        flamethrower.dx,
+        flamethrower.dy,
+      );
+      const isActive = shouldBurn && flamethrower.dragging;
 
-    flamethrowerRef.current = {
-      ...flamethrowerRef.current,
-      directionX,
-      directionY,
-      lastPointerX: event.clientX,
-      lastPointerY: event.clientY,
-      x: nextPosition.x,
-      y: nextPosition.y,
-    };
+      flamethrower.dx = direction.dx;
+      flamethrower.dy = direction.dy;
+      flamethrower.lastPointerX = clientX;
+      flamethrower.lastPointerY = clientY;
+      flamethrower.x = nextPosition.x;
+      flamethrower.y = nextPosition.y;
+      flamethrower.active = isActive;
 
-    setFlamethrowerPosition(nextPosition);
-    setFlamethrowerState({
-      active: shouldBurn && flamethrowerRef.current.dragging,
-      dx: directionX,
-      dy: directionY,
-      x: nextPosition.x,
-      y: nextPosition.y,
-    });
+      updateFlamethrowerVisual(nextPosition.x, nextPosition.y);
+      updateFlamethrowerParticleState(
+        isActive,
+        direction.dx,
+        direction.dy,
+        nextPosition.x,
+        nextPosition.y,
+      );
 
-    if (shouldBurn) {
-      burnAtRef.current(nextPosition.x, nextPosition.y, 12);
-    }
-  };
+      if (shouldBurn) {
+        burnAtRef.current(nextPosition.x, nextPosition.y, 12);
+      }
+    },
+    [flamethrowerStateRef, updateFlamethrowerParticleState, updateFlamethrowerVisual],
+  );
 
-  const handleFlamethrowerDown = (event: PointerEvent<HTMLButtonElement>) => {
+  const handleFlamethrowerDown = useCallback((event: PointerEvent<HTMLButtonElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
-    flamethrowerRef.current.dragging = true;
-    flamethrowerRef.current.lastPointerX = event.clientX;
-    flamethrowerRef.current.lastPointerY = event.clientY;
-    setIsDragging(true);
-    updateFlamethrowerFromPointer(event, true);
-  };
+    const flamethrower = flamethrowerStateRef.current;
+    flamethrower.dragging = true;
+    flamethrower.active = true;
+    flamethrower.pointerId = event.pointerId;
+    flamethrower.lastPointerX = event.clientX;
+    flamethrower.lastPointerY = event.clientY;
+    setIsFlamethrowerDragging(true);
+    updateFlamethrowerFromPoint(event.clientX, event.clientY, true);
+  }, [flamethrowerStateRef, setIsFlamethrowerDragging, updateFlamethrowerFromPoint]);
 
-  const handleFlamethrowerMove = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!flamethrowerRef.current.dragging) {
+  const handleFlamethrowerMove = useCallback((event: PointerEvent<HTMLButtonElement>) => {
+    const flamethrower = flamethrowerStateRef.current;
+
+    if (!flamethrower.dragging || flamethrower.pointerId !== event.pointerId) {
       return;
     }
 
-    updateFlamethrowerFromPointer(event, true);
-  };
+    updateFlamethrowerFromPoint(event.clientX, event.clientY, true);
+  }, [flamethrowerStateRef, updateFlamethrowerFromPoint]);
 
-  const stopFlamethrower = () => {
-    flamethrowerRef.current.dragging = false;
-    setIsDragging(false);
-    setFlamethrowerState({
-      active: false,
-      dx: flamethrowerRef.current.directionX,
-      dy: flamethrowerRef.current.directionY,
-      x: flamethrowerRef.current.x,
-      y: flamethrowerRef.current.y,
-    });
-  };
+  const stopFlamethrower = useCallback((pointerId?: number) => {
+    const flamethrower = flamethrowerStateRef.current;
+
+    if (
+      typeof pointerId === "number" &&
+      flamethrower.pointerId !== null &&
+      flamethrower.pointerId !== pointerId
+    ) {
+      return;
+    }
+
+    flamethrower.dragging = false;
+    flamethrower.active = false;
+    flamethrower.pointerId = null;
+    setIsFlamethrowerDragging(false);
+    updateFlamethrowerParticleState(
+      false,
+      flamethrower.dx,
+      flamethrower.dy,
+      flamethrower.x,
+      flamethrower.y,
+    );
+  }, [flamethrowerStateRef, setIsFlamethrowerDragging, updateFlamethrowerParticleState]);
+
+  useEffect(() => {
+    if (!isFlamethrowerDragging) {
+      return undefined;
+    }
+
+    const handleDocumentPointerMove = (event: globalThis.PointerEvent) => {
+      const flamethrower = flamethrowerStateRef.current;
+
+      if (
+        event.target === flamethrowerButtonRef.current ||
+        !flamethrower.dragging ||
+        flamethrower.pointerId !== event.pointerId
+      ) {
+        return;
+      }
+
+      updateFlamethrowerFromPoint(event.clientX, event.clientY, true);
+    };
+    const handleDocumentPointerEnd = (event: globalThis.PointerEvent) => {
+      stopFlamethrower(event.pointerId);
+    };
+
+    window.addEventListener("pointermove", handleDocumentPointerMove, { passive: true });
+    window.addEventListener("pointerup", handleDocumentPointerEnd);
+    window.addEventListener("pointercancel", handleDocumentPointerEnd);
+
+    return () => {
+      window.removeEventListener("pointermove", handleDocumentPointerMove);
+      window.removeEventListener("pointerup", handleDocumentPointerEnd);
+      window.removeEventListener("pointercancel", handleDocumentPointerEnd);
+    };
+  }, [
+    flamethrowerStateRef,
+    isFlamethrowerDragging,
+    stopFlamethrower,
+    updateFlamethrowerFromPoint,
+  ]);
 
   return (
     <motion.div
@@ -4575,89 +4930,107 @@ function FinaleBurnStage({
       aria-label={finaleStageLabels[stageKey]}
     >
       <div className="finale-destruction-stage">
-        <AnimatePresence>
-          {items
-            .filter((item) => !destroyedIds.has(item.id))
-            .map((item) => {
-              const itemStyle = {
-                left: item.left,
-                top: item.top,
-                width: item.width,
-                height: item.height,
-                ...item.style,
-                "--drift-delay": `${item.driftDelay ?? 0.5}s`,
-                "--drift-duration": `${item.driftDuration ?? 6}s`,
-                "--drift-rotate": `${item.driftRotate ?? 0}deg`,
-                "--drift-x": `${item.driftX ?? 0}px`,
-                "--drift-y": `${item.driftY ?? 0}px`,
-              } as FinaleBurnStyle;
-
-              return (
-                <motion.div
-                  className={`finale-burn-item${item.isAnchored ? " finale-anchored-piece" : ""} ${item.className ?? ""}`}
-                  key={item.id}
-                  ref={(element) => {
-                    itemRefs.current[item.id] = element;
-                  }}
-                  style={itemStyle}
-                  initial={{ opacity: 1, filter: "blur(0px)" }}
-                  animate={{ opacity: 1, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, filter: "blur(14px)" }}
-                  transition={{ duration: 0.34, ease: [0.33, 1, 0.68, 1] }}
-                >
-                  <div className="finale-burn-item-inner">{item.content}</div>
-                </motion.div>
-              );
-            })}
-        </AnimatePresence>
+        {visibleItems.map((item) => (
+          <FinaleBurnItemView
+            key={item.id}
+            item={item}
+            isDestroyed={destroyedIds.has(item.id)}
+            registerItem={registerItem}
+          />
+        ))}
       </div>
       <FinaleFlamethrowerParticles
         burnBursts={burnBursts}
-        flamethrower={flamethrowerState}
-        onBurn={(x, y, radius) => burnAtRef.current(x, y, radius)}
+        flamethrowerRef={flamethrowerStateRef}
+        onBurn={handleParticleBurn}
         performanceMode={performanceMode}
       />
       <button
         aria-label="Move the flamethrower"
         className={`charity-cleanup-flamethrower-button finale-flamethrower-button${
-          isDragging ? " is-dragging" : ""
+          isFlamethrowerDragging ? " is-dragging" : ""
         }`}
+        ref={flamethrowerButtonRef}
         style={
           {
-            "--flamethrower-x": `${flamethrowerPosition.x}px`,
-            "--flamethrower-y": `${flamethrowerPosition.y}px`,
+            "--flamethrower-x": `${flamethrowerStateRef.current.x}px`,
+            "--flamethrower-y": `${flamethrowerStateRef.current.y}px`,
           } as CSSProperties
         }
         type="button"
-        onPointerCancel={stopFlamethrower}
+        onPointerCancel={(event) => stopFlamethrower(event.pointerId)}
         onPointerDown={handleFlamethrowerDown}
         onPointerMove={handleFlamethrowerMove}
-        onPointerUp={stopFlamethrower}
+        onPointerUp={(event) => stopFlamethrower(event.pointerId)}
       />
     </motion.div>
   );
 }
 
-function FinaleFlamethrowerParticles({
+type FinaleBurnItemViewProps = {
+  item: FinaleBurnItem;
+  isDestroyed: boolean;
+  registerItem: (id: string, element: HTMLDivElement | null) => void;
+};
+
+const FinaleBurnItemView = memo(function FinaleBurnItemView({
+  item,
+  isDestroyed,
+  registerItem,
+}: FinaleBurnItemViewProps) {
+  const itemStyle = useMemo(
+    () =>
+      ({
+        left: item.left,
+        top: item.top,
+        width: item.width,
+        height: item.height,
+        ...item.style,
+        "--drift-delay": `${item.driftDelay ?? 0.5}s`,
+        "--drift-duration": `${item.driftDuration ?? 6}s`,
+        "--drift-rotate": `${item.driftRotate ?? 0}deg`,
+        "--drift-x": `${item.driftX ?? 0}px`,
+        "--drift-y": `${item.driftY ?? 0}px`,
+      }) as FinaleBurnStyle,
+    [item],
+  );
+  const setItemRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      registerItem(item.id, element);
+    },
+    [item.id, registerItem],
+  );
+  const className = [
+    "finale-burn-item",
+    item.isAnchored ? "finale-anchored-piece" : "",
+    item.className ?? "",
+    isDestroyed ? "is-destroyed" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={className} ref={setItemRef} style={itemStyle}>
+      <div className="finale-burn-item-inner">{item.content}</div>
+    </div>
+  );
+});
+
+const FinaleFlamethrowerParticles = memo(function FinaleFlamethrowerParticles({
   burnBursts,
-  flamethrower,
+  flamethrowerRef,
   onBurn,
   performanceMode,
 }: {
   burnBursts: FinaleBurnBurst[];
-  flamethrower: CharityCleanupFlamethrowerState;
+  flamethrowerRef: MutableRefObject<CharityCleanupFlamethrowerState>;
   onBurn: (x: number, y: number, radius: number) => void;
   performanceMode: PerformanceMode;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const flamethrowerRef = useRef(flamethrower);
   const onBurnRef = useRef(onBurn);
   const pendingBurnBurstsRef = useRef<FinaleBurnBurst[]>([]);
   const seenBurnBurstIdsRef = useRef<Set<number>>(new Set());
-
-  useEffect(() => {
-    flamethrowerRef.current = flamethrower;
-  }, [flamethrower]);
 
   useEffect(() => {
     onBurnRef.current = onBurn;
@@ -4842,10 +5215,188 @@ function FinaleFlamethrowerParticles({
   }, [performanceMode]);
 
   return <canvas ref={canvasRef} className="finale-flamethrower-particles" aria-hidden="true" />;
-}
+});
 
 function finaleLength(value: FinaleLength) {
   return typeof value === "number" ? `${value}%` : value;
+}
+
+function roundFinaleCssNumber(value: number) {
+  return Number(value.toFixed(4)).toString();
+}
+
+function splitFinaleCssArgs(value: string) {
+  const args: string[] = [];
+  let depth = 0;
+  let current = "";
+
+  Array.from(value).forEach((char) => {
+    if (char === "(") {
+      depth += 1;
+    } else if (char === ")") {
+      depth -= 1;
+    }
+
+    if (char === "," && depth === 0) {
+      args.push(current.trim());
+      current = "";
+      return;
+    }
+
+    current += char;
+  });
+
+  if (current.trim()) {
+    args.push(current.trim());
+  }
+
+  return args;
+}
+
+function scalePositiveFinaleLengthExpression(expression: string, multiplier: number): string {
+  const trimmedExpression = expression.trim();
+  const numericLengthMatch = /^(-?\d*\.?\d+)([a-z%]+)$/i.exec(trimmedExpression);
+
+  if (Math.abs(multiplier) < 0.0001) {
+    return "0px";
+  }
+
+  if (numericLengthMatch) {
+    return `${roundFinaleCssNumber(Number(numericLengthMatch[1]) * multiplier)}${numericLengthMatch[2]}`;
+  }
+
+  const functionMatch = /^(clamp|min|max)\((.*)\)$/i.exec(trimmedExpression);
+
+  if (functionMatch) {
+    const [, functionName, rawArgs] = functionMatch;
+    const scaledArgs = splitFinaleCssArgs(rawArgs).map((arg) =>
+      scalePositiveFinaleLengthExpression(arg, multiplier),
+    );
+
+    return `${functionName}(${scaledArgs.join(", ")})`;
+  }
+
+  const whole = Math.floor(multiplier);
+  const fraction = multiplier - whole;
+  const terms = Array.from({ length: whole }, () => trimmedExpression);
+
+  if (fraction > 0.001) {
+    terms.push(`calc(${trimmedExpression} / ${roundFinaleCssNumber(1 / fraction)})`);
+  }
+
+  if (terms.length === 0) {
+    return "0px";
+  }
+
+  return terms.length === 1 ? terms[0] : `calc(${terms.join(" + ")})`;
+}
+
+function scaleFinaleLengthExpression(expression: string, multiplier: number): string {
+  if (Math.abs(multiplier) < 0.0001) {
+    return "0px";
+  }
+
+  const scaledExpression = scalePositiveFinaleLengthExpression(expression, Math.abs(multiplier));
+
+  return multiplier < 0 ? `calc(0px - ${scaledExpression})` : scaledExpression;
+}
+
+function finalePositionWithOffset(base: FinaleLength, offset: string) {
+  if (offset === "0px") {
+    return finaleLength(base);
+  }
+
+  return `calc(${finaleLength(base)} + ${offset})`;
+}
+
+function finaleEm(value: number) {
+  return `${roundFinaleCssNumber(value)}em`;
+}
+
+function getFinaleCharacterAdvance(character: string) {
+  if (character === " ") {
+    return 0.36;
+  }
+
+  if (/['.,:;!|]/.test(character)) {
+    return 0.22;
+  }
+
+  if (/[`"\[\](){}]/.test(character)) {
+    return 0.34;
+  }
+
+  if (/[-/\\]/.test(character)) {
+    return 0.38;
+  }
+
+  if (/[ijlI1]/.test(character)) {
+    return 0.3;
+  }
+
+  if (/[ftJr]/.test(character)) {
+    return 0.42;
+  }
+
+  if (/[mwMW@%&]/.test(character)) {
+    return 0.88;
+  }
+
+  if (/[A-Z0-9$]/.test(character)) {
+    return 0.66;
+  }
+
+  return 0.56;
+}
+
+function getFinaleTextAdvance(text: string) {
+  return Array.from(text).reduce(
+    (total, character) => total + getFinaleCharacterAdvance(character),
+    0,
+  );
+}
+
+function createFinaleLetterLayout(text: string, advanceScale = 1) {
+  const characters = Array.from(text);
+  const advances = characters.map((character) => getFinaleCharacterAdvance(character) * advanceScale);
+  const totalAdvance = advances.reduce((total, advance) => total + advance, 0);
+  let cursor = 0;
+
+  return characters.flatMap((letter, index) => {
+    const advance = advances[index];
+    const center = cursor + advance / 2 - totalAdvance / 2;
+    cursor += advance;
+
+    if (letter === " ") {
+      return [];
+    }
+
+    return [
+      {
+        advance,
+        center,
+        index,
+        letter,
+      },
+    ];
+  });
+}
+
+function createFinaleWordLayout(text: string, blockAdvance = getFinaleTextAdvance(text)) {
+  return Array.from(text.matchAll(/\S+/g)).map((match, index) => {
+    const word = match[0];
+    const start = match.index ?? 0;
+    const wordAdvance = getFinaleTextAdvance(word);
+    const advanceBeforeWord = getFinaleTextAdvance(text.slice(0, start));
+
+    return {
+      advance: wordAdvance,
+      center: advanceBeforeWord + wordAdvance / 2 - blockAdvance / 2,
+      index,
+      start,
+      word,
+    };
+  });
 }
 
 function finaleItem(
@@ -4875,11 +5426,11 @@ function createFinaleTextItems(
   top: FinaleLength,
   {
     burnRadius = 26,
+    advanceScale = 1,
     height = "1.6rem",
     letterClassName = "",
-    step = "0.72rem",
-    width = "0.75rem",
   }: {
+    advanceScale?: number;
     burnRadius?: number;
     height?: string;
     letterClassName?: string;
@@ -4887,29 +5438,20 @@ function createFinaleTextItems(
     width?: string;
   } = {},
 ) {
-  const characters = Array.from(text);
-  const centerOffset = (characters.length - 1) / 2;
-
-  return characters.flatMap((letter, index) => {
-    if (letter === " ") {
-      return [];
-    }
-
-    return [
-      finaleItem(
-        `${id}-letter-${index}`,
-        `calc(${finaleLength(left)} + (${index - centerOffset} * ${step}))`,
-        top,
-        width,
-        height,
-        <span className={`finale-text-letter ${letterClassName}`}>{letter}</span>,
-        {
-          burnRadius,
-          className: "finale-letter-item",
-        },
-      ),
-    ];
-  });
+  return createFinaleLetterLayout(text, advanceScale).map(({ advance, center, index, letter }) =>
+    finaleItem(
+      `${id}-letter-${index}`,
+      finalePositionWithOffset(left, finaleEm(center)),
+      top,
+      `calc(${finaleEm(advance)} + 0.14em)`,
+      height,
+      <span className="finale-text-letter">{letter}</span>,
+      {
+        burnRadius,
+        className: `finale-letter-item ${letterClassName}`.trim(),
+      },
+    ),
+  );
 }
 
 function createFinaleWrappedTextItems(
@@ -4919,14 +5461,14 @@ function createFinaleWrappedTextItems(
   top: FinaleLength,
   {
     burnRadius = 20,
+    advanceScale = 1,
     columns,
     height = "1.05rem",
     letterClassName = "",
     maxChars,
-    stepX = "0.46rem",
     stepY = "0.95rem",
-    width = "0.48rem",
   }: {
+    advanceScale?: number;
     burnRadius?: number;
     columns: number;
     height?: string;
@@ -4937,30 +5479,29 @@ function createFinaleWrappedTextItems(
     width?: string;
   },
 ) {
-  return Array.from(text.slice(0, maxChars)).flatMap((letter, index) => {
-    if (letter === " ") {
-      return [];
-    }
+  const characters = Array.from(text.slice(0, maxChars));
+  const lines = Array.from({ length: Math.ceil(characters.length / columns) }, (_, row) => ({
+    row,
+    startIndex: row * columns,
+    text: characters.slice(row * columns, row * columns + columns).join(""),
+  }));
 
-    const row = Math.floor(index / columns);
-    const col = index % columns;
-    const centerOffset = (columns - 1) / 2;
-
-    return [
+  return lines.flatMap(({ row, startIndex, text: line }) =>
+    createFinaleLetterLayout(line, advanceScale).map(({ advance, center, index, letter }) =>
       finaleItem(
-        `${id}-letter-${index}`,
-        `calc(${finaleLength(left)} + (${col - centerOffset} * ${stepX}))`,
-        `calc(${finaleLength(top)} + ${row} * ${stepY})`,
-        width,
+        `${id}-letter-${startIndex + index}`,
+        finalePositionWithOffset(left, finaleEm(center)),
+        finalePositionWithOffset(top, scaleFinaleLengthExpression(stepY, row)),
+        `calc(${finaleEm(advance)} + 0.14em)`,
         height,
-        <span className={`finale-text-letter ${letterClassName}`}>{letter}</span>,
+        <span className="finale-text-letter">{letter}</span>,
         {
           burnRadius,
-          className: "finale-letter-item",
+          className: `finale-letter-item ${letterClassName}`.trim(),
         },
       ),
-    ];
-  });
+    ),
+  );
 }
 
 function createFinaleTextLineSet(
@@ -4979,40 +5520,137 @@ function createFinaleTextLineSet(
       `${id}-line-${index}`,
       line,
       left,
-      `calc(${finaleLength(top)} + ${index} * ${lineGap})`,
+      finalePositionWithOffset(top, scaleFinaleLengthExpression(lineGap, index)),
       textOptions,
     ),
   );
 }
 
-function createFinaleJaggedClipPath(index: number) {
-  const topA = 4 + ((index * 17) % 13);
-  const topB = 34 + ((index * 23) % 17);
-  const topC = 64 + ((index * 19) % 16);
-  const rightA = 8 + ((index * 29) % 18);
-  const rightB = 57 + ((index * 31) % 19);
-  const bottomA = 72 + ((index * 11) % 18);
-  const bottomB = 38 + ((index * 37) % 18);
-  const bottomC = 9 + ((index * 13) % 18);
-  const leftA = 60 + ((index * 41) % 22);
-  const leftB = 20 + ((index * 43) % 19);
-
-  return `polygon(0 ${leftB}%, ${topA}% 0, ${topB}% ${index % 2 === 0 ? 0 : 3}%, ${topC}% 0, 100 ${rightA}%, ${98 - (index % 4)}% ${rightB}%, 100 100%, ${bottomA}% ${98 - (index % 5)}%, ${bottomB}% 100%, ${bottomC}% ${97 - (index % 3)}%, 0 ${leftA}%)`;
+function createFinaleWordItems(
+  id: string,
+  text: string,
+  left: FinaleLength,
+  top: FinaleLength,
+  {
+    burnRadius = 22,
+    height = "1rem",
+    wordClassName = "",
+  }: {
+    burnRadius?: number;
+    height?: string;
+    step?: string;
+    wordClassName?: string;
+  } = {},
+) {
+  return createFinaleWordLayout(text).map(({ advance, center, index, start, word }) =>
+    finaleItem(
+      `${id}-word-${index}-${start}`,
+      finalePositionWithOffset(
+        left,
+        finaleEm(center),
+      ),
+      top,
+      `calc(${finaleEm(advance)} + 0.16em)`,
+      height,
+      <span className="finale-text-word">{word}</span>,
+      {
+        burnRadius: burnRadius + Math.min(18, word.length * 1.1),
+        className: `finale-word-item ${wordClassName}`.trim(),
+      },
+    ),
+  );
 }
 
-function createAnchoredPieceOptions(
-  index: number,
+function createFinaleWrappedWordItems(
+  id: string,
+  text: string,
+  left: FinaleLength,
+  top: FinaleLength,
+  {
+    burnRadius = 18,
+    columns,
+    height = "0.95rem",
+    maxChars,
+    stepY = "0.9rem",
+    wordClassName = "",
+  }: {
+    burnRadius?: number;
+    columns: number;
+    height?: string;
+    maxChars: number;
+    stepX?: string;
+    stepY?: string;
+    wordClassName?: string;
+  },
+) {
+  const words = text.slice(0, maxChars).trim().split(/\s+/).filter(Boolean);
+  let row = 0;
+  let col = 0;
+  const rows: string[] = [];
+
+  words.forEach((word) => {
+    if (col > 0 && col + word.length > columns) {
+      row += 1;
+      col = 0;
+    }
+
+    rows[row] = rows[row] ? `${rows[row]} ${word}` : word;
+    col += word.length + 1;
+  });
+
+  const blockAdvance = columns * 0.5;
+
+  return rows.flatMap((line, rowIndex) =>
+    createFinaleWordLayout(line, Math.max(blockAdvance, getFinaleTextAdvance(line))).map(
+      ({ advance, center, index, start, word }) =>
+        finaleItem(
+          `${id}-word-${rowIndex}-${index}-${start}`,
+          finalePositionWithOffset(left, finaleEm(center)),
+          finalePositionWithOffset(top, scaleFinaleLengthExpression(stepY, rowIndex)),
+          `calc(${finaleEm(advance)} + 0.16em)`,
+          height,
+          <span className="finale-text-word">{word}</span>,
+          {
+            burnRadius: burnRadius + Math.min(16, word.length),
+            className: `finale-word-item ${wordClassName}`.trim(),
+          },
+        ),
+    ),
+  );
+}
+
+function createFinaleWordLineSet(
+  id: string,
+  lines: string[],
+  left: FinaleLength,
+  top: FinaleLength,
+  options: Parameters<typeof createFinaleWordItems>[4] & {
+    lineGap?: string;
+  } = {},
+) {
+  const { lineGap = "1.35rem", ...wordOptions } = options;
+
+  return lines.flatMap((line, index) =>
+    createFinaleWordItems(
+      `${id}-line-${index}`,
+      line,
+      left,
+      finalePositionWithOffset(top, scaleFinaleLengthExpression(lineGap, index)),
+      wordOptions,
+    ),
+  );
+}
+
+function createSeamlessAnchoredPieceOptions(
+  burnRadius: number,
   className = "",
   style: CSSProperties = {},
 ) {
   return {
-    burnRadius: 44,
-    className: `finale-jagged-piece ${className}`.trim(),
+    burnRadius,
+    className: `finale-seamless-piece ${className}`.trim(),
     isAnchored: true,
-    style: {
-      ...style,
-      clipPath: createFinaleJaggedClipPath(index),
-    },
+    style,
   };
 }
 
@@ -5131,8 +5769,14 @@ function createDandleFinaleItems() {
 
     return finaleItem(
       `dandle-cell-${row}-${col}`,
-      `calc(50% + (${col - 2} * clamp(2.55rem, 7.25vmin, 3.95rem)))`,
-      `calc(50% - clamp(7.8rem, 22vmin, 12.8rem) + (${row} * clamp(2.55rem, 7.25vmin, 3.95rem)))`,
+      finalePositionWithOffset(
+        50,
+        scaleFinaleLengthExpression("clamp(2.55rem, 7.25vmin, 3.95rem)", col - 2),
+      ),
+      finalePositionWithOffset(
+        "calc(50% - clamp(7.8rem, 22vmin, 12.8rem))",
+        scaleFinaleLengthExpression("clamp(2.55rem, 7.25vmin, 3.95rem)", row),
+      ),
       cellSize,
       cellSize,
       <span className="wordle-cell" />,
@@ -5189,8 +5833,14 @@ function createWordSearchFinaleItems() {
     row.map((letter, colIndex) =>
       finaleItem(
         `word-search-cell-${rowIndex}-${colIndex}`,
-        `calc(50% - var(--finale-word-search-board-size) / 2 + var(--finale-word-search-cell) * ${colIndex + 0.5})`,
-        `calc(50% - var(--finale-word-search-board-size) / 2 + var(--finale-word-search-cell) * ${rowIndex + 0.5})`,
+        finalePositionWithOffset(
+          "calc(50% - var(--finale-word-search-board-size) / 2)",
+          scaleFinaleLengthExpression("var(--finale-word-search-cell)", colIndex + 0.5),
+        ),
+        finalePositionWithOffset(
+          "calc(50% - var(--finale-word-search-board-size) / 2)",
+          scaleFinaleLengthExpression("var(--finale-word-search-cell)", rowIndex + 0.5),
+        ),
         "var(--finale-word-search-cell)",
         "var(--finale-word-search-cell)",
         <span className="word-search-cell" role="gridcell" aria-label={letter}>
@@ -5204,7 +5854,10 @@ function createWordSearchFinaleItems() {
     createFinaleTextItems(
       `word-search-clue-${target.id}`,
       target.clue,
-      `calc(50% - min(17rem, 39vw) + ${index} * min(8.5rem, 19vw))`,
+      finalePositionWithOffset(
+        "calc(50% - min(17rem, 39vw))",
+        scaleFinaleLengthExpression("min(8.5rem, 19vw)", index),
+      ),
       `calc(50% + var(--finale-word-search-board-size) / 2 + 2.1rem)`,
       {
         burnRadius: 20,
@@ -5249,8 +5902,8 @@ function createXpFinaleItems(performanceMode: PerformanceMode) {
       `xp-wallpaper-${row}-${column}`,
       `${(column + 0.5) * (100 / columns)}%`,
       `${(row + 0.5) * (wallpaperHeight / rows)}%`,
-      `${100 / columns}%`,
-      `${wallpaperHeight / rows}%`,
+      `calc(${100 / columns}% + 1px)`,
+      `calc(${wallpaperHeight / rows}% + 1px)`,
       <span
         className="finale-xp-wallpaper-tile"
         style={
@@ -5260,7 +5913,7 @@ function createXpFinaleItems(performanceMode: PerformanceMode) {
           } as FinaleBurnStyle
         }
       />,
-      createAnchoredPieceOptions(index, "finale-xp-wallpaper-piece"),
+      createSeamlessAnchoredPieceOptions(44, "finale-xp-wallpaper-piece"),
     );
   });
 
@@ -5376,74 +6029,100 @@ function createXpFinaleItems(performanceMode: PerformanceMode) {
 function createWikiFinaleItems(performanceMode: PerformanceMode) {
   const columns = performanceMode === "reduced" ? 9 : 14;
   const rows = performanceMode === "reduced" ? 6 : 9;
+  const browserLeft = 7;
+  const browserWidth = 86;
+  const browserCenter = browserLeft + browserWidth / 2;
+  const tabsCenterY = 7;
+  const toolbarCenterY = 13;
+  const pageTop = 17;
+  const pageHeight = 81;
+  const wikiSidebarCenterX = `calc(${browserLeft}% + 5.7rem)`;
+  const wikiArticleCenterX = 44.5;
+  const wikiInfoboxCenterX = 78;
+  const wikiArticleParagraphs = discoWikiSections
+    .flatMap((section, sectionIndex) =>
+      section.paragraphs.slice(0, 2).map((paragraph, paragraphIndex) => ({
+        id: `${sectionIndex}-${paragraphIndex}`,
+        paragraph,
+      })),
+    )
+    .slice(0, 4);
+  const wikiParagraphTops = [49.5, 61.5, 75.5, 89];
   const pageTiles = Array.from({ length: columns * rows }, (_, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
 
     return finaleItem(
       `wiki-page-tile-${row}-${column}`,
-      `${14 + (column + 0.5) * (72 / columns)}%`,
-      `${23 + (row + 0.5) * (63 / rows)}%`,
-      `${72 / columns}%`,
-      `${63 / rows}%`,
+      `${browserLeft + (column + 0.5) * (browserWidth / columns)}%`,
+      `${pageTop + (row + 0.5) * (pageHeight / rows)}%`,
+      `calc(${browserWidth / columns}% + 1px)`,
+      `calc(${pageHeight / rows}% + 1px)`,
       <span className="finale-wiki-page-tile" />,
-      createAnchoredPieceOptions(index, "finale-wiki-page-piece"),
+      createSeamlessAnchoredPieceOptions(44, "finale-wiki-page-piece"),
     );
   });
 
   return [
     finaleItem(
+      "wiki-browser-tabs-bg",
+      browserCenter,
+      tabsCenterY,
+      `${browserWidth}%`,
+      "2.65rem",
+      <span className="finale-wiki-browser-tabs-bg" />,
+      createSeamlessAnchoredPieceOptions(72, "finale-wiki-browser-piece"),
+    ),
+    finaleItem(
       "wiki-tab",
-      31,
-      8,
-      "31rem",
-      "2.2rem",
+      `calc(${browserLeft}% + 8rem)`,
+      tabsCenterY,
+      "16rem",
+      "2.15rem",
       <div className="disco-browser-tab is-active finale-wiki-tab">
         <span className="disco-tab-dot" aria-hidden="true" />
       </div>,
       { burnRadius: 68 },
     ),
-    ...createFinaleTextItems(
+    ...createFinaleWordItems(
       "wiki-tab-text",
       "Disco - Wikipedia",
-      31,
-      8,
+      `calc(${browserLeft}% + 8rem)`,
+      tabsCenterY,
       {
         burnRadius: 20,
         height: "1rem",
-        letterClassName: "finale-letter-wiki-tab",
+        wordClassName: "finale-letter-wiki-tab",
         step: "0.42rem",
-        width: "0.36rem",
       },
     ),
     finaleItem(
       "wiki-title-bar",
-      66,
-      8,
-      "28rem",
-      "2.2rem",
+      `calc(${browserLeft + browserWidth}% - 6rem)`,
+      tabsCenterY,
+      "12rem",
+      "2.15rem",
       <div className="disco-browser-title finale-wiki-title" />,
       { burnRadius: 68 },
     ),
-    ...createFinaleTextItems(
+    ...createFinaleWordItems(
       "wiki-title-bar-text",
       "Disco Chrome",
-      66,
-      8,
+      `calc(${browserLeft + browserWidth}% - 6rem)`,
+      tabsCenterY,
       {
         burnRadius: 20,
         height: "1rem",
-        letterClassName: "finale-letter-wiki-title",
+        wordClassName: "finale-letter-wiki-title",
         step: "0.46rem",
-        width: "0.4rem",
       },
     ),
     finaleItem(
       "wiki-toolbar",
-      50,
-      13,
-      "72%",
-      "2.4rem",
+      browserCenter,
+      toolbarCenterY,
+      `${browserWidth}%`,
+      "2.55rem",
       <div className="finale-wiki-toolbar">
         <span>&lt;</span>
         <span>&gt;</span>
@@ -5452,126 +6131,120 @@ function createWikiFinaleItems(performanceMode: PerformanceMode) {
       </div>,
       { burnRadius: 72 },
     ),
-    ...createFinaleTextItems(
+    ...createFinaleWordItems(
       "wiki-address-text",
       "https://en.wikipedia.org/wiki/Disco",
-      55,
-      13,
+      56,
+      toolbarCenterY,
       {
         burnRadius: 18,
         height: "0.95rem",
-        letterClassName: "finale-letter-wiki-address",
+        wordClassName: "finale-letter-wiki-address",
         step: "0.34rem",
-        width: "0.3rem",
       },
     ),
     ...pageTiles,
     finaleItem(
       "wiki-sidebar",
-      20,
-      49,
-      "13rem",
-      "26rem",
+      wikiSidebarCenterX,
+      57.5,
+      "11rem",
+      "68%",
       <aside className="fake-wiki-sidebar finale-wiki-sidebar" />,
       { burnRadius: 76 },
     ),
-    ...createFinaleTextLineSet(
+    ...createFinaleWordLineSet(
       "wiki-sidebar-text",
       ["Contents", "Etymology", "Musical characteristics", "Club culture", "History", "Legacy"],
-      20,
+      wikiSidebarCenterX,
       37,
       {
         burnRadius: 18,
         height: "0.95rem",
-        letterClassName: "finale-letter-wiki-sidebar",
         lineGap: "2.2rem",
         step: "0.32rem",
-        width: "0.28rem",
+        wordClassName: "finale-letter-wiki-sidebar",
       },
     ),
     finaleItem(
       "wiki-heading",
-      44,
-      25,
-      "21rem",
-      "5rem",
+      39,
+      24.8,
+      "24rem",
+      "4.6rem",
       <div className="fake-wiki-main finale-wiki-heading" />,
       { burnRadius: 74 },
     ),
-    ...createFinaleTextItems(
+    ...createFinaleWordItems(
       "wiki-source-text",
       "From Wikipedia, the free encyclopedia",
-      44,
-      23,
+      43.4,
+      22.1,
       {
         burnRadius: 18,
         height: "0.9rem",
-        letterClassName: "finale-letter-wiki-source",
+        wordClassName: "finale-letter-wiki-source",
         step: "0.28rem",
-        width: "0.25rem",
       },
     ),
-    ...createFinaleTextItems(
+    ...createFinaleWordItems(
       "wiki-heading-text",
       "Disco",
-      36,
-      25.5,
+      32,
+      24.6,
       {
         burnRadius: 24,
         height: "2.8rem",
-        letterClassName: "finale-letter-wiki-heading",
+        wordClassName: "finale-letter-wiki-heading",
         step: "0.82rem",
-        width: "0.72rem",
       },
     ),
-    ...createFinaleTextItems(
+    ...createFinaleWordItems(
       "wiki-description-text",
       "Music genre and subculture",
-      43,
-      29,
+      42.6,
+      27.4,
       {
         burnRadius: 18,
         height: "0.95rem",
-        letterClassName: "finale-letter-wiki-description",
+        wordClassName: "finale-letter-wiki-description",
         step: "0.34rem",
-        width: "0.3rem",
       },
     ),
     finaleItem(
       "wiki-notice",
-      48,
-      38,
-      "30rem",
+      wikiArticleCenterX,
+      36,
+      "27rem",
       "4.2rem",
       <div className="fake-wiki-notice finale-wiki-notice" />,
       { burnRadius: 70 },
     ),
-    ...createFinaleWrappedTextItems(
+    ...createFinaleWrappedWordItems(
       "wiki-notice-text",
       "For more information on disco, see the page on Dance Pants Revolution.",
-      48,
-      37.2,
+      wikiArticleCenterX,
+      35.2,
       {
         burnRadius: 16,
-        columns: 58,
+        columns: 52,
         height: "0.9rem",
-        letterClassName: "finale-letter-wiki-body",
         maxChars: 116,
         stepX: "0.28rem",
         stepY: "0.9rem",
-        width: "0.24rem",
+        wordClassName: "finale-letter-wiki-body",
       },
     ),
     finaleItem(
       "wiki-infobox",
-      75,
+      wikiInfoboxCenterX,
       48,
-      "16rem",
-      "26rem",
+      "14.5rem",
+      "24rem",
       <div className="fake-wiki-infobox finale-wiki-infobox" />,
       { burnRadius: 78 },
     ),
-    ...createFinaleTextLineSet(
+    ...createFinaleWordLineSet(
       "wiki-infobox-text",
       [
         "Disco",
@@ -5580,76 +6253,55 @@ function createWikiFinaleItems(performanceMode: PerformanceMode) {
         "Derivative forms",
         ...discoInfoLinks.slice(7, 11),
       ],
-      75,
-      37,
+      wikiInfoboxCenterX,
+      29,
       {
         burnRadius: 16,
         height: "0.9rem",
-        letterClassName: "finale-letter-wiki-infobox",
         lineGap: "1.55rem",
         step: "0.26rem",
-        width: "0.24rem",
+        wordClassName: "finale-letter-wiki-infobox",
       },
     ),
-    ...discoWikiSections.flatMap((section, sectionIndex) =>
-      section.paragraphs.slice(0, 2).flatMap((paragraph, paragraphIndex) =>
-        createFinaleWrappedTextItems(
-          `wiki-paragraph-${sectionIndex}-${paragraphIndex}`,
-          paragraph,
-          46,
-          49.5 + sectionIndex * 16.5 + paragraphIndex * 7.6,
-          {
-            burnRadius: 15,
-            columns: 74,
-            height: "0.86rem",
-            letterClassName: "finale-letter-wiki-body",
-            maxChars: 296,
-            stepX: "0.28rem",
-            stepY: "0.84rem",
-            width: "0.24rem",
-          },
-        ),
+    ...wikiArticleParagraphs.flatMap(({ id, paragraph }, paragraphIndex) =>
+      createFinaleWrappedWordItems(
+        `wiki-paragraph-${id}`,
+        paragraph,
+        wikiArticleCenterX,
+        wikiParagraphTops[paragraphIndex] ?? 89,
+        {
+          burnRadius: 15,
+          columns: 66,
+          height: "0.86rem",
+          maxChars: 296,
+          stepX: "0.28rem",
+          stepY: "0.9rem",
+          wordClassName: "finale-letter-wiki-body",
+        },
       ),
     ),
   ];
 }
 
 function createDanflixFinaleItems() {
-  const heroColumns = 12;
-  const heroRows = 8;
-  const heroTiles = Array.from({ length: heroColumns * heroRows }, (_, index) => {
-    const column = index % heroColumns;
-    const row = Math.floor(index / heroColumns);
-    const backgroundPositionX = (column / Math.max(1, heroColumns - 1)) * 100;
-    const backgroundPositionY = (row / Math.max(1, heroRows - 1)) * 100;
-
-    return finaleItem(
-      `danflix-hero-tile-${row}-${column}`,
-      `${44 + (column + 0.5) * (54 / heroColumns)}%`,
-      `${18 + (row + 0.5) * (40 / heroRows)}%`,
-      `${54 / heroColumns}%`,
-      `${40 / heroRows}%`,
-      <span
-        className="finale-danflix-hero-tile"
-        style={
-          {
-            "--danflix-hero-position": `${backgroundPositionX}% ${backgroundPositionY}%`,
-            "--danflix-hero-size": `${heroColumns * 100}% ${heroRows * 100}%`,
-          } as FinaleBurnStyle
-        }
-      />,
-      createAnchoredPieceOptions(index, "finale-danflix-hero-piece"),
-    );
-  });
+  const heroLeft = 3;
+  const heroTop = 12;
+  const heroWidth = 94;
+  const heroHeight = 47;
+  const featureCopyCenterX = 23.5;
+  const featureCopyCenterY = 36.5;
+  const posterCenterY = 80;
+  const posterHeight = "23%";
   const posters = danflixPosters.slice(0, 10).map((poster, index) => {
     const title = poster.words.map((word) => word.text).join(" ");
+    const posterCenterX = `${7.5 + index * 9.25}%`;
 
     return finaleItem(
       `danflix-poster-${poster.id}`,
-      `${9 + index * 9.1}%`,
-      78,
-      "8.4%",
-      "25%",
+      posterCenterX,
+      posterCenterY,
+      "8.6%",
+      posterHeight,
       <article
         aria-label={`${title} poster`}
         className={`danflix-poster ${poster.className} finale-danflix-poster`}
@@ -5663,8 +6315,8 @@ function createDanflixFinaleItems() {
     createFinaleTextItems(
       `danflix-poster-title-${poster.id}`,
       poster.words.map((word) => word.text).join(" "),
-      `${9 + index * 9.1}%`,
-      85,
+      `${7.5 + index * 9.25}%`,
+      86.2,
       {
         burnRadius: 18,
         height: "1.2rem",
@@ -5692,6 +6344,7 @@ function createDanflixFinaleItems() {
       "2.35rem",
       {
         burnRadius: 24,
+        advanceScale: 1.38,
         height: "2rem",
         letterClassName: "finale-letter-danflix-logo",
         step: "0.58rem",
@@ -5733,81 +6386,82 @@ function createDanflixFinaleItems() {
       width: "0.32rem",
     }),
     finaleItem(
+      "danflix-hero-backdrop",
+      heroLeft + heroWidth / 2,
+      heroTop + heroHeight / 2,
+      `${heroWidth}%`,
+      `${heroHeight}%`,
+      <img
+        className="finale-danflix-hero-image"
+        src="/disco-1280.jpg"
+        alt=""
+        draggable={false}
+      />,
+      createSeamlessAnchoredPieceOptions(96, "finale-danflix-hero-piece"),
+    ),
+    finaleItem(
       "danflix-feature-copy",
-      21,
-      35,
-      "34%",
+      featureCopyCenterX,
+      featureCopyCenterY,
+      "43%",
       "42%",
-      <div className="finale-danflix-feature-copy">
-        <p className="danflix-original finale-label-spacer">A Danflix Original</p>
-        <h1 className="danflix-title-logo finale-label-spacer">
-          <span>Disco Dan</span>
-          <span>The Dancumentary</span>
-        </h1>
-        <p className="danflix-description finale-label-spacer">{danflixDescription}</p>
-        <div className="danflix-actions">
-          <button className="danflix-play-button" type="button" disabled />
-          <button className="danflix-info-button" type="button" disabled>
-            <span />
-            <span className="danflix-info-icon" aria-hidden="true">i</span>
-          </button>
-        </div>
-      </div>,
+      <div className="finale-danflix-feature-copy" />,
       { burnRadius: 80 },
     ),
-    ...createFinaleTextItems("danflix-original-text", "A Danflix Original", 20.5, 23, {
+    ...createFinaleTextItems("danflix-original-text", "A Danflix Original", featureCopyCenterX, 22.8, {
       burnRadius: 18,
       height: "1rem",
       letterClassName: "finale-letter-danflix-original",
       step: "0.34rem",
       width: "0.3rem",
     }),
-    ...createFinaleTextItems("danflix-title-main-text", "Disco Dan", 20.5, 29, {
+    ...createFinaleTextItems("danflix-title-main-text", "Disco Dan", featureCopyCenterX, 29.2, {
       burnRadius: 28,
       height: "3.8rem",
       letterClassName: "finale-letter-danflix-title",
       step: "1.04rem",
       width: "0.94rem",
     }),
-    ...createFinaleTextItems("danflix-title-sub-text", "The Dancumentary", 20.5, 34.5, {
+    ...createFinaleTextItems("danflix-title-sub-text", "THE DANCUMENTARY", featureCopyCenterX, 34.8, {
       burnRadius: 18,
+      advanceScale: 1.32,
       height: "1.2rem",
       letterClassName: "finale-letter-danflix-subtitle",
       step: "0.38rem",
       width: "0.34rem",
     }),
-    ...createFinaleWrappedTextItems("danflix-description-text", danflixDescription, 21, 40, {
+    ...createFinaleWrappedTextItems("danflix-description-text", danflixDescription, featureCopyCenterX, 41, {
       burnRadius: 15,
-      columns: 58,
+      columns: 50,
       height: "0.9rem",
       letterClassName: "finale-letter-danflix-description",
-      maxChars: 174,
+      maxChars: 158,
       stepX: "0.28rem",
       stepY: "0.88rem",
       width: "0.24rem",
     }),
-    ...createFinaleTextItems("danflix-play-text", "Play", 14.8, 54, {
+    ...createFinaleTextItems("danflix-play-text", "Play", 17.8, 53.8, {
       burnRadius: 18,
       height: "1rem",
       letterClassName: "finale-letter-danflix-play",
       step: "0.38rem",
       width: "0.34rem",
     }),
-    ...createFinaleTextItems("danflix-info-text", "More Info", 24, 54, {
+    ...createFinaleTextItems("danflix-info-text", "More Info", 30.2, 53.8, {
       burnRadius: 18,
       height: "1rem",
       letterClassName: "finale-letter-danflix-info",
       step: "0.34rem",
       width: "0.3rem",
     }),
-    ...heroTiles,
     ...createFinaleTextItems(
       "danflix-feature-caption",
-      "Disco Dan: The Dancumentary",
-      78,
-      57,
+      "DISCO DAN: THE DANCUMENTARY",
+      75,
+      55.5,
       {
         burnRadius: 18,
+        advanceScale: 1.28,
         height: "1.2rem",
         letterClassName: "finale-letter-danflix-caption",
         step: "0.42rem",
@@ -5816,11 +6470,12 @@ function createDanflixFinaleItems() {
     ),
     ...createFinaleTextItems(
       "danflix-row-title",
-      "Popular on Danflix",
-      11,
-      63,
+      "POPULAR ON DANFLIX",
+      10.2,
+      64,
       {
         burnRadius: 20,
+        advanceScale: 1.28,
         height: "1.4rem",
         letterClassName: "finale-letter-danflix-row-title",
         step: "0.42rem",
