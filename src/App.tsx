@@ -2999,7 +2999,6 @@ function WordSearchScene({
   const isFinale = phase === "finale";
   const isFinaleTransition = phase === "finaleFlip";
   const isLastLevel = levelIndex === wordSearchLevels.length - 1;
-  const isReducedPerformance = performanceMode === "reduced";
   const selectionKeys = useMemo(
     () => new Set(selection.map(wordSearchCoordKey)),
     [selection],
@@ -3386,7 +3385,6 @@ function WordSearchScene({
                   const pulseIndex = pulseIndexes.get(coordKey);
                   const shouldPulse =
                     shouldPulseSolution &&
-                    !isReducedPerformance &&
                     pulseIndex !== undefined &&
                     !isFoundLetter &&
                     phase !== "solved" &&
@@ -4191,6 +4189,22 @@ type FinaleStageKey =
 type FinaleLength = number | string;
 type FinaleBurnStyle = CSSProperties & Record<`--${string}`, string | number>;
 
+type FinaleCoinPhysics = {
+  seed: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  va: number;
+};
+
+type FinaleCoinPhysicsState = FinaleCoinPhysics & {
+  baseX: number;
+  baseY: number;
+  x: number;
+  y: number;
+  radius: number;
+};
+
 type FinaleBurnItem = {
   id: string;
   left: string;
@@ -4206,6 +4220,7 @@ type FinaleBurnItem = {
   driftX?: number;
   driftY?: number;
   isAnchored?: boolean;
+  physics?: FinaleCoinPhysics;
   style?: CSSProperties;
 };
 
@@ -4602,15 +4617,26 @@ function FinaleBurnStage({
     () => createFinaleBurnItems(stageKey, performanceMode),
     [performanceMode, stageKey],
   );
+  const physicsItems = useMemo(
+    () =>
+      items.filter(
+        (item): item is FinaleBurnItem & { physics: FinaleCoinPhysics } =>
+          item.physics !== undefined,
+      ),
+    [items],
+  );
   const [destroyedIds, setDestroyedIds] = useState<Set<string>>(() => new Set());
   const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
   const [burnBursts, setBurnBursts] = useState<FinaleBurnBurst[]>([]);
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const itemMeasurementsRef = useRef<Map<string, FinaleItemMeasurement>>(new Map());
   const itemHitGridRef = useRef<FinaleHitGrid>({
     cellSize: FINALE_HIT_GRID_CELL_SIZE,
     cells: new Map(),
   });
+  const hasMovingItemsRef = useRef(false);
+  const lastMovingMeasureRef = useRef(0);
   const destroyedIdsRef = useRef(destroyedIds);
   const burnBurstIdRef = useRef(0);
   const removalTimerIdsRef = useRef<number[]>([]);
@@ -4620,6 +4646,11 @@ function FinaleBurnStage({
   useEffect(() => {
     destroyedIdsRef.current = destroyedIds;
   }, [destroyedIds]);
+
+  useEffect(() => {
+    hasMovingItemsRef.current = physicsItems.length > 0;
+    lastMovingMeasureRef.current = 0;
+  }, [physicsItems.length]);
 
   useEffect(
     () => () => {
@@ -4666,6 +4697,223 @@ function FinaleBurnStage({
     };
   }, [measureItems]);
 
+  useEffect(() => {
+    if (physicsItems.length === 0) {
+      return undefined;
+    }
+
+    const physicsStates = new Map<string, FinaleCoinPhysicsState>();
+    const frameIntervalMs = performanceMode === "reduced" ? 33 : 16;
+    let animationFrame = 0;
+    let lastFrame = performance.now();
+    let lastPaint = 0;
+
+    const getStageBounds = () => {
+      const rect = stageRef.current?.getBoundingClientRect();
+
+      return {
+        bottom: rect?.bottom ?? window.innerHeight,
+        left: rect?.left ?? 0,
+        right: rect?.right ?? window.innerWidth,
+        top: rect?.top ?? 0,
+      };
+    };
+
+    const getPhysicsState = (item: FinaleBurnItem & { physics: FinaleCoinPhysics }) => {
+      const currentState = physicsStates.get(item.id);
+
+      if (currentState) {
+        return currentState;
+      }
+
+      const element = itemRefs.current[item.id];
+
+      if (!element) {
+        return null;
+      }
+
+      const rect = element.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const nextState: FinaleCoinPhysicsState = {
+        ...item.physics,
+        baseX: x,
+        baseY: y,
+        radius: Math.max(rect.width, rect.height) / 2,
+        x,
+        y,
+      };
+
+      physicsStates.set(item.id, nextState);
+      return nextState;
+    };
+
+    const applyPhysicsState = (
+      item: FinaleBurnItem & { physics: FinaleCoinPhysics },
+      state: FinaleCoinPhysicsState,
+    ) => {
+      const element = itemRefs.current[item.id];
+
+      if (!element) {
+        return;
+      }
+
+      element.style.setProperty("--physics-x", `${state.x - state.baseX}px`);
+      element.style.setProperty("--physics-y", `${state.y - state.baseY}px`);
+      element.style.setProperty("--coin-angle", `${state.angle}rad`);
+    };
+
+    const clampToBounds = (
+      state: FinaleCoinPhysicsState,
+      bounds: ReturnType<typeof getStageBounds>,
+    ) => {
+      if (state.x - state.radius < bounds.left) {
+        state.x = bounds.left + state.radius;
+        state.vx *= -0.72;
+      } else if (state.x + state.radius > bounds.right) {
+        state.x = bounds.right - state.radius;
+        state.vx *= -0.72;
+      }
+
+      if (state.y - state.radius < bounds.top) {
+        state.y = bounds.top + state.radius;
+        state.vy *= -0.72;
+      } else if (state.y + state.radius > bounds.bottom) {
+        state.y = bounds.bottom - state.radius;
+        state.vy *= -0.72;
+      }
+    };
+
+    const resolveCoinCollisions = (bounds: ReturnType<typeof getStageBounds>) => {
+      for (let outer = 0; outer < physicsItems.length; outer += 1) {
+        const firstItem = physicsItems[outer];
+
+        if (destroyedIdsRef.current.has(firstItem.id) || !itemRefs.current[firstItem.id]) {
+          continue;
+        }
+
+        const first = getPhysicsState(firstItem);
+
+        if (!first) {
+          continue;
+        }
+
+        for (let inner = outer + 1; inner < physicsItems.length; inner += 1) {
+          const secondItem = physicsItems[inner];
+
+          if (
+            destroyedIdsRef.current.has(secondItem.id) ||
+            !itemRefs.current[secondItem.id]
+          ) {
+            continue;
+          }
+
+          const second = getPhysicsState(secondItem);
+
+          if (!second) {
+            continue;
+          }
+
+          const dx = second.x - first.x;
+          const dy = second.y - first.y;
+          const distance = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));
+          const minDistance = first.radius + second.radius;
+
+          if (distance >= minDistance) {
+            continue;
+          }
+
+          const nx = dx / distance;
+          const ny = dy / distance;
+          const overlap = minDistance - distance;
+          first.x -= nx * overlap * 0.5;
+          first.y -= ny * overlap * 0.5;
+          second.x += nx * overlap * 0.5;
+          second.y += ny * overlap * 0.5;
+
+          const relativeVelocity = (second.vx - first.vx) * nx + (second.vy - first.vy) * ny;
+          if (relativeVelocity > 0) {
+            continue;
+          }
+
+          const impulse = -relativeVelocity * 0.45;
+          first.vx -= impulse * nx;
+          first.vy -= impulse * ny;
+          second.vx += impulse * nx;
+          second.vy += impulse * ny;
+        }
+
+        clampToBounds(first, bounds);
+      }
+
+      physicsItems.forEach((item) => {
+        const state = physicsStates.get(item.id);
+
+        if (state && !destroyedIdsRef.current.has(item.id)) {
+          clampToBounds(state, bounds);
+        }
+      });
+    };
+
+    const animateCoins = (now: number) => {
+      if (document.hidden || now - lastPaint < frameIntervalMs) {
+        animationFrame = window.requestAnimationFrame(animateCoins);
+        return;
+      }
+
+      const delta = Math.min(2.3, (now - lastFrame) / 16.67);
+      const bounds = getStageBounds();
+      lastFrame = now;
+      lastPaint = now;
+
+      physicsItems.forEach((item) => {
+        if (destroyedIdsRef.current.has(item.id)) {
+          return;
+        }
+
+        if (!itemRefs.current[item.id]) {
+          physicsStates.delete(item.id);
+          return;
+        }
+
+        const state = getPhysicsState(item);
+
+        if (!state) {
+          return;
+        }
+
+        state.vx += Math.sin(now * 0.0017 + state.seed) * 0.014 * delta;
+        state.vy += Math.cos(now * 0.0013 + state.seed * 1.7) * 0.014 * delta;
+        state.vx *= 0.998;
+        state.vy *= 0.998;
+        state.x += state.vx * delta;
+        state.y += state.vy * delta;
+        state.angle += state.va * delta;
+        state.va *= 0.992;
+
+        clampToBounds(state, bounds);
+      });
+
+      resolveCoinCollisions(bounds);
+
+      physicsItems.forEach((item) => {
+        const state = physicsStates.get(item.id);
+
+        if (state && !destroyedIdsRef.current.has(item.id)) {
+          applyPhysicsState(item, state);
+        }
+      });
+
+      animationFrame = window.requestAnimationFrame(animateCoins);
+    };
+
+    animationFrame = window.requestAnimationFrame(animateCoins);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [performanceMode, physicsItems]);
+
   const updateFlamethrowerVisual = useCallback((x: number, y: number) => {
     const button = flamethrowerButtonRef.current;
 
@@ -4705,7 +4953,18 @@ function FinaleBurnStage({
     const nextDestroyedIdSet = new Set<string>();
     const nextBurnBursts: FinaleBurnBurst[] = [];
 
-    if (itemMeasurementsRef.current.size === 0) {
+    if (hasMovingItemsRef.current) {
+      const now = performance.now();
+      const measureIntervalMs = performanceMode === "reduced" ? 64 : 32;
+
+      if (
+        itemMeasurementsRef.current.size === 0 ||
+        now - lastMovingMeasureRef.current >= measureIntervalMs
+      ) {
+        measureItems();
+        lastMovingMeasureRef.current = now;
+      }
+    } else if (itemMeasurementsRef.current.size === 0) {
       measureItems();
     }
 
@@ -4929,7 +5188,7 @@ function FinaleBurnStage({
       transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
       aria-label={finaleStageLabels[stageKey]}
     >
-      <div className="finale-destruction-stage">
+      <div className="finale-destruction-stage" ref={stageRef}>
         {visibleItems.map((item) => (
           <FinaleBurnItemView
             key={item.id}
@@ -5654,7 +5913,7 @@ function createSeamlessAnchoredPieceOptions(
   };
 }
 
-function addFinaleDrift(items: FinaleBurnItem[], stageKey: FinaleStageKey) {
+function addFinaleDrift(items: FinaleBurnItem[], stageKey: FinaleStageKey): FinaleBurnItem[] {
   const stageSeed = finaleStageKeys.indexOf(stageKey) + 1;
 
   return items.map((item, index) => {
@@ -5685,7 +5944,10 @@ function addFinaleDrift(items: FinaleBurnItem[], stageKey: FinaleStageKey) {
   });
 }
 
-function createFinaleBurnItems(stageKey: FinaleStageKey, performanceMode: PerformanceMode) {
+function createFinaleBurnItems(
+  stageKey: FinaleStageKey,
+  performanceMode: PerformanceMode,
+): FinaleBurnItem[] {
   const items =
     stageKey === "animals"
       ? createAnimalFinaleItems()
@@ -5701,7 +5963,7 @@ function createFinaleBurnItems(stageKey: FinaleStageKey, performanceMode: Perfor
                 ? createDanflixFinaleItems()
                 : stageKey === "jeopardy"
                   ? createJeopardyFinaleItems()
-                  : createCharityFinaleItems();
+                  : createCharityFinaleItems(performanceMode);
 
   return addFinaleDrift(items, stageKey);
 }
@@ -6554,21 +6816,43 @@ function createJeopardyFinaleItems() {
   return [...categoryItems, ...tileItems];
 }
 
-function createCharityFinaleItems() {
-  const coins = Array.from({ length: 30 }, (_, index) => {
-    const ring = Math.floor(index / 10);
-    const angle = (index % 10) * (Math.PI * 2 / 10) + ring * 0.32;
-    const radiusX = 18 + ring * 8;
-    const radiusY = 13 + ring * 5;
+function finaleDeterministicUnit(index: number, salt: number) {
+  const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function createCharityFinaleItems(performanceMode: PerformanceMode) {
+  const coinCount = performanceMode === "reduced" ? 64 : 104;
+  const coins = Array.from({ length: coinCount }, (_, index) => {
+    const x = 7 + finaleDeterministicUnit(index, 1) * 86;
+    const y = 11 + finaleDeterministicUnit(index, 2) * 78;
+    const size = 1.18 + finaleDeterministicUnit(index, 3) * 0.58;
+    const direction = finaleDeterministicUnit(index, 4) * Math.PI * 2;
+    const speed = 0.72 + finaleDeterministicUnit(index, 5) * 1.65;
+    const spinDirection = finaleDeterministicUnit(index, 6) > 0.5 ? 1 : -1;
+    const angle = finaleDeterministicUnit(index, 7) * Math.PI;
 
     return finaleItem(
       `charity-coin-${index}`,
-      `${50 + Math.cos(angle) * radiusX}%`,
-      `${52 + Math.sin(angle) * radiusY}%`,
-      "1.6rem",
-      "1.6rem",
+      `${x.toFixed(3)}%`,
+      `${y.toFixed(3)}%`,
+      `${size.toFixed(2)}rem`,
+      `${size.toFixed(2)}rem`,
       <span className="finale-charity-coin" />,
-      { burnRadius: 54 },
+      {
+        burnRadius: 44,
+        className: "finale-charity-coin-item",
+        physics: {
+          angle,
+          seed: index,
+          va: spinDirection * (0.035 + finaleDeterministicUnit(index, 8) * 0.095),
+          vx: Math.cos(direction) * speed,
+          vy: Math.sin(direction) * speed,
+        },
+        style: {
+          "--coin-angle": `${angle}rad`,
+        } as FinaleBurnStyle,
+      },
     );
   });
 
