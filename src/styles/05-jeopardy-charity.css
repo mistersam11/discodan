@@ -505,10 +505,19 @@
   padding: 0;
   background:
     linear-gradient(#050203, #050203) padding-box,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88)) border-box;
+    conic-gradient(
+      from 36deg,
+      rgba(255, 255, 255, 0.95) 0deg 64deg,
+      rgba(255, 159, 48, 0.72) 88deg 114deg,
+      rgba(255, 255, 255, 0.92) 142deg 214deg,
+      rgba(211, 55, 18, 0.48) 238deg 264deg,
+      rgba(255, 210, 93, 0.68) 292deg 314deg,
+      rgba(255, 255, 255, 0.94) 342deg 360deg
+    ) border-box;
   box-shadow:
     0 0 0.15rem #ffffff,
-    0 0 0.85rem rgba(255, 255, 255, 0.58),
+    0 0 0.5rem rgba(255, 255, 255, 0.42),
+    0 0 0.45rem rgba(255, 99, 24, 0.22),
     inset 0 0 0.7rem rgba(255, 255, 255, 0.2);
   cursor: pointer;
   touch-action: none;
@@ -518,67 +527,47 @@
 .charity-cleanup-flamethrower-button::before {
   content: "";
   position: absolute;
-  inset: calc(-1 * var(--flamethrower-ring-size));
+  inset: 0;
   z-index: 0;
   border-radius: inherit;
   background:
     linear-gradient(
       115deg,
-      transparent 0 25%,
-      rgba(255, 116, 25, 0.28) 32%,
-      rgba(255, 226, 164, 0.82) 40%,
-      rgba(255, 123, 25, 0.5) 48%,
-      transparent 60%
+      transparent 0 30%,
+      rgba(255, 132, 30, 0.18) 36%,
+      rgba(255, 238, 184, 0.62) 43%,
+      rgba(255, 139, 32, 0.24) 50%,
+      transparent 62%
     ),
-    conic-gradient(
-      from 28deg,
-      rgba(255, 255, 255, 0.9) 0deg 42deg,
-      rgba(255, 147, 34, 0.7) 64deg 96deg,
-      rgba(255, 255, 255, 0.84) 122deg 165deg,
-      rgba(183, 38, 12, 0.54) 190deg 220deg,
-      rgba(255, 187, 54, 0.62) 246deg 282deg,
-      rgba(255, 255, 255, 0.88) 314deg 360deg
+    radial-gradient(
+      ellipse at 72% 24%,
+      rgba(255, 108, 24, 0.3),
+      transparent 34%
     );
   background-position:
     -130% 50%,
-    center;
+    50% 50%;
   background-size:
-    260% 260%,
+    250% 250%,
     100% 100%;
-  filter: saturate(1.08);
-  opacity: 0.74;
+  filter: blur(0.015rem) saturate(1.04);
+  opacity: 0.62;
   -webkit-mask: radial-gradient(
     farthest-side,
-    transparent calc(100% - 0.48rem),
-    #000 calc(100% - 0.42rem)
+    transparent calc(100% - var(--flamethrower-ring-size) - 1px),
+    #000 calc(100% - var(--flamethrower-ring-size) + 1px)
   );
   mask: radial-gradient(
     farthest-side,
-    transparent calc(100% - 0.48rem),
-    #000 calc(100% - 0.42rem)
+    transparent calc(100% - var(--flamethrower-ring-size) - 1px),
+    #000 calc(100% - var(--flamethrower-ring-size) + 1px)
   );
   animation: flamethrower-ring-glint 4.6s ease-in-out infinite;
-}
-
-.charity-flamethrower-button::after,
-.charity-cleanup-flamethrower-button::after {
-  content: "";
-  position: absolute;
-  inset: var(--flamethrower-ring-size);
-  z-index: 1;
-  border-radius: inherit;
-  background: #050203;
-  box-shadow:
-    inset 0 0 0.34rem rgba(255, 244, 212, 0.16),
-    inset 0 0 0.82rem rgba(0, 0, 0, 0.58);
   pointer-events: none;
 }
 
 .charity-flamethrower-button:hover,
 .charity-flamethrower-button:focus-visible {
-  background:
-    linear-gradient(#080302, #080302) padding-box,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.9)) border-box;
   outline: 2px solid #ffffff;
   outline-offset: 0.18rem;
 }
@@ -599,10 +588,19 @@
   padding: 0;
   background:
     linear-gradient(#050203, #050203) padding-box,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88)) border-box;
+    conic-gradient(
+      from 36deg,
+      rgba(255, 255, 255, 0.95) 0deg 64deg,
+      rgba(255, 159, 48, 0.72) 88deg 114deg,
+      rgba(255, 255, 255, 0.92) 142deg 214deg,
+      rgba(211, 55, 18, 0.48) 238deg 264deg,
+      rgba(255, 210, 93, 0.68) 292deg 314deg,
+      rgba(255, 255, 255, 0.94) 342deg 360deg
+    ) border-box;
   box-shadow:
     0 0 0.18rem #ffffff,
-    0 0 1.05rem rgba(255, 255, 255, 0.7),
+    0 0 0.6rem rgba(255, 255, 255, 0.48),
+    0 0 0.5rem rgba(255, 99, 24, 0.24),
     inset 0 0 0.8rem rgba(255, 255, 255, 0.22);
   cursor: grab;
   transform: translate(-50%, -50%);
