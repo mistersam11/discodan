@@ -2155,7 +2155,7 @@ function CharitySimulatorScene({
       <AnimatePresence>
         {message && (
           <motion.p
-            className="charity-message"
+            className={`charity-message ${hasFrozenButton ? "is-ice-warning" : ""}`}
             key={message}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2302,7 +2302,7 @@ function CharityPhysicsCanvas({
     const particles: CharityParticle[] = [];
     const maxParticles = reduceEffects ? 120 : 260;
     const baseMaxCoins = reduceEffects ? 96 : 180;
-    const maxCoins = isMobileDevice ? baseMaxCoins : baseMaxCoins * 3;
+    const maxCoins = (isMobileDevice ? baseMaxCoins : baseMaxCoins * 3) * 3;
     const coinRadius = reduceEffects ? 10 : 13;
     const frameIntervalMs = reduceEffects ? 33 : 16;
     let width = 0;

@@ -454,7 +454,7 @@
 
 .charity-message {
   position: absolute;
-  top: calc(50% - clamp(5.4rem, 14vh, 7rem));
+  top: calc(50% - clamp(6.8rem, 17vh, 9rem));
   right: 0;
   left: 0;
   z-index: 3;
@@ -466,6 +466,10 @@
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
+}
+
+.charity-message.is-ice-warning {
+  top: calc(50% - clamp(10rem, 25vh, 14rem));
 }
 
 .charity-action-stack {
