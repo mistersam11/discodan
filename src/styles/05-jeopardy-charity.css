@@ -1,0 +1,981 @@
+.jeopardy-scene {
+  --jeopardy-frame-radius: clamp(0.75rem, 1.8vw, 1.35rem);
+
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.jeopardy-clock-intro,
+.jeopardy-logo-intro,
+.jeopardy-podium-scene,
+.jeopardy-board-scene,
+.jeopardy-standings-scene,
+.jeopardy-final-intro,
+.jeopardy-final-question-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #000000;
+}
+
+.jeopardy-clock-anchor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.jeopardy-clock {
+  position: relative;
+  width: clamp(8.5rem, 26vmin, 16rem);
+  aspect-ratio: 1;
+  border: clamp(0.34rem, 0.9vmin, 0.58rem) solid #f7f7ff;
+  border-radius: 50%;
+  background: #000000;
+}
+
+.jeopardy-clock-tick {
+  position: absolute;
+  background: #ffffff;
+}
+
+.tick-12,
+.tick-6 {
+  left: 50%;
+  width: 0.25rem;
+  height: 1rem;
+  transform: translateX(-50%);
+}
+
+.tick-12 {
+  top: 0.78rem;
+}
+
+.tick-6 {
+  bottom: 0.78rem;
+}
+
+.tick-3,
+.tick-9 {
+  top: 50%;
+  width: 1rem;
+  height: 0.25rem;
+  transform: translateY(-50%);
+}
+
+.tick-3 {
+  right: 0.78rem;
+}
+
+.tick-9 {
+  left: 0.78rem;
+}
+
+.jeopardy-clock-hand {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  display: block;
+  border-radius: 999px;
+  background: #ffffff;
+  transform-origin: center bottom;
+}
+
+.jeopardy-clock-hour {
+  width: 0.45rem;
+  height: 29%;
+  margin-left: -0.225rem;
+  animation: jeopardy-hour-spin 5.2s cubic-bezier(0.05, 0.86, 0.14, 1) forwards;
+}
+
+.jeopardy-clock-minute {
+  width: 0.28rem;
+  height: 39%;
+  margin-left: -0.14rem;
+  animation: jeopardy-minute-spin 5.2s cubic-bezier(0.05, 0.86, 0.14, 1) forwards;
+}
+
+.jeopardy-clock-pin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.68rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: translate(-50%, -50%);
+}
+
+.jeopardy-clock-copy {
+  position: absolute;
+  top: calc(50% + clamp(5.6rem, 17vmin, 10rem));
+  left: 50%;
+  display: grid;
+  width: min(calc(100vw - 2rem), 32rem);
+  gap: 0.65rem;
+  justify-items: center;
+  transform: translateX(-50%);
+}
+
+.jeopardy-clock-time,
+.jeopardy-clock-caption {
+  margin: 0;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.jeopardy-clock-time {
+  min-height: 1.1em;
+  font-size: clamp(1.45rem, 5vw, 2.6rem);
+  font-weight: 850;
+}
+
+.jeopardy-clock-caption {
+  min-height: 1.2em;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: clamp(0.98rem, 2.4vw, 1.3rem);
+}
+
+.jeopardy-logo-intro {
+  perspective: 50rem;
+}
+
+.jeopardy-logo-button {
+  display: grid;
+  width: min(78vw, 42rem);
+  aspect-ratio: 1100 / 621;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  perspective: 50rem;
+}
+
+.jeopardy-logo-button:focus-visible {
+  outline: 2px solid #ffe45c;
+  outline-offset: 0.65rem;
+}
+
+.jeopardy-logo-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: jeopardy-logo-spin 5.5s linear infinite;
+}
+
+.jeopardy-logo-face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  border-radius: 0.4rem;
+  backface-visibility: hidden;
+  box-shadow: 0 1.4rem 4rem rgba(43, 80, 255, 0.28);
+}
+
+.jeopardy-logo-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.jeopardy-logo-face.is-back {
+  transform: rotateY(180deg);
+}
+
+.jeopardy-standings-scene {
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  justify-items: center;
+  padding: clamp(2rem, 7vh, 5rem) clamp(1rem, 4vw, 3rem);
+}
+
+.jeopardy-standings-scene h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 5vw, 3.7rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  animation: jeopardy-standings-title 6.3s ease both;
+}
+
+.jeopardy-standings-list {
+  display: flex;
+  width: min(calc(100vw - 2rem), 42rem);
+  min-height: min(48vh, 22rem);
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: clamp(0.55rem, 1.8vh, 1rem);
+}
+
+.jeopardy-standing-row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(0.55rem, 2vw, 1rem);
+  border: 2px solid rgba(255, 255, 255, 0.76);
+  padding: clamp(0.55rem, 1.5vw, 0.9rem) clamp(0.65rem, 2vw, 1.15rem);
+  background: #040474;
+  color: #ffffff;
+  font-size: clamp(0.98rem, 2.7vw, 1.45rem);
+  font-weight: 850;
+  text-align: left;
+  text-shadow: 0 0.12rem 0.25rem rgba(0, 0, 0, 0.86);
+  opacity: 0;
+  animation: jeopardy-standing-row-arrive 4.7s ease var(--standing-delay) both;
+}
+
+.jeopardy-standing-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jeopardy-final-intro {
+  place-content: center;
+  justify-items: center;
+  gap: clamp(0.85rem, 2.5vw, 1.5rem);
+  padding: 0 clamp(1rem, 4vw, 3rem);
+  transform: translateY(3vh);
+}
+
+.jeopardy-final-intro p,
+.jeopardy-final-intro h2 {
+  margin: 0;
+}
+
+.jeopardy-final-intro p {
+  font-size: clamp(1.45rem, 5vw, 3.8rem);
+  font-weight: 900;
+}
+
+.jeopardy-final-intro h2 {
+  display: grid;
+  gap: 0.1em;
+  perspective: 42rem;
+  font-size: clamp(2.7rem, 12vw, 8.6rem);
+  font-weight: 950;
+  line-height: 0.82;
+  text-shadow:
+    0 0.08em 0 #0712a5,
+    0 0 0.3em rgba(255, 255, 255, 0.45);
+}
+
+.jeopardy-final-intro h2 span:last-child {
+  display: inline-block;
+  transform-origin: center;
+  animation: jeopardy-final-jeopardy-chaos 520ms linear infinite;
+}
+
+.jeopardy-final-question-scene {
+  place-items: center;
+  background: #000000;
+}
+
+.jeopardy-final-video {
+  display: block;
+  width: min(78vw, 56rem);
+  max-height: min(70dvh, 38rem);
+  border-radius: var(--jeopardy-frame-radius);
+  background: #000000;
+  box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.72);
+}
+
+.jeopardy-final-question-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  height: 100%;
+  align-content: center;
+  place-content: center;
+  align-items: center;
+  justify-items: center;
+  gap: clamp(1rem, 3vh, 1.7rem);
+  padding: clamp(1.5rem, 6vh, 4rem) clamp(1rem, 4vw, 3rem);
+}
+
+.jeopardy-final-question-card h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 5vw, 3.4rem);
+  font-weight: 650;
+  line-height: 1.15;
+  text-transform: none;
+}
+
+.jeopardy-final-answer-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.75rem, 2.5vw, 1.4rem);
+}
+
+.jeopardy-final-answer-buttons button {
+  min-width: clamp(5.5rem, 15vw, 8rem);
+  border: 1px solid #ffffff;
+  border-radius: 0.2rem;
+  padding: 0.6rem 1.1rem;
+  color: #ffffff;
+  background: #000000;
+  font-size: clamp(1rem, 2.6vw, 1.35rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.jeopardy-final-answer-buttons button:hover,
+.jeopardy-final-answer-buttons button:focus-visible {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 0.15rem;
+}
+
+.jeopardy-final-score-reveal {
+  display: grid;
+  gap: clamp(0.65rem, 2vh, 1rem);
+  justify-items: center;
+}
+
+.jeopardy-final-score-reveal p,
+.jeopardy-final-score-reveal strong {
+  margin: 0;
+}
+
+.jeopardy-final-score-reveal p {
+  font-family: "Segoe Print", "Comic Sans MS", "Bradley Hand ITC", cursive;
+  font-size: clamp(1.7rem, 5.2vw, 3.5rem);
+  font-weight: 900;
+}
+
+.jeopardy-final-score-reveal strong {
+  color: #52ff8f;
+  font-size: clamp(2.4rem, 9vw, 6.6rem);
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+  text-shadow:
+    0 0 0.55rem rgba(82, 255, 143, 0.7),
+    0 0.12rem 0.25rem rgba(0, 0, 0, 0.86);
+}
+
+.jeopardy-final-score-reveal strong.is-zero {
+  color: #ff3030;
+  text-shadow:
+    0 0 0.65rem rgba(255, 48, 48, 0.78),
+    0 0.12rem 0.25rem rgba(0, 0, 0, 0.86);
+}
+
+.charity-gate-scene,
+.charity-simulator-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: #ffffff;
+  background: #000000;
+}
+
+.charity-gate-scene {
+  display: grid;
+  place-content: center;
+  gap: 0.65rem;
+  justify-items: center;
+}
+
+.charity-gate-scene button {
+  border: 1px solid #ffffff;
+  border-radius: 0.25rem;
+  padding: 0.72rem 1.15rem;
+  color: #ffffff;
+  background: #000000;
+  font-size: clamp(1.15rem, 3vw, 1.65rem);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.charity-gate-scene button:hover,
+.charity-gate-scene button:focus-visible {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 0.18rem;
+}
+
+.charity-gate-scene p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+}
+
+.charity-simulator-scene {
+  display: grid;
+  justify-items: center;
+}
+
+.charity-simulator-scene h2 {
+  position: relative;
+  z-index: 2;
+  margin: clamp(1.1rem, 4vh, 2.3rem) 0 0;
+  font-size: clamp(1.75rem, 5vw, 3.1rem);
+  font-weight: 750;
+}
+
+.charity-cleanup-title {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: auto;
+  margin: 0;
+  padding: 1rem;
+  color: #ffffff;
+  font-size: clamp(2.45rem, 9vw, 7.2rem);
+  font-weight: 950;
+  line-height: 0.9;
+  text-align: center;
+  text-shadow:
+    0 0.08em 0.22em rgba(255, 159, 31, 0.74),
+    0 0.02em 0.08em rgba(0, 0, 0, 0.95);
+  pointer-events: none;
+}
+
+.charity-physics-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.charity-message {
+  position: absolute;
+  top: calc(50% - clamp(5.4rem, 14vh, 7rem));
+  right: 0;
+  left: 0;
+  z-index: 3;
+  width: min(calc(100vw - 2rem), 38rem);
+  margin: 0;
+  margin-inline: auto;
+  color: #ffffff;
+  font-size: clamp(1rem, 2.6vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.charity-action-stack {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.charity-flamethrower-wrap {
+  display: grid;
+  gap: 0.48rem;
+  justify-items: center;
+  margin-bottom: clamp(1.8rem, 6vh, 4rem);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.92rem;
+  font-weight: 750;
+  line-height: 1;
+  text-transform: lowercase;
+  user-select: none;
+}
+
+.charity-flamethrower-button {
+  width: clamp(2.75rem, 7vmin, 3.65rem);
+  aspect-ratio: 1;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  padding: 0;
+  background: #000000;
+  box-shadow:
+    0 0 0.15rem #ffffff,
+    0 0 0.85rem rgba(255, 255, 255, 0.58),
+    inset 0 0 0.7rem rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.charity-flamethrower-button:hover,
+.charity-flamethrower-button:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  outline: 2px solid #ffffff;
+  outline-offset: 0.18rem;
+}
+
+.charity-cleanup-flamethrower-button {
+  position: absolute;
+  top: var(--flamethrower-y);
+  left: var(--flamethrower-x);
+  z-index: 4;
+  width: clamp(3.1rem, 8vmin, 4.2rem);
+  aspect-ratio: 1;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  padding: 0;
+  background: #000000;
+  box-shadow:
+    0 0 0.18rem #ffffff,
+    0 0 1.05rem rgba(255, 255, 255, 0.7),
+    inset 0 0 0.8rem rgba(255, 255, 255, 0.22);
+  cursor: grab;
+  transform: translate(-50%, -50%);
+  touch-action: none;
+}
+
+.charity-cleanup-flamethrower-button.is-dragging {
+  cursor: grabbing;
+  animation: none;
+}
+
+.charity-cleanup-flamethrower-button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 0.22rem;
+}
+
+.charity-next-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 5;
+  border: 1px solid #ffffff;
+  border-radius: 0.25rem;
+  padding: 0.72rem 1.35rem;
+  color: #ffffff;
+  background: #000000;
+  font-size: clamp(1.1rem, 3vw, 1.55rem);
+  font-weight: 750;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.charity-next-button:hover,
+.charity-next-button:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 0.18rem;
+}
+
+.charity-donate-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.charity-donate-button {
+  min-width: clamp(11rem, 30vw, 16rem);
+  border: 1px solid #ffffff;
+  border-radius: 0.25rem;
+  padding: 0.78rem 1.2rem;
+  color: #ffffff;
+  background: #000000;
+  font-size: clamp(1rem, 2.7vw, 1.35rem);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.charity-donate-button:hover:not(:disabled),
+.charity-donate-button:focus-visible:not(:disabled) {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 0.18rem;
+}
+
+.charity-donate-button:disabled {
+  color: rgba(255, 255, 255, 0.52);
+  cursor: default;
+}
+
+.charity-ice-cube {
+  --ice-opacity: 0.8;
+  --ice-scale: 1;
+
+  position: absolute;
+  inset: -0.75rem;
+  border: 2px solid rgba(224, 250, 255, 0.92);
+  border-radius: 0.18rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.35), transparent 42%),
+    rgba(125, 221, 255, var(--ice-opacity));
+  box-shadow:
+    inset 0 0 1.2rem rgba(255, 255, 255, 0.55),
+    0 0 0.8rem rgba(125, 221, 255, 0.38);
+  transform: scale(var(--ice-scale));
+  pointer-events: none;
+}
+
+.charity-ice-cube::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: clamp(2.6rem, 12vw, 5.4rem);
+  font-weight: 950;
+  line-height: 1;
+  text-shadow:
+    0 0.08em 0.12em rgba(0, 97, 145, 0.78),
+    0 0 0.28em rgba(255, 255, 255, 0.85);
+  transform: translateY(-0.12em);
+  content: "ICE";
+}
+
+.charity-balance {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.25rem, 4vw, 2.25rem);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0.12rem 0.25rem rgba(0, 0, 0, 0.8);
+}
+
+.charity-balance.is-negative {
+  color: #ff6b6b;
+}
+
+.jeopardy-stage-frame {
+  position: relative;
+  width: min(78rem, calc(100vw - 5rem));
+  height: min(48rem, calc(100dvh - 5rem));
+  overflow: hidden;
+  border-radius: var(--jeopardy-frame-radius);
+  background: #04040a;
+  box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.65);
+}
+
+.jeopardy-podium-scene .jeopardy-stage-frame {
+  width: min(78rem, calc(100vw - 5rem), calc(177.78dvh - 8.89rem));
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.jeopardy-podiums-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.jeopardy-podium-overlays {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.jeopardy-contestant-podium {
+  position: absolute;
+  top: 0;
+  left: var(--podium-left);
+  width: 17%;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.podium-0 {
+  --podium-left: 19.8%;
+  --podium-copy-offset: 7%;
+  --podium-outline-offset: 7%;
+}
+
+.podium-1 {
+  --podium-left: 52.45%;
+}
+
+.podium-2 {
+  --podium-left: 85.2%;
+  --podium-copy-offset: -12%;
+  --podium-outline-offset: -7%;
+}
+
+.jeopardy-contestant-podium.is-active::after {
+  position: absolute;
+  top: 34%;
+  left: calc(-6% + var(--podium-outline-offset, 0%));
+  width: 112%;
+  height: 34%;
+  border: 0.22rem solid #ffe45c;
+  box-shadow:
+    0 0 0.85rem rgba(255, 228, 92, 0.84),
+    inset 0 0 0.85rem rgba(255, 228, 92, 0.28);
+  content: "";
+}
+
+.jeopardy-money,
+.jeopardy-name {
+  position: absolute;
+  left: calc(50% + var(--podium-copy-offset, 0%));
+  width: 92%;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 0.12rem 0.35rem rgba(0, 0, 0, 0.92);
+  transform: translateX(-50%);
+}
+
+.jeopardy-money {
+  top: 38.8%;
+  font-size: clamp(1.1rem, min(2.6vw, 4vh), 2.15rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.jeopardy-money.is-positive {
+  animation: jeopardy-money-positive 1.05s ease;
+}
+
+.jeopardy-money.is-negative {
+  animation: jeopardy-money-negative 1.05s ease;
+}
+
+.jeopardy-name {
+  top: 52.2%;
+  font-family: "Segoe Print", "Comic Sans MS", "Bradley Hand ITC", cursive;
+  font-size: clamp(1.2rem, min(3vw, 4.8vh), 2.55rem);
+  font-weight: 800;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.jeopardy-speech-bubble {
+  position: absolute;
+  top: 13%;
+  left: var(--speech-left);
+  z-index: 4;
+  width: min(22rem, 30vw);
+  border: 2px solid #ffffff;
+  border-radius: 0.45rem;
+  padding: 0.75rem 0.9rem;
+  color: #ffffff;
+  background: rgba(0, 0, 70, 0.9);
+  font-size: clamp(0.9rem, 1.6vw, 1.18rem);
+  font-weight: 800;
+  line-height: 1.22;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.speech-0 {
+  --speech-left: 19.8%;
+
+  transform: translateX(-20%);
+}
+
+.speech-1 {
+  --speech-left: 52.45%;
+
+  transform: translateX(-50%);
+}
+
+.speech-2 {
+  --speech-left: 85.2%;
+
+  transform: translateX(-80%);
+}
+
+.jeopardy-choice-panel {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  width: min(calc(100% - 2rem), 42rem);
+  gap: 0.75rem;
+  justify-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.84);
+  border-radius: 0.45rem;
+  padding: 0.8rem;
+  background: rgba(0, 0, 80, 0.86);
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.jeopardy-choice-timer {
+  color: #ffe45c;
+  font-size: 1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.jeopardy-choice-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.jeopardy-choice-options button {
+  min-height: 2.45rem;
+  border: 1px solid #ffe45c;
+  border-radius: 0.25rem;
+  color: #ffffff;
+  background: #0712a5;
+  font-size: clamp(0.82rem, 1.5vw, 1rem);
+  font-weight: 800;
+  line-height: 1.12;
+  cursor: pointer;
+}
+
+.jeopardy-choice-options button:hover,
+.jeopardy-choice-options button:focus-visible {
+  background: #1234e9;
+  outline: 2px solid #ffffff;
+  outline-offset: 0.12rem;
+}
+
+.jeopardy-board-scene {
+  padding: clamp(0.7rem, 2vw, 1.35rem);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(67, 106, 255, 0.24), transparent 34rem),
+    #02020a;
+}
+
+.jeopardy-board-frame {
+  display: grid;
+  padding: clamp(0.24rem, 0.8vw, 0.55rem);
+  background: #05050b;
+}
+
+.jeopardy-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: 0.85fr repeat(5, 1fr);
+  gap: clamp(0.2rem, 0.7vw, 0.42rem);
+  width: 100%;
+  height: 100%;
+  background: #05050b;
+}
+
+.jeopardy-category,
+.jeopardy-tile {
+  display: grid;
+  place-items: center;
+  border: 2px solid #05050b;
+  color: #ffffff;
+  background: #0606a8;
+  text-align: center;
+  text-shadow: 0 0.12rem 0.2rem rgba(0, 0, 0, 0.88);
+}
+
+.jeopardy-category {
+  padding: 0.28rem;
+  font-size: clamp(0.62rem, 1.45vw, 1.15rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.jeopardy-tile {
+  min-width: 0;
+  min-height: 0;
+  border-radius: 0;
+  font-size: clamp(1.15rem, 3.2vw, 2.55rem);
+  font-weight: 900;
+}
+
+button.jeopardy-tile {
+  cursor: pointer;
+}
+
+button.jeopardy-tile:hover,
+button.jeopardy-tile:focus-visible {
+  color: #ffe45c;
+  outline: 3px solid #ffe45c;
+  outline-offset: -0.28rem;
+}
+
+.jeopardy-tile.is-missing {
+  background: #010147;
+  box-shadow: inset 0 0 1.2rem rgba(0, 0, 0, 0.65);
+}
+
+.jeopardy-question-panel {
+  position: fixed;
+  z-index: 100;
+  overflow: hidden;
+  border-radius: var(--jeopardy-frame-radius);
+  background: #0606a8;
+  box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.65);
+}
+
+.jeopardy-question-content {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  align-content: center;
+  gap: clamp(1rem, 3vmin, 2.1rem);
+  padding: clamp(1rem, 4vw, 3rem);
+  color: #ffffff;
+  opacity: 0;
+  animation: jeopardy-question-content-in 0.28s ease 0.42s forwards;
+}
+
+.jeopardy-question-value {
+  margin: 0;
+  color: #ffe45c;
+  font-size: clamp(0.9rem, 2.2vw, 1.4rem);
+  font-weight: 900;
+}
+
+.jeopardy-clue {
+  display: flex;
+  max-width: min(60rem, 94vw);
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25em;
+  color: #ffffff;
+  font-size: clamp(1.55rem, 5vw, 4.1rem);
+  font-weight: 850;
+  line-height: 1.12;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 0.14rem 0.28rem rgba(0, 0, 0, 0.72);
+}
+
+.jeopardy-clue span {
+  transition: color 120ms ease;
+}
+
+.jeopardy-clue span.is-read {
+  color: #ffe45c;
+}
+
+.jeopardy-buzz-button {
+  display: grid;
+  width: clamp(5.5rem, 15vmin, 8rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0.32rem solid #d3a53d;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #b40010;
+  box-shadow:
+    inset 0 0.25rem 0.7rem rgba(255, 255, 255, 0.22),
+    0 0.85rem 1.8rem rgba(0, 0, 0, 0.38);
+  font-size: clamp(0.78rem, 2vmin, 1.18rem);
+  font-weight: 950;
+  line-height: 0.92;
+  cursor: pointer;
+}
+
+.jeopardy-buzz-button.is-too-early {
+  background: #6a6a6a;
+  cursor: default;
+}
+
+.jeopardy-buzz-button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 0.25rem;
+}
+

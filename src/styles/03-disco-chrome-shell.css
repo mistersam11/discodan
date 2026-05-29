@@ -1,0 +1,86 @@
+.disco-chrome-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 1.35rem;
+  color: #202124;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.08), transparent 28rem),
+    #0b0c10;
+}
+
+.disco-browser-window {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  width: min(74rem, calc(100vw - 2.7rem));
+  height: min(47rem, calc(100dvh - 2.7rem));
+  overflow: hidden;
+  border: 1px solid #2d3038;
+  border-radius: 0.55rem;
+  background: #ffffff;
+  box-shadow: 0 1.6rem 4rem rgba(0, 0, 0, 0.52);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.disco-browser-window.is-blasted {
+  pointer-events: none;
+  animation: disco-browser-blast 0.38s steps(2, end) forwards;
+}
+
+.danflix-reveal-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0.04em 0.12em 0.12em;
+  color: #e50914;
+  background: transparent;
+  font-size: 8rem;
+  font-weight: 760;
+  line-height: 1;
+  opacity: 0;
+  text-align: center;
+  text-shadow:
+    0 0.16rem 0 #000000,
+    0 0 2.4rem rgba(229, 9, 20, 0.28);
+  transform: translate(-50%, -50%) scale(0.95);
+  transition:
+    opacity 0.9s ease 0.38s,
+    transform 1.1s ease 0.38s;
+  cursor: pointer;
+  pointer-events: none;
+}
+
+.danflix-reveal-button.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+.danflix-logo-skip-scene {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(229, 9, 20, 0.18), transparent 24rem),
+    #000000;
+}
+
+.danflix-reveal-button:disabled {
+  cursor: default;
+}
+
+.danflix-reveal-button:hover,
+.danflix-reveal-button:focus-visible {
+  color: #e50914;
+  background: transparent;
+  filter: drop-shadow(0 0 1.25rem rgba(229, 9, 20, 0.52));
+  outline: none;
+  transform: translate(-50%, -50%) scale(1.035);
+  animation: danflix-red-glow 0.9s ease-in-out infinite alternate;
+}
+

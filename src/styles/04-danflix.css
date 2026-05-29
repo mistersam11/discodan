@@ -1,0 +1,1208 @@
+.danflix-scene {
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  color: #ffffff;
+  background:
+    linear-gradient(180deg, rgba(20, 20, 20, 0.42), rgba(0, 0, 0, 0.96)),
+    #070707;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.danflix-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  pointer-events: none;
+  background: transparent;
+  isolation: isolate;
+}
+
+.danflix-intro::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #000000;
+  content: "";
+  animation: danflix-intro-dim 2.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.danflix-intro-curtain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 50.05%;
+
+  background: #080808;
+
+  box-shadow:
+    inset 0 0 4rem rgba(0, 0, 0, 0.85),
+    0 0 1.5rem rgba(229, 9, 20, 0.14);
+
+  animation-duration: 1.85s;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+
+  will-change: transform, opacity;
+}
+
+.danflix-intro-curtain-left {
+  left: 0;
+  transform-origin: left center;
+  animation-name: danflix-curtain-left;
+}
+
+.danflix-intro-curtain-right {
+  right: 0;
+  transform-origin: right center;
+  animation-name: danflix-curtain-right;
+}
+
+.danflix-intro-slit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 3;
+
+  width: 1px;
+  background: rgba(229, 9, 20, 0.9);
+
+  box-shadow: 0 0 1.25rem rgba(229, 9, 20, 0.35);
+
+  transform: translateX(-50%) scaleY(0);
+  animation: danflix-slit-open 1.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+
+  will-change: transform, opacity;
+}
+
+.danflix-home {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0, rgba(0, 0, 0, 0.82) 70%, #070707 100%),
+    #070707;
+}
+
+.danflix-nav {
+  position: relative;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.1rem, 2.8vw, 2.2rem);
+  min-height: clamp(3.35rem, 7dvh, 4.6rem);
+  padding: 0 clamp(1.1rem, 4vw, 3.6rem);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.98), rgba(0, 0, 0, 0.74) 68%, rgba(0, 0, 0, 0));
+  box-shadow: 0 1.2rem 1.8rem rgba(0, 0, 0, 0.2);
+}
+
+.danflix-logo {
+  color: #e50914;
+  font-size: clamp(1.35rem, 2.6vw, 1.8rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.danflix-nav-links {
+  display: flex;
+  gap: 1.35rem;
+  align-items: center;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.danflix-nav-links::-webkit-scrollbar {
+  display: none;
+}
+
+.danflix-nav-links button {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  color: #ffffff;
+  background: transparent;
+  font-size: 0.92rem;
+  opacity: 1;
+  cursor: default;
+  transition:
+    color 160ms ease,
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+.danflix-nav-links button:disabled {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.danflix-nav-links button:hover,
+.danflix-nav-links button:focus-visible {
+  color: #e5e5e5;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.danflix-feature {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.88fr) minmax(18rem, 1.12fr);
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, #080808 0%, rgba(8, 8, 8, 0.98) 34%, rgba(8, 8, 8, 0.48) 61%, rgba(8, 8, 8, 0.08) 100%),
+    #101010;
+  box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.52);
+  animation: danflix-feature-arrive 0.82s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.danflix-feature::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.86) 27%, rgba(0, 0, 0, 0.34) 55%, rgba(0, 0, 0, 0.08) 100%),
+    linear-gradient(0deg, rgba(7, 7, 7, 0.85) 0%, rgba(7, 7, 7, 0) 34%);
+  content: "";
+}
+
+.danflix-feature:hover {
+  box-shadow: 0 2.25rem 5.6rem rgba(0, 0, 0, 0.64);
+  transform: scale(1.004);
+}
+
+.danflix-feature-copy {
+  position: relative;
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  width: auto;
+  min-height: 100%;
+  max-width: none;
+  padding:
+    clamp(1.05rem, 4.6dvh, 4.8rem)
+    clamp(1rem, 2vw, 1.8rem)
+    clamp(1.05rem, 4dvh, 4.2rem)
+    clamp(1.2rem, 3.8vw, 3.4rem);
+  background: transparent;
+}
+
+.danflix-original {
+  margin: 0 0 0.95rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.danflix-title-logo {
+  display: grid;
+  gap: 0.06rem;
+  max-width: 100%;
+  margin: 0;
+  color: #ffffff;
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size: clamp(2.45rem, min(5.6vw, 8.5dvh), 4.7rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.86;
+  text-shadow:
+    0 0.2rem 0 #141414,
+    0 0 1.5rem rgba(229, 9, 20, 0.36);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.danflix-title-logo span:last-child {
+  color: #e50914;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.95rem, min(1.6vw, 2.5dvh), 1.35rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.danflix-description {
+  max-width: 34.5rem;
+  margin: clamp(0.8rem, 2.2dvh, 1.45rem) 0 0;
+  color: #f3f3f3;
+  font-size: clamp(0.88rem, min(1.25vw, 2dvh), 1.08rem);
+  line-height: 1.36;
+}
+
+.danflix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: clamp(0.95rem, 2.5dvh, 1.75rem);
+}
+
+.danflix-play-button,
+.danflix-info-button {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.25rem;
+  padding: 0 clamp(1rem, 2vw, 1.45rem);
+  font-size: clamp(0.9rem, 1.15vw, 1rem);
+  font-weight: 800;
+}
+
+.danflix-play-button {
+  color: #000000;
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.danflix-play-button:hover,
+.danflix-play-button:focus-visible {
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 0.5rem 1.4rem rgba(255, 255, 255, 0.18);
+  outline: 2px solid #ffffff;
+  outline-offset: 0.18rem;
+  transform: translateY(-1px) scale(1.02);
+}
+
+.danflix-info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  color: #ffffff;
+  background: rgba(109, 109, 110, 0.76);
+  cursor: default;
+}
+
+.danflix-info-button:disabled {
+  opacity: 1;
+}
+
+.danflix-info-icon {
+  display: inline-grid;
+  width: 1.18rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0.12rem solid currentColor;
+  border-radius: 50%;
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.danflix-feature-art {
+  position: relative;
+  z-index: 0;
+  display: grid;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 100%;
+  place-items: center;
+  overflow: hidden;
+  background: #070707;
+  transition: filter 220ms ease;
+}
+
+.danflix-feature:hover .danflix-feature-art {
+  filter: saturate(1.08) brightness(1.04);
+}
+
+.danflix-feature-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.02);
+}
+
+.danflix-feature-art::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(7, 7, 7, 0.62) 0%, rgba(7, 7, 7, 0.12) 52%, rgba(7, 7, 7, 0) 100%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0) 43%);
+  content: "";
+}
+
+.danflix-feature-art::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-shadow: inset 0 0 5rem rgba(0, 0, 0, 0.58);
+  content: "";
+  pointer-events: none;
+}
+
+.danflix-disco-orbit {
+  position: absolute;
+  top: 11%;
+  right: 18%;
+  z-index: 2;
+  width: clamp(5.8rem, 9.5vw, 8.5rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    linear-gradient(90deg, transparent 47%, rgba(255, 255, 255, 0.68) 48% 52%, transparent 53%),
+    linear-gradient(0deg, transparent 47%, rgba(255, 255, 255, 0.68) 48% 52%, transparent 53%),
+    linear-gradient(135deg, #ffffff, #aeb5c4);
+  box-shadow: 0 0 2.4rem rgba(255, 255, 255, 0.4);
+}
+
+.danflix-documentary-cover {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  width: min(78%, 28rem);
+  max-width: calc(100% - 3rem);
+  min-height: clamp(9.5rem, 34dvh, 20rem);
+  place-items: center;
+  gap: 0.35rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 0.16rem solid rgba(255, 255, 255, 0.22);
+  border-radius: 0.45rem;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.24), transparent 6rem),
+    linear-gradient(145deg, #121212 0%, #e50914 54%, #3a0407 100%);
+  box-shadow:
+    0 1.6rem 3rem rgba(0, 0, 0, 0.52),
+    inset 0 0 0 0.08rem rgba(255, 255, 255, 0.12);
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.danflix-documentary-cover span:first-child {
+  color: #ffffff;
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size: clamp(2.6rem, min(6vw, 9dvh), 5.2rem);
+  font-weight: 900;
+  line-height: 0.86;
+  text-shadow:
+    0 0.18rem 0 #050505,
+    0 0 1.5rem rgba(0, 0, 0, 0.48);
+}
+
+.danflix-documentary-cover span:last-child {
+  align-self: start;
+  color: #ffffff;
+  font-size: clamp(0.78rem, min(1.4vw, 2.2dvh), 1.1rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.danflix-feature-art p {
+  position: absolute;
+  right: 2rem;
+  bottom: 1.55rem;
+  z-index: 3;
+  max-width: 20rem;
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: right;
+  text-shadow: 0 0.12rem 0.3rem rgba(0, 0, 0, 0.82);
+  text-transform: uppercase;
+}
+
+.danflix-row {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding:
+    clamp(0.3rem, 1.6dvh, 1rem)
+    0
+    clamp(0.55rem, 2dvh, 1.4rem)
+    0;
+  background: linear-gradient(180deg, rgba(7, 7, 7, 0.88), #070707 42%);
+}
+
+.danflix-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding:
+    0
+    clamp(1.1rem, 4vw, 3.6rem)
+    0
+    clamp(1.1rem, 4vw, 3.6rem);
+}
+
+.danflix-row h2 {
+  margin: 0 0 clamp(0.35rem, 1dvh, 0.75rem);
+  color: #ffffff;
+  font-size: clamp(1rem, 2.2dvh, 1.32rem);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.danflix-row-arrow {
+  display: grid;
+  place-items: center;
+  border: 0;
+  color: #ffffff;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.68;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.danflix-row-arrow:hover,
+.danflix-row-arrow:focus-visible {
+  background: transparent;
+  opacity: 0.9;
+  outline: none;
+  transform: scale(1.06);
+}
+
+.danflix-row-frame {
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  overflow: visible;
+}
+
+.danflix-row-arrow {
+  position: absolute;
+  top: 0.45rem;
+  bottom: 0.8rem;
+  z-index: 12;
+  width: clamp(2.35rem, 4vw, 3.25rem);
+  background: transparent;
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+.danflix-row-arrow-left {
+  left: 0;
+  border-radius: 0 0.35rem 0.35rem 0;
+}
+
+.danflix-row-arrow-right {
+  right: 0;
+  border-radius: 0.35rem 0 0 0.35rem;
+}
+
+.danflix-poster-strip {
+  display: grid;
+  grid-auto-columns: clamp(8.2rem, 11vw, 12rem);
+  grid-auto-flow: column;
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.45rem clamp(0.8rem, 2vw, 1.4rem) 0.85rem clamp(0.8rem, 2vw, 1.4rem);
+  scroll-behavior: smooth;
+  scroll-padding-inline: 3rem;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.danflix-poster {
+  position: relative;
+  display: flex;
+  aspect-ratio: 7 / 9;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  padding: clamp(0.72rem, 1.3vw, 1rem);
+  color: var(--poster-title-color, #ffffff);
+  background-color: #171717;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -3.8rem 3.5rem rgba(0, 0, 0, 0.18);
+  scroll-snap-align: start;
+  transform: translateY(0) scale(1);
+  transform-origin: center bottom;
+  transition:
+    box-shadow 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
+  animation: danflix-poster-arrive 0.58s cubic-bezier(0.22, 1, 0.36, 1) var(--poster-delay) both;
+}
+
+.danflix-poster-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--poster-position, center);
+}
+
+.danflix-poster::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    var(
+      --poster-overlay,
+      radial-gradient(circle at 32% 76%, rgba(0, 0, 0, 0.78), transparent 48%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.62))
+    );
+  content: "";
+}
+
+.danflix-poster::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 22%),
+    radial-gradient(circle at 50% 108%, transparent 38%, rgba(0, 0, 0, 0.2) 100%);
+  box-shadow: inset 0 0 2.4rem rgba(0, 0, 0, 0.34);
+  content: "";
+}
+
+.danflix-poster-title {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.02em 0.2em;
+  align-items: flex-start;
+  max-width: 100%;
+  color: var(--poster-title-color, #ffffff);
+  font-family: var(--poster-title-font, Impact, Haettenschweiler, "Arial Black", sans-serif);
+  font-size: var(--poster-title-size, clamp(1.35rem, 2.15vw, 2.35rem));
+  font-weight: var(--poster-title-weight, 900);
+  letter-spacing: 0;
+  line-height: 0.9;
+  text-align: var(--poster-title-align, left);
+  text-shadow:
+    var(
+      --poster-title-shadow,
+      0 0.1rem 0.14rem rgba(0, 0, 0, 0.96),
+      0 0.26rem 0.82rem rgba(0, 0, 0, 0.88)
+    );
+  text-transform: uppercase;
+  -webkit-text-stroke: var(--poster-title-stroke, 0.012em rgba(0, 0, 0, 0.45));
+}
+
+.danflix-poster-word {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.danflix-poster-word.is-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  line-height: 0.86;
+}
+
+.danflix-poster:hover {
+  z-index: 2;
+  box-shadow:
+    0 1rem 2.3rem rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  filter: brightness(1.08) saturate(1.08);
+  transform: translateY(-0.42rem) scale(1.045);
+}
+
+.poster-one {
+  align-items: flex-end;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 28% 76%, rgba(0, 0, 0, 0.88), transparent 49%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.68));
+  --poster-position: center;
+  --poster-title-size: clamp(1.55rem, 2.6vw, 2.8rem);
+}
+
+.poster-two {
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.7) 26%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.06));
+  --poster-position: center;
+  --poster-title-color: #141414;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.85rem rgba(255, 255, 255, 0.95);
+  --poster-title-size: clamp(1.55rem, 2.35vw, 2.55rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
+}
+
+.poster-three {
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 76% 23%, rgba(0, 0, 0, 0.76), transparent 46%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(4, 7, 25, 0.48));
+  --poster-position: 42% center;
+  --poster-title-align: right;
+  --poster-title-font: "Courier New", Consolas, monospace;
+  --poster-title-size: clamp(1.18rem, 1.8vw, 1.95rem);
+}
+
+.poster-four {
+  align-items: flex-end;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 24% 76%, rgba(0, 0, 0, 0.9), transparent 45%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.55), transparent 72%);
+  --poster-position: 60% center;
+  --poster-title-font: Arial, Helvetica, sans-serif;
+  --poster-title-size: clamp(1.2rem, 1.95vw, 2.1rem);
+}
+
+.poster-four .danflix-poster-title {
+  align-items: flex-end;
+  gap: 0.26em;
+}
+
+.poster-five {
+  align-items: flex-end;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 28% 82%, rgba(0, 0, 0, 0.82), transparent 48%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.66), transparent 48%);
+  --poster-position: center;
+  --poster-title-color: #f6f6f6;
+  --poster-title-size: clamp(2rem, 3.3vw, 3.7rem);
+}
+
+.poster-six {
+  align-items: flex-end;
+  justify-content: center;
+  --poster-overlay:
+    radial-gradient(circle at 50% 82%, rgba(0, 0, 0, 0.82), transparent 45%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.54));
+  --poster-position: center;
+  --poster-title-align: center;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-size: clamp(1.3rem, 2.12vw, 2.35rem);
+}
+
+.poster-six .danflix-poster-title {
+  justify-content: center;
+}
+
+.poster-seven {
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 24%, rgba(0, 0, 0, 0.8), transparent 44%),
+    linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.46));
+  --poster-position: 42% center;
+  --poster-title-font: Verdana, Geneva, sans-serif;
+  --poster-title-size: clamp(1.16rem, 1.75vw, 1.9rem);
+}
+
+.poster-eight {
+  align-items: flex-end;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 82%, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.66) 24%, transparent 54%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.34));
+  --poster-position: center;
+  --poster-title-color: #151a12;
+  --poster-title-font: "Arial Black", Arial, sans-serif;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.95),
+    0 0 0.78rem rgba(255, 255, 255, 0.92);
+  --poster-title-size: clamp(1.8rem, 3vw, 3.35rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
+}
+
+.poster-nine {
+  align-items: flex-end;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 28% 78%, rgba(0, 0, 0, 0.86), transparent 50%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.6));
+  --poster-position: center;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-size: clamp(1.42rem, 2.34vw, 2.58rem);
+}
+
+.poster-ten {
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 25%, rgba(0, 0, 0, 0.82), transparent 45%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 20, 26, 0.52));
+  --poster-position: center;
+  --poster-title-align: right;
+  --poster-title-color: #e9ffff;
+  --poster-title-shadow:
+    0 0.12rem 0.12rem rgba(0, 0, 0, 0.95),
+    0 0 0.85rem rgba(0, 229, 255, 0.44);
+  --poster-title-size: clamp(1.12rem, 1.8vw, 1.98rem);
+}
+
+.poster-ten .danflix-poster-title {
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.24em;
+}
+
+.poster-eleven {
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 78% 23%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.62) 25%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 62%);
+  --poster-position: center;
+  --poster-title-color: #0c1115;
+  font-family: "Courier New", Consolas, monospace;
+  --poster-title-font: "Courier New", Consolas, monospace;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.8rem rgba(255, 255, 255, 0.9);
+  --poster-title-size: clamp(1.2rem, 1.9vw, 2.08rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
+}
+
+.poster-twelve {
+  align-items: flex-end;
+  justify-content: center;
+  --poster-overlay:
+    radial-gradient(circle at 50% 84%, rgba(0, 0, 0, 0.84), transparent 48%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent 55%);
+  --poster-position: center;
+  --poster-title-align: center;
+  --poster-title-font: Arial, Helvetica, sans-serif;
+  --poster-title-size: clamp(1.35rem, 2.18vw, 2.42rem);
+}
+
+.poster-twelve .danflix-poster-title {
+  justify-content: center;
+}
+
+.poster-thirteen {
+  align-items: flex-start;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 77% 24%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.54) 24%, transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 60%);
+  --poster-position: 38% center;
+  --poster-title-color: #111111;
+  --poster-title-align: right;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.75rem rgba(255, 255, 255, 0.88);
+  --poster-title-size: clamp(1.38rem, 2.26vw, 2.48rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.72);
+}
+
+.poster-fourteen {
+  align-items: flex-start;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 24% 24%, rgba(0, 0, 0, 0.82), transparent 45%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 6, 16, 0.54));
+  --poster-position: center;
+  --poster-title-color: #f7fbff;
+  font-family: Georgia, "Times New Roman", serif;
+  --poster-title-font: Georgia, "Times New Roman", serif;
+  --poster-title-shadow:
+    0 0.12rem 0.12rem rgba(0, 0, 0, 0.98),
+    0 0 0.85rem rgba(36, 144, 255, 0.42);
+  --poster-title-size: clamp(1.52rem, 2.36vw, 2.6rem);
+}
+
+.poster-fifteen {
+  align-items: flex-end;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 28% 79%, rgba(0, 0, 0, 0.82), transparent 46%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.56), transparent 52%);
+  --poster-position: 62% center;
+  --poster-title-color: #ffffff;
+  font-family: Verdana, Geneva, sans-serif;
+  --poster-title-font: Verdana, Geneva, sans-serif;
+  --poster-title-size: clamp(1.12rem, 1.76vw, 1.94rem);
+}
+
+.poster-sixteen {
+  align-items: flex-end;
+  justify-content: center;
+  --poster-overlay:
+    radial-gradient(circle at 50% 84%, rgba(0, 0, 0, 0.88), transparent 48%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.64), rgba(0, 0, 0, 0.08) 58%);
+  --poster-position: center;
+  --poster-title-align: center;
+  --poster-title-font: "Arial Black", Arial, sans-serif;
+  --poster-title-size: clamp(1.3rem, 2.16vw, 2.38rem);
+}
+
+.poster-seventeen {
+  align-items: flex-end;
+  justify-content: flex-end;
+  --poster-overlay:
+    radial-gradient(circle at 76% 78%, rgba(0, 0, 0, 0.88), transparent 48%),
+    linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5));
+  --poster-position: 56% center;
+  --poster-title-align: right;
+  --poster-title-color: #fff7ae;
+  --poster-title-font: "Trebuchet MS", Arial, sans-serif;
+  --poster-title-size: clamp(1.14rem, 1.82vw, 2rem);
+}
+
+.poster-seventeen .danflix-poster-title {
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.24em;
+}
+
+.poster-eighteen {
+  align-items: flex-start;
+  justify-content: flex-start;
+  --poster-overlay:
+    radial-gradient(circle at 24% 22%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.66) 25%, transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36), transparent 60%);
+  --poster-position: center;
+  --poster-title-color: #101010;
+  --poster-title-shadow:
+    0 0.05rem 0 rgba(255, 255, 255, 0.96),
+    0 0 0.85rem rgba(255, 255, 255, 0.92);
+  --poster-title-size: clamp(2rem, 3.28vw, 3.62rem);
+  --poster-title-stroke: 0.012em rgba(255, 255, 255, 0.74);
+}
+
+.danflix-player {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000000;
+  text-align: center;
+}
+
+.danflix-player-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 2rem;
+  background: #000000;
+}
+
+.danflix-now-playing {
+  text-align: center;
+}
+
+.danflix-player-glow {
+  position: absolute;
+  inset: 16% 22%;
+  background: radial-gradient(ellipse at center, rgba(229, 9, 20, 0.24), transparent 70%);
+  filter: blur(16px);
+}
+
+.danflix-player-kicker {
+  position: absolute;
+  top: calc(50% - 6.6rem);
+  margin: 0;
+  color: #e50914;
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.danflix-now-playing h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #ffffff;
+  font-size: 3.8rem;
+  line-height: 1;
+  text-shadow: 0 0 2rem rgba(229, 9, 20, 0.44);
+}
+
+.danflix-progress {
+  position: absolute;
+  bottom: 2.4rem;
+  left: 3rem;
+  right: 3rem;
+  height: 0.32rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.danflix-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #e50914;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: danflix-progress-fill 4s linear forwards;
+}
+
+.danflix-loading-stage {
+  align-content: center;
+  gap: 1.2rem;
+}
+
+.danflix-loading-stage p {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.25rem, 3.2vw, 2.45rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.danflix-loading-wheel {
+  width: clamp(3.2rem, 7vw, 5.3rem);
+  aspect-ratio: 1;
+  border: 0.42rem solid rgba(255, 255, 255, 0.22);
+  border-top-color: #e50914;
+  border-radius: 50%;
+  animation: danflix-loading-spin 0.78s linear infinite;
+}
+
+.danflix-documentary-stage {
+  align-content: center;
+  text-align: center;
+}
+
+.danflix-documentary-stage.is-paused .danflix-documentary-copy {
+  opacity: 0.34;
+  filter: brightness(0.58);
+}
+
+.danflix-documentary-copy {
+  display: grid;
+  grid-template-rows: auto minmax(1.25em, auto);
+  justify-items: center;
+  gap: clamp(0.85rem, 2.4vw, 1.45rem);
+  width: min(100%, 58rem);
+  transition:
+    filter 320ms ease,
+    opacity 320ms ease;
+}
+
+.danflix-documentary-date {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(3.2rem, 12vw, 8.6rem);
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 0.9;
+  text-shadow: 0 0 2rem rgba(255, 255, 255, 0.15);
+}
+
+.danflix-documentary-caption {
+  min-height: 1.25em;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.35rem, 4.8vw, 3.35rem);
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.danflix-pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.danflix-pause-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  gap: clamp(0.78rem, 1.7vw, 1.25rem);
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+}
+
+.danflix-pause-symbol span {
+  display: block;
+  width: clamp(0.78rem, 1.7vw, 1.18rem);
+  height: clamp(4.2rem, 10vw, 7rem);
+  border-radius: 0.16rem;
+  background: #ffffff;
+  box-shadow: 0 0 1.4rem rgba(255, 255, 255, 0.34);
+}
+
+.danflix-pause-question {
+  position: absolute;
+  top: calc(50% + clamp(5.8rem, 12vw, 8rem));
+  left: 50%;
+  display: grid;
+  width: min(calc(100% - 2rem), 35rem);
+  gap: 1rem;
+  justify-items: center;
+  transform: translateX(-50%);
+  animation: danflix-pause-question-appear 0.82s ease 0.55s both;
+}
+
+.danflix-pause-question p {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.05rem, 2.25vw, 1.55rem);
+  font-weight: 850;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.danflix-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.danflix-choice-button {
+  min-width: 9.2rem;
+  min-height: 2.85rem;
+  border: 0;
+  border-radius: 0.28rem;
+  padding: 0.7rem 1.2rem;
+  color: #000000;
+  background: #ffffff;
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.danflix-choice-button-secondary {
+  color: #ffffff;
+  background: rgba(109, 109, 110, 0.82);
+}
+
+.danflix-choice-button:hover,
+.danflix-choice-button:focus-visible {
+  box-shadow: 0 0.6rem 1.2rem rgba(255, 255, 255, 0.16);
+  outline: 2px solid rgba(255, 255, 255, 0.88);
+  outline-offset: 0.18rem;
+  transform: translateY(-1px);
+}
+
+.danflix-suspension-stage {
+  background: #a94205;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.danflix-suspension-content {
+  display: grid;
+  width: min(calc(100% - 2rem), 48rem);
+  gap: clamp(1.2rem, 3vw, 2rem);
+  justify-items: center;
+}
+
+.danflix-suspension-copy {
+  max-width: 100%;
+  margin: 0;
+  color: #180600;
+  font-size: clamp(1.15rem, 3.2vw, 2.55rem);
+  font-weight: 900;
+  line-height: 1.12;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.danflix-suspension-word {
+  color: #120500;
+  text-shadow: none;
+}
+
+.danflix-suspension-days {
+  display: inline-block;
+  min-width: 4ch;
+  color: #120500;
+  font-variant-numeric: tabular-nums;
+  text-shadow: none;
+}
+
+.danflix-forgiveness-button {
+  min-height: 3rem;
+  border: 1px solid rgba(18, 5, 0, 0.74);
+  border-radius: 0.2rem;
+  padding: 0.8rem 1.15rem;
+  color: #120500;
+  background: rgba(255, 244, 223, 0.88);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.88rem, 1.5vw, 1rem);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.danflix-forgiveness-button:hover,
+.danflix-forgiveness-button:focus-visible {
+  background: #fff4df;
+  box-shadow: 0 0.7rem 1.4rem rgba(18, 5, 0, 0.18);
+  outline: 2px solid rgba(18, 5, 0, 0.8);
+  outline-offset: 0.18rem;
+  transform: translateY(-1px);
+}
+
+.forgiveness-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  padding: 0;
+  color: #ffffff;
+  background: #000000;
+  text-align: center;
+}
+

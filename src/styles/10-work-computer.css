@@ -1,0 +1,533 @@
+.work-computer-scene {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+  background: #000000;
+  color: #111111;
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+}
+
+.work-computer-frame {
+  position: relative;
+  width: min(78rem, calc(100vw - 5rem));
+  height: min(48rem, calc(100dvh - 5rem));
+  overflow: hidden;
+  background: #000000;
+  box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.65);
+}
+
+.xp-login,
+.xp-loading,
+.xp-desktop,
+.blue-screen {
+  position: absolute;
+  inset: 0;
+}
+
+.xp-login {
+  display: grid;
+  grid-template-rows: 5rem 1fr 5rem;
+  background: linear-gradient(90deg, #00359c, #4f8ee9 50%, #00359c);
+  color: #ffffff;
+}
+
+.xp-login-band {
+  background: linear-gradient(180deg, #092b86, #063ba8 52%, #092b86);
+}
+
+.xp-login-band-bottom {
+  background: linear-gradient(180deg, #063ba8, #092b86);
+}
+
+.xp-login-center {
+  display: grid;
+  grid-template-columns: minmax(12rem, 22rem) minmax(16rem, 28rem);
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  padding: 2rem;
+}
+
+.xp-login-copy {
+  border-right: 1px solid rgba(255, 255, 255, 0.45);
+  padding-right: 2rem;
+  font-size: 1.08rem;
+}
+
+.xp-user-tile {
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.3rem;
+  padding: 0.8rem;
+  color: #ffffff;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.xp-user-tile:hover,
+.xp-user-tile:focus-visible {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.16);
+  outline: none;
+}
+
+.xp-user-avatar {
+  display: grid;
+  width: 4.2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid #ffffff;
+  border-radius: 0.35rem;
+  color: #123d8f;
+  background: linear-gradient(135deg, #dff0ff, #f7fff1);
+  font-weight: 800;
+}
+
+.xp-loading {
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: linear-gradient(90deg, #00359c, #4f8ee9 50%, #00359c);
+}
+
+.xp-loading-card {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  animation: old-computer-stutter 1.15s steps(1, end) infinite;
+}
+
+.xp-spinner {
+  width: 3rem;
+  aspect-ratio: 1;
+  border: 0.34rem solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: xp-spin 1.45s steps(8, end) infinite;
+}
+
+.xp-desktop {
+  overflow: hidden;
+  background: #68a1ee;
+}
+
+.xp-wallpaper {
+  position: absolute;
+  inset: 0 0 2.15rem;
+  overflow: hidden;
+  background: #68a1ee;
+}
+
+.xp-wallpaper img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.desktop-app-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 6.5rem;
+  border: 1px solid transparent;
+  padding: 0.45rem 0.25rem;
+  color: #ffffff;
+  background: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.desktop-app-icon:hover,
+.desktop-app-icon:focus-visible {
+  border-color: rgba(255, 255, 255, 0.75);
+  background: rgba(0, 80, 180, 0.34);
+  outline: none;
+}
+
+.excel-icon {
+  display: grid;
+  width: 3.3rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid #f3fff1;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0a7a31, #20a958);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.disco-chrome-desktop-icon {
+  display: grid;
+  width: 3.3rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, #ffffff 0 24%, transparent 25%),
+    conic-gradient(
+      from -22deg,
+      #ff3131 0 34%,
+      #ffe45c 0 57%,
+      #37cf65 0 78%,
+      #3483ff 0 100%
+    );
+  box-shadow:
+    0 0 0.45rem rgba(255, 255, 255, 0.65),
+    0 0 1rem rgba(53, 217, 255, 0.4);
+  animation: disco-chrome-rainbow-flash 680ms steps(2, end) infinite;
+}
+
+.disco-chrome-desktop-icon span {
+  display: block;
+  width: 1.26rem;
+  aspect-ratio: 1;
+  border: 0.24rem solid #ffffff;
+  border-radius: 50%;
+  background: #2363dd;
+}
+
+.danflix-desktop-icon {
+  display: grid;
+  width: 3.3rem;
+  aspect-ratio: 1;
+  place-items: center;
+  color: #e50914;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 3.35rem;
+  font-weight: 900;
+  line-height: 0.85;
+  text-shadow:
+    0 0.1rem 0 #000000,
+    0 0 0.8rem rgba(229, 9, 20, 0.42);
+}
+
+.xp-taskbar {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  height: 2.15rem;
+  background: linear-gradient(180deg, #2d74e8, #0755c9 45%, #0646ad);
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.xp-start-button {
+  height: 100%;
+  border: 0;
+  border-radius: 0 0.9rem 0.9rem 0;
+  padding: 0 1.15rem;
+  color: #ffffff;
+  background: linear-gradient(180deg, #54c447, #188c22 58%, #0f731c);
+  font-weight: 800;
+  text-transform: lowercase;
+  cursor: default;
+}
+
+.xp-task-button {
+  justify-self: start;
+  width: min(12rem, 42vw);
+  height: 1.65rem;
+  margin-left: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 0.15rem;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  text-align: left;
+}
+
+.xp-task-button.is-active {
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.xp-clock {
+  padding: 0 0.9rem;
+  font-size: 0.78rem;
+}
+
+.excel-window {
+  position: absolute;
+  top: 7vh;
+  left: 50%;
+  display: grid;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
+  width: min(calc(100vw - 3rem), 58rem);
+  height: min(calc(100dvh - 6.2rem), 37rem);
+  border: 2px solid #0c55c4;
+  border-radius: 0.35rem 0.35rem 0 0;
+  background: #ece9d8;
+  box-shadow: 0 1.3rem 2.8rem rgba(0, 0, 0, 0.35);
+  transform: translateX(-50%);
+}
+
+.excel-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 1.8rem;
+  padding: 0 0.25rem 0 0.55rem;
+  color: #ffffff;
+  background: linear-gradient(180deg, #2e7af1, #0755c9 58%, #003f9f);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.excel-window-buttons {
+  display: flex;
+  gap: 0.16rem;
+}
+
+.excel-window-buttons span {
+  display: grid;
+  width: 1.25rem;
+  height: 1.15rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 0.12rem;
+  background: linear-gradient(180deg, #7fb2ff, #0a57ca);
+  font-size: 0.72rem;
+}
+
+.excel-menu,
+.excel-toolbar,
+.excel-formula-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 1.6rem;
+  border-bottom: 1px solid #aca899;
+  padding: 0 0.55rem;
+  font-size: 0.78rem;
+}
+
+.excel-toolbar {
+  gap: 0.24rem;
+}
+
+.excel-toolbar span {
+  width: 1.18rem;
+  height: 1.18rem;
+  border: 1px solid #aca899;
+  background: linear-gradient(180deg, #ffffff, #d9d5c6);
+}
+
+.excel-formula-bar {
+  gap: 0.45rem;
+}
+
+.excel-formula-bar span,
+.excel-formula-bar div {
+  border: 1px solid #aca899;
+  background: #ffffff;
+}
+
+.excel-formula-bar span {
+  width: 5.6rem;
+  padding: 0.15rem 0.25rem;
+}
+
+.excel-formula-bar div {
+  flex: 1;
+  padding: 0.15rem 0.35rem;
+  font-style: italic;
+}
+
+.excel-sheet-wrap {
+  position: relative;
+  min-height: 0;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.excel-sheet {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.45rem repeat(10, minmax(7.5rem, 1fr));
+  min-width: 78rem;
+  background: #ffffff;
+}
+
+.excel-corner,
+.excel-column-header,
+.excel-row-header,
+.excel-cell {
+  min-height: 1.8rem;
+  border-right: 1px solid #c7c7c7;
+  border-bottom: 1px solid #c7c7c7;
+}
+
+.excel-corner,
+.excel-column-header,
+.excel-row-header {
+  display: grid;
+  place-items: center;
+  color: #222222;
+  background: #ece9d8;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.excel-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-top: 0;
+  border-left: 0;
+  padding: 0 0.35rem;
+  color: #111111;
+  background: #ffffff;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: default;
+}
+
+button.excel-cell {
+  appearance: none;
+}
+
+.excel-cell.is-money-column {
+  cursor: pointer;
+}
+
+.excel-cell input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  color: #111111;
+  background: transparent;
+  font-size: 0.78rem;
+}
+
+.excel-cell.is-money-column input {
+  cursor: pointer;
+}
+
+.excel-window.is-money-transforming .excel-cell {
+  animation: cell-money-green 1.8s ease var(--money-delay) forwards;
+}
+
+.excel-window.is-money-transforming .excel-column-header,
+.excel-window.is-money-transforming .excel-row-header,
+.excel-window.is-money-transforming .excel-corner {
+  animation: excel-chrome-fade 1.7s ease 1.35s forwards;
+}
+
+.excel-window.is-money-transforming .excel-cell,
+.excel-window.is-money-transforming .excel-cell input {
+  pointer-events: none;
+}
+
+.excel-window.is-money-transforming .excel-cell input {
+  color: transparent;
+}
+
+.money-physics-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.boss-note {
+  position: absolute;
+  top: 4.6rem;
+  right: 2rem;
+  width: min(18rem, calc(100% - 2rem));
+  padding: 2rem 1.1rem 1.2rem;
+  color: #2f2b00;
+  background: #fff37a;
+  box-shadow: 0 0.8rem 1.6rem rgba(0, 0, 0, 0.25);
+  font-family: "Comic Sans MS", "Trebuchet MS", cursive;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.boss-note button {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.45rem;
+  border: 0;
+  color: #2f2b00;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.blue-screen {
+  display: grid;
+  align-content: start;
+  justify-content: start;
+  padding: 4.5rem 3.75rem;
+  color: #ffffff;
+  background: #0000aa;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  z-index: 30;
+}
+
+.bsod-copy {
+  display: grid;
+  justify-items: start;
+  width: min(100%, 44rem);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.bsod-copy p {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 400;
+}
+
+.bsod-copy h2 {
+  margin: 1.2rem 0 0;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.bsod-loading-wheel {
+  width: 2.8rem;
+  aspect-ratio: 1;
+  border: 0.32rem solid rgba(255, 255, 255, 0.28);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: xp-spin 0.55s linear infinite;
+}
+
+.bsod-restart-button {
+  position: static;
+  justify-self: start;
+  margin-top: 1.7rem;
+  min-width: 8.5rem;
+  min-height: 2.75rem;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  background: transparent;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  cursor: pointer;
+}
+
+.bsod-restart-button:hover,
+.bsod-restart-button:focus-visible {
+  color: #0000aa;
+  background: #ffffff;
+  outline: none;
+}
+

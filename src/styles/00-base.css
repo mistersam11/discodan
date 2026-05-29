@@ -1,0 +1,182 @@
+:root {
+  color: #f8f4ec;
+  background: #020203;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.experience-shell {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 58%, rgba(255, 255, 255, 0.055), transparent 34rem),
+    #020203;
+}
+
+.screen-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, transparent 0 46%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 26%);
+  mix-blend-mode: screen;
+  opacity: 0.42;
+}
+
+.question-scene,
+.story-scene,
+.code-scene,
+.finale-scene,
+.animal-game-scene,
+.wordle-game-scene,
+.work-computer-scene,
+.danflix-scene,
+.word-search-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.question-form {
+  display: grid;
+  width: min(calc(100vw - 2.5rem), 48rem);
+  gap: 2rem;
+  justify-items: center;
+}
+
+.question-form label {
+  color: #fffaf1;
+  font-size: clamp(2.25rem, 8vw, 3.9rem);
+  font-weight: 650;
+  line-height: 1.05;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.question-form input {
+  width: min(calc(100vw - 2.5rem), 28rem);
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 0;
+  outline: 0;
+  padding: 0.85rem 0.25rem 0.9rem;
+  color: #ffffff;
+  background: transparent;
+  font-size: 1.45rem;
+  line-height: 1.3;
+  text-align: center;
+  caret-color: #ffffff;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.question-form input:focus {
+  border-color: #ffffff;
+  box-shadow: 0 0.75rem 1.6rem -1.25rem rgba(255, 255, 255, 0.82);
+}
+
+.question-form input.has-error,
+.question-form input.has-error:focus {
+  border-color: #ff3b3b;
+  box-shadow: 0 0.75rem 1.6rem -1.25rem rgba(255, 59, 59, 0.9);
+}
+
+.question-form input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.question-error {
+  min-height: 1.2rem;
+  margin: -1.35rem 0 0;
+  color: #ff3b3b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.code-scene {
+  place-items: start;
+  padding: 1.35rem;
+}
+
+.code-scene pre {
+  position: relative;
+  z-index: 3;
+  max-width: min(42rem, calc(100vw - 2.7rem));
+  margin: 0;
+  color: #87ffe6;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.96rem;
+  line-height: 1.68;
+  white-space: pre-wrap;
+  text-shadow: 0 0 1.35rem rgba(53, 217, 255, 0.55);
+}
+
+.code-caret {
+  display: inline-block;
+  width: 0.6rem;
+  height: 1rem;
+  margin-left: 0.12rem;
+  background: #ffffff;
+  box-shadow: 0 0 1rem rgba(255, 255, 255, 0.9);
+  transform: translateY(0.16rem);
+  animation: blink 0.74s steps(2, start) infinite;
+}
+
+.story-scene {
+  background: #020203;
+}
+
+.story-lines {
+  display: grid;
+  width: min(calc(100vw - 2.5rem), 58rem);
+  gap: 1.25rem;
+}
+
+.story-lines p {
+  margin: 0;
+  color: #fffaf1;
+  font-size: clamp(1.35rem, 5vw, 2.2rem);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+}
+

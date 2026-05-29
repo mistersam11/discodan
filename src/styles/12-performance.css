@@ -1,0 +1,172 @@
+.experience-shell[data-performance-mode="reduced"] .screen-vignette {
+  mix-blend-mode: normal;
+  opacity: 0.28;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-board-wrap,
+.experience-shell[data-performance-mode="reduced"] .animal-game-content,
+.experience-shell[data-performance-mode="reduced"] .disco-countdown,
+.experience-shell[data-performance-mode="reduced"] .disco-chrome-scene {
+  filter: none !important;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell {
+  transition:
+    color 80ms ease,
+    background-color 140ms ease;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-selected {
+  background: rgba(255, 255, 255, 0.08);
+  text-shadow: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-solution-pulsing {
+  border-radius: 0.14rem;
+  background: rgba(255, 228, 92, 0.1);
+  animation: word-search-solution-pulse-lite 2.25s ease-in-out var(--word-search-pulse-delay) infinite;
+  text-shadow: none;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-final-solution-pulsing {
+  animation-duration: 1.55s;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-letter-glyph.is-final-disco-pulsing,
+.experience-shell[data-performance-mode="reduced"] .word-search-letter-glyph.is-final-dan-rainbow {
+  animation: none;
+  will-change: auto;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-found-letter {
+  border-radius: 0.14rem;
+  background: rgba(255, 228, 92, 0.16);
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-found-letter .word-search-letter-glyph {
+  animation: word-search-found-lite 620ms ease both;
+  color: #ffe45c;
+  text-shadow: 0 0 0.34rem rgba(255, 228, 92, 0.55);
+  will-change: transform, opacity;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-found-letter .word-search-letter-glyph::before,
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-found-letter .word-search-letter-glyph::after {
+  content: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-selection-outline-path {
+  stroke-width: 2;
+  filter: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-solve-outline {
+  animation-duration: 1.25s;
+  will-change: transform, opacity;
+}
+
+.experience-shell[data-performance-mode="reduced"] .word-search-cell.is-final-falling {
+  animation-name: word-search-final-letter-fall-lite;
+  will-change: transform, opacity;
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-poster {
+  contain: layout paint;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  animation: none;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-poster-strip {
+  scroll-behavior: auto;
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-poster::after {
+  box-shadow: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-poster:hover {
+  box-shadow:
+    0 0.45rem 1rem rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  filter: none;
+  transform: translateY(-0.16rem) scale(1.012);
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-feature:hover,
+.experience-shell[data-performance-mode="reduced"] .danflix-play-button:hover,
+.experience-shell[data-performance-mode="reduced"] .danflix-play-button:focus-visible {
+  transform: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-feature:hover .danflix-feature-art {
+  filter: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-intro-curtain,
+.experience-shell[data-performance-mode="reduced"] .danflix-documentary-cover,
+.experience-shell[data-performance-mode="reduced"] .disco-browser-window,
+.experience-shell[data-performance-mode="reduced"] .jeopardy-logo-face,
+.experience-shell[data-performance-mode="reduced"] .jeopardy-question-panel,
+.experience-shell[data-performance-mode="reduced"] .jeopardy-stage-frame,
+.experience-shell[data-performance-mode="reduced"] .work-computer-frame {
+  box-shadow: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .jeopardy-logo-card {
+  animation-duration: 9s;
+}
+
+.experience-shell[data-performance-mode="reduced"] .jeopardy-question-content {
+  animation-delay: 0.18s;
+}
+
+.experience-shell[data-performance-mode="reduced"] .danflix-reveal-button:hover,
+.experience-shell[data-performance-mode="reduced"] .danflix-reveal-button:focus-visible {
+  filter: none;
+  animation: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .white-shot {
+  box-shadow: 0 0 0.65rem rgba(255, 255, 255, 0.72);
+  animation: none;
+}
+
+.experience-shell[data-performance-mode="reduced"] .wind-dust-field span,
+.experience-shell[data-performance-mode="reduced"] .crumble-piece {
+  filter: none;
+}
+
+@keyframes word-search-found-lite {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.84);
+  }
+
+  58% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes word-search-final-letter-fall-lite {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 104vh, 0) scale(0.96);
+  }
+}
+

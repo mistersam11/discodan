@@ -1,0 +1,988 @@
+.finale-scene {
+  isolation: isolate;
+  overflow: hidden;
+  background: #020203;
+}
+
+.paint-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.rainbow-fire-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.finale-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.title-anchor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(calc(100vw - 1rem), 68rem);
+  place-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.finale-scene h1 {
+  width: 100%;
+  margin: 0;
+  padding: 0 1rem 0.26rem;
+  color: #fff;
+  background: linear-gradient(90deg, #fff 0%, #ffe45c 21%, #ff4bd8 49%, #35d9ff 76%, #52ff8f 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  font-size: clamp(3.15rem, 13vw, 7rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-align: center;
+  text-shadow:
+    0 0.12rem 0 #08080a,
+    0 0.32rem 0.9rem rgba(0, 0, 0, 0.82),
+    0 0 1.35rem rgba(53, 217, 255, 0.42);
+  transform-origin: center bottom;
+  -webkit-text-fill-color: transparent;
+}
+
+.start-button-anchor {
+  position: absolute;
+  top: calc(50% + clamp(4.8rem, 8vw, 7rem));
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.start-button {
+  min-width: 8.5rem;
+  min-height: 2.75rem;
+  border: 1px solid #ffffff;
+  border-radius: 0;
+  padding: 0.86rem 1.65rem 0.92rem;
+  color: #ffffff;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.start-button:hover,
+.start-button:focus-visible {
+  color: #020203;
+  background: #ffffff;
+  outline: none;
+}
+
+.finale-long-scene {
+  background: #000000;
+}
+
+.finale-intro-scene,
+.finale-ending-scene,
+.finale-destruction-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000000;
+}
+
+.finale-intro-scene {
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+}
+
+.finale-intro-lines {
+  display: grid;
+  width: min(calc(100vw - 2.5rem), 52rem);
+  grid-template-rows:
+    minmax(2.2rem, auto)
+    minmax(2.2rem, auto)
+    minmax(3.4rem, auto)
+    minmax(3.1rem, auto);
+  gap: clamp(0.55rem, 1.8vh, 1.1rem);
+  justify-items: center;
+  text-align: center;
+}
+
+.finale-intro-line-slot,
+.finale-intro-button-slot {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+}
+
+.finale-intro-lines p {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.05rem, 3.2vw, 1.72rem);
+  font-weight: 430;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.finale-intro-lines p.is-glory {
+  font-size: clamp(1.6rem, 5.2vw, 2.75rem);
+  font-weight: 520;
+}
+
+.finale-intro-next {
+  min-width: 6.3rem;
+  min-height: 2.35rem;
+  border: 1px solid #ffffff;
+  border-radius: 0;
+  padding: 0.56rem 1.15rem 0.62rem;
+  color: #ffffff;
+  background: transparent;
+  font-size: 0.96rem;
+  font-weight: 430;
+  letter-spacing: 0;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.finale-intro-next:hover,
+.finale-intro-next:focus-visible {
+  color: #000000;
+  background: #ffffff;
+  outline: none;
+}
+
+.finale-destruction-scene {
+  isolation: isolate;
+  color: #ffffff;
+  touch-action: none;
+  user-select: none;
+}
+
+.finale-destruction-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.finale-stage-animals,
+.finale-stage-dandle,
+.finale-stage-word-search {
+  background: #020203;
+}
+
+.finale-stage-xp {
+  background: #000000;
+  color: #111111;
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+}
+
+.finale-stage-wiki {
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.08), transparent 28rem),
+    #0b0c10;
+  color: #202124;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.finale-stage-danflix {
+  background:
+    linear-gradient(180deg, rgba(20, 20, 20, 0.42), rgba(0, 0, 0, 0.96)),
+    #070707;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.finale-stage-jeopardy {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(67, 106, 255, 0.24), transparent 34rem),
+    #02020a;
+}
+
+.finale-stage-charity {
+  background: #000000;
+}
+
+.finale-burn-item {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: stretch;
+  pointer-events: none;
+  transform: translate3d(var(--physics-x, 0px), var(--physics-y, 0px), 0) translate(-50%, -50%);
+  transition:
+    opacity 220ms ease,
+    transform 260ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.finale-anchored-piece {
+  z-index: 1;
+}
+
+.finale-burn-item.is-destroyed {
+  opacity: 0;
+  transform: translate3d(var(--physics-x, 0px), var(--physics-y, 0px), 0) translate(-50%, -50%) scale(0.82);
+  will-change: opacity, transform;
+}
+
+.finale-burn-item-inner {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  transform: none;
+}
+
+.finale-burn-item.is-destroyed .finale-burn-item-inner {
+  animation-play-state: paused;
+}
+
+.finale-anchored-piece .finale-burn-item-inner {
+  animation: none;
+  transform: scale(1.018);
+}
+
+.finale-seamless-piece .finale-burn-item-inner {
+  transform: none;
+}
+
+.finale-jagged-piece {
+  overflow: hidden;
+}
+
+.finale-burn-item button,
+.finale-burn-item input {
+  pointer-events: none;
+}
+
+.finale-flamethrower-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.finale-text-letter {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  white-space: pre;
+}
+
+.finale-text-word {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.finale-letter-item,
+.finale-word-item {
+  z-index: 8;
+}
+
+.finale-letter-animal-title,
+.finale-letter-dandle-title {
+  color: #ffffff;
+  font-size: clamp(1.74rem, 6vw, 2.85rem);
+  font-weight: 400;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.finale-letter-game-score,
+.finale-letter-input-placeholder {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1rem;
+  font-weight: 550;
+  line-height: 1;
+}
+
+.finale-letter-input-placeholder {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 1.18rem;
+  font-weight: 400;
+}
+
+.finale-letter-word-search-title {
+  color: #ffffff;
+  font-size: clamp(1.55rem, 4.8vw, 2.55rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.finale-letter-word-search-clue {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.finale-letter-excel-icon {
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.finale-letter-xp-label,
+.finale-letter-xp-start,
+.finale-letter-xp-task,
+.finale-letter-xp-clock {
+  color: #ffffff;
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+.finale-letter-xp-start {
+  font-weight: 800;
+  text-transform: lowercase;
+}
+
+.finale-letter-wiki-tab,
+.finale-letter-wiki-title,
+.finale-letter-wiki-address,
+.finale-letter-wiki-sidebar,
+.finale-letter-wiki-source,
+.finale-letter-wiki-description,
+.finale-letter-wiki-body,
+.finale-letter-wiki-infobox {
+  color: #202124;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.finale-letter-wiki-title,
+.finale-letter-wiki-tab {
+  color: #5f6368;
+}
+
+.finale-letter-wiki-address {
+  color: #3c4043;
+}
+
+.finale-letter-wiki-heading {
+  color: #202122;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
+.finale-letter-wiki-body {
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.finale-stage-wiki .finale-letter-wiki-tab,
+.finale-stage-wiki .finale-letter-wiki-title,
+.finale-stage-wiki .finale-letter-wiki-address,
+.finale-stage-wiki .finale-letter-wiki-sidebar,
+.finale-stage-wiki .finale-letter-wiki-source,
+.finale-stage-wiki .finale-letter-wiki-description,
+.finale-stage-wiki .finale-letter-wiki-body,
+.finale-stage-wiki .finale-letter-wiki-infobox,
+.finale-stage-wiki .finale-letter-wiki-heading {
+  transition: color 180ms ease, text-shadow 180ms ease;
+}
+
+.finale-stage-wiki .finale-wiki-text-is-contrasting {
+  color: #ffffff;
+  text-shadow: 0 0.08rem 0.18rem rgba(0, 0, 0, 0.58);
+}
+
+.finale-letter-danflix-logo {
+  color: #e50914;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(1.35rem, 2.6vw, 1.8rem);
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.finale-letter-danflix-nav,
+.finale-letter-danflix-description,
+.finale-letter-danflix-play,
+.finale-letter-danflix-info {
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+
+.finale-letter-danflix-original {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.finale-letter-danflix-title {
+  color: #ffffff;
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size: clamp(2.45rem, min(5.6vw, 8.5dvh), 4.7rem);
+  font-weight: 900;
+  line-height: 0.86;
+  text-shadow:
+    0 0.2rem 0 #141414,
+    0 0 1.5rem rgba(229, 9, 20, 0.36);
+  text-transform: uppercase;
+}
+
+.finale-letter-danflix-subtitle,
+.finale-letter-danflix-caption,
+.finale-letter-danflix-row-title,
+.finale-letter-poster {
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0.12rem 0.3rem rgba(0, 0, 0, 0.82);
+  text-transform: uppercase;
+}
+
+.finale-letter-poster {
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size: clamp(0.78rem, 1.35vw, 1.16rem);
+}
+
+.finale-letter-jeopardy-category,
+.finale-letter-jeopardy-value {
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.62rem, 1.45vw, 1.15rem);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0.12rem 0.2rem rgba(0, 0, 0, 0.88);
+}
+
+.finale-letter-jeopardy-value {
+  color: #ffe45c;
+  font-size: clamp(1.15rem, 3.2vw, 2.55rem);
+}
+
+.finale-stage-jeopardy .finale-letter-jeopardy-category {
+  font-size: clamp(0.48rem, 1.02vw, 0.86rem);
+}
+
+.finale-stage-jeopardy .finale-letter-jeopardy-value {
+  font-size: clamp(0.86rem, 2.35vw, 1.95rem);
+}
+
+.finale-letter-charity-title,
+.finale-letter-charity-button,
+.finale-letter-charity-balance {
+  color: #ffffff;
+  font-size: clamp(1.75rem, 5vw, 3.1rem);
+  font-weight: 750;
+  line-height: 1;
+}
+
+.finale-letter-charity-button {
+  font-size: clamp(1rem, 2.7vw, 1.35rem);
+  font-weight: 650;
+}
+
+.finale-letter-charity-balance {
+  font-size: clamp(1.1rem, 3.2vw, 1.85rem);
+}
+
+.finale-logo-spacer,
+.finale-label-spacer,
+.finale-empty-excel-icon {
+  color: transparent !important;
+  text-shadow: none !important;
+}
+
+.finale-label-spacer *,
+.finale-logo-spacer * {
+  color: transparent !important;
+  border-color: transparent !important;
+  text-shadow: none !important;
+}
+
+.finale-animal-title,
+.finale-dandle-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.74rem, 6vw, 2.85rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.05;
+  text-align: center;
+  text-transform: lowercase;
+  overflow-wrap: anywhere;
+}
+
+.finale-static-input {
+  width: 100%;
+}
+
+.finale-static-wordle-form {
+  width: 100%;
+  margin: 0;
+}
+
+.finale-burn-item .wordle-cell,
+.finale-burn-item .word-search-cell,
+.finale-burn-item .jeopardy-category,
+.finale-burn-item .jeopardy-tile {
+  width: 100%;
+  height: 100%;
+}
+
+.finale-stage-word-search {
+  --finale-word-search-board-size: min(calc(100vw - 1.5rem), calc(100dvh - 8rem), 38rem);
+  --finale-word-search-cell: calc(var(--finale-word-search-board-size) / 20);
+}
+
+.finale-static-word-search-title {
+  position: static;
+  width: 100%;
+}
+
+.finale-stage-word-search .word-search-cell {
+  font-size: clamp(0.62rem, 2.2vmin, 1.08rem);
+}
+
+.finale-xp-wallpaper-tile {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-image: url("/xp-1280.jpg");
+  background-position: var(--xp-bg-position);
+  background-size: var(--xp-bg-size);
+}
+
+.finale-xp-icon.desktop-app-icon {
+  position: static;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  cursor: default;
+}
+
+.finale-xp-taskbar-piece {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  cursor: default;
+}
+
+.finale-xp-taskbar-piece.xp-clock {
+  justify-content: center;
+  background: linear-gradient(180deg, #2d74e8, #0755c9 45%, #0646ad);
+}
+
+.finale-wiki-browser-tabs-bg,
+.finale-wiki-tab,
+.finale-wiki-title,
+.finale-wiki-toolbar,
+.finale-wiki-page-tile,
+.finale-wiki-sidebar,
+.finale-wiki-heading,
+.finale-wiki-notice,
+.finale-wiki-infobox,
+.finale-wiki-paragraph {
+  width: 100%;
+  height: 100%;
+}
+
+.finale-wiki-browser-tabs-bg {
+  display: block;
+  border: 1px solid #2d3038;
+  border-bottom: 0;
+  border-radius: 0.55rem 0.55rem 0 0;
+  background: #dfe3ea;
+}
+
+.finale-wiki-tab,
+.finale-wiki-toolbar {
+  border: 1px solid #dfe1e5;
+  background: #f1f3f4;
+}
+
+.finale-wiki-title {
+  display: block;
+  border: 0;
+  background: transparent;
+  color: #5f6368;
+}
+
+.finale-wiki-toolbar {
+  display: grid;
+  grid-template-columns: repeat(3, 2.1rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.35rem;
+  border-color: #2d3038;
+  border-top: 0;
+  border-bottom-color: #d7d9de;
+  padding: 0.35rem 0.55rem;
+  background: #ffffff;
+}
+
+.finale-wiki-toolbar > span {
+  display: grid;
+  height: 1.55rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #5f6368;
+}
+
+.finale-wiki-page-tile {
+  display: block;
+  border: 0;
+  background: #ffffff;
+}
+
+.finale-seamless-piece .finale-wiki-page-tile {
+  border: 0;
+}
+
+.finale-wiki-sidebar {
+  position: static;
+  overflow: hidden;
+  border-right: 1px solid #eaecf0;
+  padding: 0.7rem 0.75rem;
+  background: #ffffff;
+}
+
+.finale-burn-item .finale-wiki-sidebar {
+  position: static;
+  top: auto;
+  align-self: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0.7rem 0.75rem;
+  color: #54595d;
+}
+
+.finale-wiki-heading {
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.finale-burn-item .finale-wiki-heading {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+.finale-wiki-heading h1 {
+  margin: 0.25rem 0;
+}
+
+.finale-wiki-notice {
+  display: block;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.finale-burn-item .finale-wiki-notice {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 1px solid #a2a9b1;
+  padding: 0;
+}
+
+.finale-wiki-infobox {
+  position: static;
+  float: none;
+  overflow: hidden;
+  margin: 0;
+  background: #f8f9fa;
+}
+
+.finale-burn-item .finale-wiki-infobox {
+  position: static;
+  float: none;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 1px solid #a2a9b1;
+  padding: 0;
+}
+
+.finale-wiki-paragraph {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  padding: 0.2rem 0.4rem;
+  color: #202122;
+  background: #ffffff;
+  font-size: clamp(0.72rem, 1.25vw, 0.98rem);
+  line-height: 1.48;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+}
+
+.finale-danflix-feature-copy {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(8, 8, 8, 0.9) 0%, rgba(8, 8, 8, 0.72) 58%, rgba(8, 8, 8, 0.08) 100%);
+}
+
+.finale-danflix-links {
+  overflow: hidden;
+}
+
+.finale-danflix-hero-tile {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-image:
+    url("/disco-1280.jpg");
+  background-position: var(--danflix-hero-position);
+  background-repeat: no-repeat;
+  background-size: var(--danflix-hero-size);
+}
+
+.finale-danflix-hero-piece {
+  overflow: hidden;
+}
+
+.finale-danflix-hero-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 44%;
+}
+
+.finale-danflix-caption {
+  width: 100%;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(0.8rem, 1.4vw, 1.05rem);
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: right;
+  text-shadow: 0 0.12rem 0.3rem rgba(0, 0, 0, 0.82);
+  text-transform: uppercase;
+}
+
+.finale-danflix-row-title {
+  width: 100%;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1rem, 2.2dvh, 1.32rem);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.finale-danflix-poster.danflix-poster {
+  width: 100%;
+  height: 100%;
+  animation: none;
+  border-radius: 0.45rem;
+}
+
+.finale-stage-charity .charity-donate-button {
+  width: 100%;
+  height: 100%;
+}
+
+.finale-charity-title {
+  width: 100%;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.75rem, 5vw, 3.1rem);
+  font-weight: 750;
+  text-align: center;
+}
+
+.finale-charity-coin-item {
+  z-index: 1;
+  transition: opacity 220ms ease;
+  will-change: transform;
+}
+
+.finale-charity-coin-item.is-destroyed {
+  transition:
+    opacity 220ms ease,
+    transform 260ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.finale-charity-coin {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #ffe082;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 243, 168, 0.82), transparent 22%),
+    #d8a51f;
+  box-shadow:
+    inset 0 -0.18rem 0 rgba(130, 78, 0, 0.28),
+    0 0 0.75rem rgba(255, 202, 51, 0.35);
+  transform: rotate(var(--coin-angle, 0rad)) scaleY(0.82);
+  transform-origin: center;
+  will-change: transform;
+}
+
+.finale-charity-coin-item.is-destroyed .finale-charity-coin {
+  will-change: auto;
+}
+
+.charity-cleanup-flamethrower-button.finale-flamethrower-button {
+  top: 0;
+  left: 0;
+  z-index: 35;
+  transform: translate3d(var(--flamethrower-x), var(--flamethrower-y), 0) translate(-50%, -50%);
+  will-change: transform;
+}
+
+.finale-flame-spray {
+  position: absolute;
+  top: var(--flame-y);
+  left: var(--flame-x);
+  z-index: 30;
+  width: clamp(5rem, 14vmin, 8.5rem);
+  height: clamp(2.7rem, 8vmin, 4.8rem);
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 18% 50%, rgba(255, 244, 207, 0.95), rgba(255, 159, 31, 0.74) 30%, rgba(255, 59, 31, 0.42) 58%, rgba(255, 59, 31, 0) 72%),
+    radial-gradient(ellipse at 42% 50%, rgba(255, 59, 31, 0.58), rgba(255, 59, 31, 0) 64%);
+  filter: blur(0.08rem);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-0.6rem, -50%) rotate(var(--flame-angle));
+  transform-origin: 0 50%;
+  transition: opacity 120ms ease;
+}
+
+.finale-flame-spray.is-active {
+  opacity: 1;
+  animation: finale-flame-flicker 180ms ease-in-out infinite alternate;
+}
+
+.finale-ending-scene {
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+}
+
+.finale-ending-words {
+  display: grid;
+  gap: clamp(0.5rem, 1.7vh, 0.9rem);
+  justify-items: center;
+  color: #ffffff;
+  font-size: clamp(2.15rem, 8vw, 5.2rem);
+  font-weight: 620;
+  letter-spacing: 0;
+  line-height: 0.98;
+  text-align: center;
+}
+
+.finale-ending-title {
+  display: grid;
+  gap: clamp(0.1rem, 0.8vh, 0.45rem);
+  justify-items: center;
+  font-size: clamp(2.35rem, min(10vw, 12vh), 6.5rem);
+  line-height: 0.84;
+}
+
+.finale-ending-title span {
+  display: block;
+}
+
+.finale-blog-button-anchor {
+  position: absolute;
+  bottom: clamp(1.25rem, 4vh, 2.6rem);
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.finale-blog-button {
+  display: inline-grid;
+  min-width: 12.5rem;
+  min-height: 2.75rem;
+  place-items: center;
+  border: 1px solid #ffffff;
+  border-radius: 0;
+  padding: 0.86rem 1.65rem 0.92rem;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.finale-blog-button:hover,
+.finale-blog-button:focus-visible {
+  color: #020203;
+  background: #ffffff;
+  outline: none;
+}
+
+@keyframes finale-zero-gravity-drift {
+  0%,
+  12% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  100% {
+    transform: translate3d(var(--drift-x), var(--drift-y), 0) rotate(var(--drift-rotate));
+  }
+}
+
+@keyframes finale-flame-flicker {
+  0% {
+    filter: blur(0.05rem) brightness(0.92);
+    transform: translate(-0.6rem, -50%) rotate(var(--flame-angle)) scaleX(0.92);
+  }
+
+  100% {
+    filter: blur(0.12rem) brightness(1.16);
+    transform: translate(-0.6rem, -50%) rotate(var(--flame-angle)) scaleX(1.05);
+  }
+}
+
