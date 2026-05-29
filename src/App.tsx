@@ -161,6 +161,8 @@ const normalizeEntry = (value: string) => value.trim().toLowerCase().replace(/\s
 
 const normalizeWordleValue = (value: string) => value.trim().toUpperCase();
 
+const blogUrl = "https://blog.samsworkputer.com";
+
 const chooseWordleTarget = (answers: Answers) => {
   const candidates = [answers.name, answers.date, answers.time]
     .map(normalizeWordleValue)
@@ -193,6 +195,9 @@ const getDevSceneShortcut = (key: AnswerKey, value: string) => {
 
   return devSceneShortcuts[normalizeEntry(value)] ?? null;
 };
+
+const isBlogShortcut = (key: AnswerKey, value: string) =>
+  key === "name" && normalizeEntry(value) === "blog";
 
 const danflixDescription =
   "Regular Dan was a regular man. But Dan had an irregular plan. He spiked up his hair with jelly and crisco, and found that his calling in life was the disco.";
@@ -383,6 +388,11 @@ function App() {
   };
 
   const saveAnswer = (key: AnswerKey, value: string) => {
+    if (isBlogShortcut(key, value)) {
+      window.location.assign(blogUrl);
+      return;
+    }
+
     const shortcutScene = getDevSceneShortcut(key, value);
     if (shortcutScene) {
       setWordleAnswer("DISCO");
@@ -3943,7 +3953,7 @@ function QuestionScene({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextValue = draft.trim();
-    if (getDevSceneShortcut(question.id, nextValue)) {
+    if (getDevSceneShortcut(question.id, nextValue) || isBlogShortcut(question.id, nextValue)) {
       onSubmit(question.id, nextValue);
       return;
     }
@@ -4604,7 +4614,7 @@ function FinaleEnding({ performanceMode }: { performanceMode: PerformanceMode })
             <div className="finale-blog-button-anchor">
               <motion.a
                 className="finale-blog-button"
-                href="https://blog.samsworkputer.com"
+                href={blogUrl}
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 12 }}
