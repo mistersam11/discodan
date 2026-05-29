@@ -4354,10 +4354,61 @@ function getFinaleHitCandidates(
   return candidates;
 }
 
+function areFinaleIdSetsEqual(first: Set<string>, second: Set<string>) {
+  if (first.size !== second.size) {
+    return false;
+  }
+
+  for (const id of first) {
+    if (!second.has(id)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function isFinaleWikiTextItem(item: FinaleBurnItem) {
+  return item.className?.includes("finale-letter-wiki") ?? false;
+}
+
+function isFinaleWikiBackdropItem(item: FinaleBurnItem) {
+  if (item.className?.includes("finale-wiki-page-piece")) {
+    return true;
+  }
+
+  if (item.className?.includes("finale-wiki-browser-piece")) {
+    return true;
+  }
+
+  return [
+    "wiki-tab",
+    "wiki-title-bar",
+    "wiki-toolbar",
+    "wiki-sidebar",
+    "wiki-heading",
+    "wiki-notice",
+    "wiki-infobox",
+  ].includes(item.id);
+}
+
+function finaleMeasurementContainsPoint(
+  measurement: FinaleItemMeasurement,
+  x: number,
+  y: number,
+) {
+  return (
+    x >= measurement.left &&
+    x <= measurement.right &&
+    y >= measurement.top &&
+    y <= measurement.bottom
+  );
+}
+
 const finaleIntroLines = [
   "50 years ago, Disco Dan won a competition...",
   "Now, you must do the same...",
-  "Achieve. Disco. Glory",
+  "Achieve. Disco. Glory.",
 ];
 
 const finaleStageKeys: FinaleStageKey[] = [
@@ -4659,6 +4710,9 @@ function FinaleBurnStage({
   );
   const [destroyedIds, setDestroyedIds] = useState<Set<string>>(() => new Set());
   const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
+  const [contrastingTextIds, setContrastingTextIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [burnBursts, setBurnBursts] = useState<FinaleBurnBurst[]>([]);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -4728,6 +4782,56 @@ function FinaleBurnStage({
       window.removeEventListener("resize", measureItems);
     };
   }, [measureItems]);
+
+  useLayoutEffect(() => {
+    if (stageKey !== "wiki" || removedIds.size === 0) {
+      setContrastingTextIds((current) =>
+        current.size === 0 ? current : new Set(),
+      );
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      measureItems();
+
+      const measurements = itemMeasurementsRef.current;
+      const backdropMeasurements = items
+        .filter((item) => isFinaleWikiBackdropItem(item) && !removedIds.has(item.id))
+        .map((item) => measurements.get(item.id))
+        .filter((measurement): measurement is FinaleItemMeasurement => Boolean(measurement));
+      const nextContrastingIds = new Set<string>();
+
+      items.forEach((item) => {
+        if (!isFinaleWikiTextItem(item) || removedIds.has(item.id)) {
+          return;
+        }
+
+        const measurement = measurements.get(item.id);
+
+        if (!measurement) {
+          return;
+        }
+
+        const centerX = measurement.left + measurement.width / 2;
+        const centerY = measurement.top + measurement.height / 2;
+        const hasBackdrop = backdropMeasurements.some((backdropMeasurement) =>
+          finaleMeasurementContainsPoint(backdropMeasurement, centerX, centerY),
+        );
+
+        if (!hasBackdrop) {
+          nextContrastingIds.add(item.id);
+        }
+      });
+
+      setContrastingTextIds((current) =>
+        areFinaleIdSetsEqual(current, nextContrastingIds)
+          ? current
+          : nextContrastingIds,
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [items, measureItems, removedIds, stageKey]);
 
   useEffect(() => {
     if (physicsItems.length === 0) {
@@ -5225,6 +5329,7 @@ function FinaleBurnStage({
           <FinaleBurnItemView
             key={item.id}
             item={item}
+            isContrasting={contrastingTextIds.has(item.id)}
             isDestroyed={destroyedIds.has(item.id)}
             registerItem={registerItem}
           />
@@ -5260,12 +5365,14 @@ function FinaleBurnStage({
 
 type FinaleBurnItemViewProps = {
   item: FinaleBurnItem;
+  isContrasting: boolean;
   isDestroyed: boolean;
   registerItem: (id: string, element: HTMLDivElement | null) => void;
 };
 
 const FinaleBurnItemView = memo(function FinaleBurnItemView({
   item,
+  isContrasting,
   isDestroyed,
   registerItem,
 }: FinaleBurnItemViewProps) {
@@ -5295,6 +5402,7 @@ const FinaleBurnItemView = memo(function FinaleBurnItemView({
     "finale-burn-item",
     item.isAnchored ? "finale-anchored-piece" : "",
     item.className ?? "",
+    isContrasting ? "finale-wiki-text-is-contrasting" : "",
     isDestroyed ? "is-destroyed" : "",
   ]
     .filter(Boolean)
@@ -6801,7 +6909,7 @@ function createJeopardyFinaleItems() {
         <div className="jeopardy-category" />,
         { burnRadius: 66 },
       ),
-      ...createFinaleTextItems(
+      ...createFinaleWordItems(
         `jeopardy-category-${columnIndex}-text`,
         category,
         `${boardLeft + columnWidth * (columnIndex + 0.5)}%`,
@@ -6809,9 +6917,7 @@ function createJeopardyFinaleItems() {
         {
           burnRadius: 22,
           height: "1.3rem",
-          letterClassName: "finale-letter-jeopardy-category",
-          step: "0.4rem",
-          width: "0.36rem",
+          wordClassName: "finale-letter-jeopardy-category",
         },
       ),
     ],
@@ -6828,7 +6934,7 @@ function createJeopardyFinaleItems() {
           <div className="jeopardy-tile" />,
           { burnRadius: 70 },
         ),
-        ...createFinaleTextItems(
+        ...createFinaleWordItems(
           `jeopardy-tile-${value}-${columnIndex}-text`,
           `$${value}`,
           `${boardLeft + columnWidth * (columnIndex + 0.5)}%`,
@@ -6836,9 +6942,7 @@ function createJeopardyFinaleItems() {
           {
             burnRadius: 26,
             height: "2.4rem",
-            letterClassName: "finale-letter-jeopardy-value",
-            step: "0.64rem",
-            width: "0.58rem",
+            wordClassName: "finale-letter-jeopardy-value",
           },
         ),
       ],

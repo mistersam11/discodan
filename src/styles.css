@@ -590,8 +590,12 @@ input {
 .finale-stage-wiki .finale-letter-wiki-body,
 .finale-stage-wiki .finale-letter-wiki-infobox,
 .finale-stage-wiki .finale-letter-wiki-heading {
+  transition: color 180ms ease, text-shadow 180ms ease;
+}
+
+.finale-stage-wiki .finale-wiki-text-is-contrasting {
   color: #ffffff;
-  mix-blend-mode: difference;
+  text-shadow: 0 0.08rem 0.18rem rgba(0, 0, 0, 0.58);
 }
 
 .finale-letter-danflix-logo {
@@ -665,6 +669,14 @@ input {
 .finale-letter-jeopardy-value {
   color: #ffe45c;
   font-size: clamp(1.15rem, 3.2vw, 2.55rem);
+}
+
+.finale-stage-jeopardy .finale-letter-jeopardy-category {
+  font-size: clamp(0.48rem, 1.02vw, 0.86rem);
+}
+
+.finale-stage-jeopardy .finale-letter-jeopardy-value {
+  font-size: clamp(0.86rem, 2.35vw, 1.95rem);
 }
 
 .finale-letter-charity-title,
