@@ -503,17 +503,7 @@
   border: var(--flamethrower-ring-size) solid transparent;
   border-radius: 50%;
   padding: 0;
-  background:
-    linear-gradient(#050203, #050203) padding-box,
-    conic-gradient(
-      from 36deg,
-      rgba(255, 255, 255, 0.95) 0deg 64deg,
-      rgba(255, 159, 48, 0.72) 88deg 114deg,
-      rgba(255, 255, 255, 0.92) 142deg 214deg,
-      rgba(211, 55, 18, 0.48) 238deg 264deg,
-      rgba(255, 210, 93, 0.68) 292deg 314deg,
-      rgba(255, 255, 255, 0.94) 342deg 360deg
-    ) border-box;
+  background: linear-gradient(#050203, #050203) padding-box;
   box-shadow:
     0 0 0.15rem #ffffff,
     0 0 0.5rem rgba(255, 255, 255, 0.42),
@@ -521,14 +511,50 @@
     inset 0 0 0.7rem rgba(255, 255, 255, 0.2);
   cursor: pointer;
   touch-action: none;
+  animation: flamethrower-ring-glow 6s ease-in-out infinite;
 }
 
 .charity-flamethrower-button::before,
 .charity-cleanup-flamethrower-button::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: calc(-1 * var(--flamethrower-ring-size));
   z-index: 0;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from 34deg,
+      rgba(255, 255, 255, 0.95) 0deg 58deg,
+      rgba(255, 158, 48, 0.78) 78deg 108deg,
+      rgba(255, 255, 255, 0.92) 130deg 196deg,
+      rgba(213, 55, 18, 0.54) 224deg 254deg,
+      rgba(255, 201, 86, 0.7) 280deg 306deg,
+      rgba(255, 255, 255, 0.94) 334deg 360deg
+    );
+  filter: saturate(1.05) brightness(1);
+  opacity: 0.92;
+  transform: rotate(-6deg);
+  transform-origin: center;
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--flamethrower-ring-size) - 1px),
+    #000 calc(100% - var(--flamethrower-ring-size) + 1px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--flamethrower-ring-size) - 1px),
+    #000 calc(100% - var(--flamethrower-ring-size) + 1px)
+  );
+  animation: flamethrower-ring-surface 6.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.charity-flamethrower-button::after,
+.charity-cleanup-flamethrower-button::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--flamethrower-ring-size));
+  z-index: 1;
   border-radius: inherit;
   background:
     linear-gradient(
@@ -586,35 +612,73 @@
   border: var(--flamethrower-ring-size) solid transparent;
   border-radius: 50%;
   padding: 0;
-  background:
-    linear-gradient(#050203, #050203) padding-box,
-    conic-gradient(
-      from 36deg,
-      rgba(255, 255, 255, 0.95) 0deg 64deg,
-      rgba(255, 159, 48, 0.72) 88deg 114deg,
-      rgba(255, 255, 255, 0.92) 142deg 214deg,
-      rgba(211, 55, 18, 0.48) 238deg 264deg,
-      rgba(255, 210, 93, 0.68) 292deg 314deg,
-      rgba(255, 255, 255, 0.94) 342deg 360deg
-    ) border-box;
+  background: linear-gradient(#050203, #050203) padding-box;
   box-shadow:
     0 0 0.18rem #ffffff,
     0 0 0.6rem rgba(255, 255, 255, 0.48),
     0 0 0.5rem rgba(255, 99, 24, 0.24),
     inset 0 0 0.8rem rgba(255, 255, 255, 0.22);
   cursor: grab;
+  animation: flamethrower-ring-glow 6s ease-in-out infinite;
   transform: translate(-50%, -50%);
   touch-action: none;
 }
 
 .charity-cleanup-flamethrower-button.is-dragging {
   cursor: grabbing;
-  animation: none;
 }
 
 .charity-cleanup-flamethrower-button:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 0.22rem;
+}
+
+@keyframes flamethrower-ring-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0.15rem #ffffff,
+      0 0 0.46rem rgba(255, 255, 255, 0.4),
+      0 0 0.36rem rgba(255, 99, 24, 0.18),
+      inset 0 0 0.72rem rgba(255, 255, 255, 0.18);
+  }
+
+  38% {
+    box-shadow:
+      0 0 0.16rem #ffffff,
+      0 0 0.58rem rgba(255, 255, 255, 0.48),
+      0 0 0.58rem rgba(255, 112, 28, 0.25),
+      inset 0 0 0.78rem rgba(255, 238, 198, 0.22);
+  }
+
+  67% {
+    box-shadow:
+      0 0 0.14rem #ffffff,
+      0 0 0.5rem rgba(255, 255, 255, 0.42),
+      0 0 0.46rem rgba(255, 83, 20, 0.2),
+      inset 0 0 0.7rem rgba(255, 255, 255, 0.18);
+  }
+}
+
+@keyframes flamethrower-ring-surface {
+  0%,
+  100% {
+    filter: saturate(1.02) brightness(0.96);
+    opacity: 0.86;
+    transform: rotate(-8deg) scale(1);
+  }
+
+  36% {
+    filter: saturate(1.16) brightness(1.1);
+    opacity: 0.98;
+    transform: rotate(12deg) scale(1.01);
+  }
+
+  64% {
+    filter: saturate(1.06) brightness(1);
+    opacity: 0.9;
+    transform: rotate(-2deg) scale(1);
+  }
 }
 
 @keyframes flamethrower-ring-glint {
