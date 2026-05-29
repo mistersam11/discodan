@@ -4559,6 +4559,12 @@ function FinaleDestructionSequence({
 
 function FinaleEnding({ performanceMode }: { performanceMode: PerformanceMode }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const [showBlogButton, setShowBlogButton] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowBlogButton(true), 2600);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <motion.div
@@ -4593,6 +4599,22 @@ function FinaleEnding({ performanceMode }: { performanceMode: PerformanceMode })
             ))}
           </motion.h1>
         </div>
+        <AnimatePresence>
+          {showBlogButton && (
+            <div className="finale-blog-button-anchor">
+              <motion.a
+                className="finale-blog-button"
+                href="https://blog.samsworkputer.com"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 12 }}
+                transition={{ duration: 0.78, ease: [0.22, 1, 0.36, 1] }}
+              >
+                visit sam&apos;s blog
+              </motion.a>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

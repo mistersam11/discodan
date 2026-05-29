@@ -1080,6 +1080,45 @@ input {
   display: block;
 }
 
+.finale-blog-button-anchor {
+  position: absolute;
+  bottom: clamp(1.25rem, 4vh, 2.6rem);
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.finale-blog-button {
+  display: inline-grid;
+  min-width: 12.5rem;
+  min-height: 2.75rem;
+  place-items: center;
+  border: 1px solid #ffffff;
+  border-radius: 0;
+  padding: 0.86rem 1.65rem 0.92rem;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.finale-blog-button:hover,
+.finale-blog-button:focus-visible {
+  color: #020203;
+  background: #ffffff;
+  outline: none;
+}
+
 @keyframes finale-zero-gravity-drift {
   0%,
   12% {
