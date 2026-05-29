@@ -618,25 +618,28 @@
   cursor: default;
 }
 
-.charity-ice-cube {
+.charity-ice-sheet {
   --ice-opacity: 0.8;
   --ice-scale: 1;
 
-  position: absolute;
-  inset: -0.75rem;
+  position: relative;
+  width: 100vw;
+  height: clamp(4.9rem, 15vh, 8.4rem);
   border: 2px solid rgba(224, 250, 255, 0.92);
-  border-radius: 0.18rem;
+  border-right: 0;
+  border-left: 0;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.35), transparent 42%),
     rgba(125, 221, 255, var(--ice-opacity));
   box-shadow:
     inset 0 0 1.2rem rgba(255, 255, 255, 0.55),
     0 0 0.8rem rgba(125, 221, 255, 0.38);
-  transform: scale(var(--ice-scale));
+  transform: scaleY(var(--ice-scale));
+  transform-origin: center;
   pointer-events: none;
 }
 
-.charity-ice-cube::after {
+.charity-ice-sheet::after {
   position: absolute;
   inset: 0;
   display: grid;

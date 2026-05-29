@@ -1803,6 +1803,7 @@ const charityHints = [
   "Rock beats scissors. Paper beats rock. Circles beats ice.",
   "Stop clicking this dang button and give to charity.",
 ];
+const charityCleanupTitles = ["DISCO DAN HATES MONEY", "MOVE AROUND"] as const;
 
 function getCleanupFlamethrowerLandingPosition() {
   if (typeof window === "undefined") {
@@ -1892,7 +1893,7 @@ function CharitySimulatorScene({
   const [isGoldCleanupComplete, setIsGoldCleanupComplete] = useState(false);
   const [isFlaming, setIsFlaming] = useState(false);
   const [isCleanupFlamethrowerDragging, setIsCleanupFlamethrowerDragging] = useState(false);
-  const [showGoldCleanupTitle, setShowGoldCleanupTitle] = useState(false);
+  const [goldCleanupTitle, setGoldCleanupTitle] = useState("");
   const [cleanupFlamethrowerPosition, setCleanupFlamethrowerPosition] = useState(
     getCleanupFlamethrowerLandingPosition,
   );
@@ -1953,13 +1954,17 @@ function CharitySimulatorScene({
   }, [isButtonFrozen]);
 
   useEffect(() => {
-    if (!showGoldCleanupTitle) {
+    if (!goldCleanupTitle) {
       return undefined;
     }
 
-    const timer = window.setTimeout(() => setShowGoldCleanupTitle(false), 1700);
+    const timer = window.setTimeout(() => {
+      setGoldCleanupTitle((currentTitle) =>
+        currentTitle === charityCleanupTitles[0] ? charityCleanupTitles[1] : "",
+      );
+    }, 1700);
     return () => window.clearTimeout(timer);
-  }, [showGoldCleanupTitle]);
+  }, [goldCleanupTitle]);
 
   useEffect(() => {
     if (iceHealth <= 0) {
@@ -2069,32 +2074,42 @@ function CharitySimulatorScene({
     hintTimerRef.current = window.setTimeout(() => setHintMessage(""), 4000);
   };
 
+  const startGoldCleanup = useCallback(() => {
+    const landingPosition = getCleanupFlamethrowerLandingPosition();
+    cleanupFlamethrowerRef.current = {
+      dragging: false,
+      directionX: 0,
+      directionY: -1,
+      lastPointerX: landingPosition.x,
+      lastPointerY: landingPosition.y,
+      ...landingPosition,
+    };
+    setCleanupFlamethrowerPosition(landingPosition);
+    setHasStartedGoldCleanup(true);
+    setIsGoldCleanupComplete(false);
+    setGoldCleanupTitle(charityCleanupTitles[0]);
+    physicsApiRef.current?.setCleanupFlamethrower({
+      active: false,
+      dx: 0,
+      dy: -1,
+      ...landingPosition,
+    });
+    physicsApiRef.current?.startGoldCleanup();
+  }, []);
+
+  useEffect(() => {
+    if (canStartGoldCleanup) {
+      startGoldCleanup();
+    }
+  }, [canStartGoldCleanup, startGoldCleanup]);
+
   const handleDonate = () => {
     if (isButtonFrozen) {
       return;
     }
 
     if (canStartGoldCleanup) {
-      const landingPosition = getCleanupFlamethrowerLandingPosition();
-      cleanupFlamethrowerRef.current = {
-        dragging: false,
-        directionX: 0,
-        directionY: -1,
-        lastPointerX: landingPosition.x,
-        lastPointerY: landingPosition.y,
-        ...landingPosition,
-      };
-      setCleanupFlamethrowerPosition(landingPosition);
-      setHasStartedGoldCleanup(true);
-      setIsGoldCleanupComplete(false);
-      setShowGoldCleanupTitle(true);
-      physicsApiRef.current?.setCleanupFlamethrower({
-        active: false,
-        dx: 0,
-        dy: -1,
-        ...landingPosition,
-      });
-      physicsApiRef.current?.startGoldCleanup();
+      startGoldCleanup();
       return;
     }
 
@@ -2137,18 +2152,18 @@ function CharitySimulatorScene({
       />
       {!hasStartedGoldCleanup && <h2>Charity Simulator</h2>}
       <AnimatePresence>
-        {showGoldCleanupTitle && !isGoldCleanupComplete && (
+        {goldCleanupTitle && !isGoldCleanupComplete && (
           <motion.div
             aria-level={2}
             className="charity-cleanup-title"
-            key="charity-cleanup-title"
+            key={goldCleanupTitle}
             role="heading"
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.35 }}
           >
-            MOVE THE FLAMETHROWER
+            {goldCleanupTitle}
           </motion.div>
         )}
       </AnimatePresence>
@@ -2183,28 +2198,28 @@ function CharitySimulatorScene({
           </div>
           )}
 
-          <div className="charity-donate-wrap">
-            <button
-              className="charity-donate-button"
-              disabled={isButtonFrozen}
-              type="button"
-              onClick={handleDonate}
-            >
-              Give to charity
-            </button>
-            {isButtonFrozen && (
-              <div
-                className="charity-ice-cube"
-                aria-hidden="true"
-                style={
-                  {
-                    "--ice-opacity": `${0.24 + (iceHealth / 100) * 0.56}`,
-                    "--ice-scale": `${0.42 + (iceHealth / 100) * 0.58}`,
-                  } as CSSProperties
-                }
-              />
-            )}
-          </div>
+          {isButtonFrozen ? (
+            <div
+              className="charity-ice-sheet"
+              aria-hidden="true"
+              style={
+                {
+                  "--ice-opacity": `${0.24 + (iceHealth / 100) * 0.56}`,
+                  "--ice-scale": `${0.42 + (iceHealth / 100) * 0.58}`,
+                } as CSSProperties
+              }
+            />
+          ) : !hasFrozenButton ? (
+            <div className="charity-donate-wrap">
+              <button
+                className="charity-donate-button"
+                type="button"
+                onClick={handleDonate}
+              >
+                Give to charity
+              </button>
+            </div>
+          ) : null}
           <p className={`charity-balance ${balance < 0 ? "is-negative" : ""}`}>
             {formatJeopardyMoney(balance)}
           </p>
