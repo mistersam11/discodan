@@ -850,7 +850,7 @@ function ForgivenessScene({
   const [questionOrigin, setQuestionOrigin] = useState<JeopardyTileOrigin | null>(null);
   const [revealedWordCount, setRevealedWordCount] = useState(0);
   const [buzzState, setBuzzState] = useState<JeopardyBuzzState>("waiting");
-  const [choiceSeconds, setChoiceSeconds] = useState(8);
+  const [choiceSeconds, setChoiceSeconds] = useState(10);
   const [result, setResult] = useState<JeopardyResult | null>(null);
   const timersRef = useRef<number[]>([]);
 
@@ -935,7 +935,7 @@ function ForgivenessScene({
       return undefined;
     }
 
-    setChoiceSeconds(8);
+    setChoiceSeconds(10);
     const interval = window.setInterval(() => {
       setChoiceSeconds((current) => {
         if (current <= 1) {
