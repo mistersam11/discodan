@@ -49,8 +49,8 @@ const questions: Question[] = [
   },
   {
     id: "time",
-    prompt: "What time is it?",
-    placeholder: "type the time",
+    prompt: "What is the answer to today's Wordle?",
+    placeholder: "type the answer",
   },
 ];
 
@@ -579,6 +579,7 @@ type JeopardyPhase =
   | "finalQuestion"
   | "charityGate"
   | "charity";
+type JeopardyBuzzState = "waiting" | "live" | "tooEarly";
 
 type JeopardyContestant = {
   id: "dan-left" | "dan-center" | "player";
@@ -676,6 +677,7 @@ type JeopardyTileOrigin = {
 const jeopardyCategories = ["POTPOURRI", "POTPOURRI", "DISCO", "DAN", "POTPOURRI", "POTPOURRI"] as const;
 const jeopardyValues = [100, 200, 400, 800, 1000];
 const jeopardyPlayableCategories = ["DISCO", "DAN"] as const;
+const JEOPARDY_BUZZ_WINDOW_MS = 1500;
 
 function shuffleItems<T>(items: T[]) {
   const shuffledItems = [...items];
@@ -847,7 +849,7 @@ function ForgivenessScene({
   const [selectedQuestion, setSelectedQuestion] = useState<JeopardyQuestion | null>(null);
   const [questionOrigin, setQuestionOrigin] = useState<JeopardyTileOrigin | null>(null);
   const [revealedWordCount, setRevealedWordCount] = useState(0);
-  const [buzzState, setBuzzState] = useState<"ready" | "tooEarly">("ready");
+  const [buzzState, setBuzzState] = useState<JeopardyBuzzState>("waiting");
   const [choiceSeconds, setChoiceSeconds] = useState(8);
   const [result, setResult] = useState<JeopardyResult | null>(null);
   const timersRef = useRef<number[]>([]);
@@ -890,7 +892,7 @@ function ForgivenessScene({
     }
 
     setRevealedWordCount(0);
-    setBuzzState("ready");
+    setBuzzState("waiting");
     const interval = window.setInterval(() => {
       setRevealedWordCount((current) => {
         if (current >= questionWords.length) {
@@ -909,15 +911,24 @@ function ForgivenessScene({
     if (
       phase !== "question" ||
       !selectedQuestion ||
-      buzzState !== "ready" ||
+      buzzState !== "waiting" ||
       revealedWordCount < questionWords.length
     ) {
       return undefined;
     }
 
-    const timer = window.setTimeout(() => showDanAnswer(selectedQuestion), 500);
-    return () => window.clearTimeout(timer);
+    setBuzzState("live");
+    return undefined;
   }, [buzzState, phase, questionWords.length, revealedWordCount, selectedQuestion]);
+
+  useEffect(() => {
+    if (phase !== "question" || !selectedQuestion || buzzState !== "live") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => showDanAnswer(selectedQuestion), JEOPARDY_BUZZ_WINDOW_MS);
+    return () => window.clearTimeout(timer);
+  }, [buzzState, phase, selectedQuestion]);
 
   useEffect(() => {
     if (phase !== "choice" || !selectedQuestion) {
@@ -1072,7 +1083,7 @@ function ForgivenessScene({
       return;
     }
 
-    if (revealedWordCount < questionWords.length) {
+    if (buzzState !== "live") {
       setBuzzState("tooEarly");
       timersRef.current.push(window.setTimeout(() => showDanAnswer(selectedQuestion), 900));
       return;
@@ -1496,16 +1507,20 @@ function JeopardyQuestionPanel({
   revealedWordCount,
   words,
 }: {
-  buzzState: "ready" | "tooEarly";
+  buzzState: JeopardyBuzzState;
   onBuzz: () => void;
   origin: JeopardyTileOrigin;
   question: JeopardyQuestion;
   revealedWordCount: number;
   words: string[];
 }) {
+  const isBuzzLive = buzzState === "live";
+  const isBuzzTooEarly = buzzState === "tooEarly";
+  const buzzStateClass = isBuzzTooEarly ? "too-early" : buzzState;
+
   return (
     <motion.div
-      className="jeopardy-question-panel"
+      className={`jeopardy-question-panel is-buzz-${buzzStateClass}`}
       key={question.id}
       initial={{
         left: origin.left,
@@ -1537,21 +1552,59 @@ function JeopardyQuestionPanel({
           ))}
         </div>
         <button
-          className={`jeopardy-buzz-button ${buzzState === "tooEarly" ? "is-too-early" : ""}`}
+          aria-label={
+            isBuzzTooEarly
+              ? "Too early"
+              : isBuzzLive
+                ? "Buzz in"
+                : "Wait until the clue is fully revealed"
+          }
+          className={`jeopardy-buzz-button is-${buzzStateClass}`}
+          style={
+            {
+              "--jeopardy-buzz-window": `${JEOPARDY_BUZZ_WINDOW_MS}ms`,
+            } as CSSProperties
+          }
           type="button"
           onClick={onBuzz}
-          disabled={buzzState === "tooEarly"}
+          disabled={isBuzzTooEarly}
         >
-          {buzzState === "tooEarly" ? (
-            <>
-              TOO
-              <br />
-              EARLY
-            </>
-          ) : (
-            "BUZZ"
-          )}
+          <span className="jeopardy-buzz-label">
+            {isBuzzTooEarly ? (
+              <>
+                TOO
+                <br />
+                EARLY
+              </>
+            ) : isBuzzLive ? (
+              "BUZZ"
+            ) : (
+              "WAIT"
+            )}
+          </span>
+          <svg
+            className="jeopardy-buzz-timer-ring"
+            viewBox="0 0 100 100"
+            aria-hidden="true"
+          >
+            <circle className="jeopardy-buzz-timer-track" cx="50" cy="50" r="44" />
+            <circle className="jeopardy-buzz-timer-progress" cx="50" cy="50" r="44" />
+          </svg>
         </button>
+        <AnimatePresence>
+          {isBuzzTooEarly && (
+            <motion.div
+              className="jeopardy-too-early-callout"
+              role="alert"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+            >
+              Too early
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

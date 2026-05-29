@@ -925,6 +925,7 @@ button.jeopardy-tile:focus-visible {
 }
 
 .jeopardy-question-content {
+  position: relative;
   display: grid;
   width: 100%;
   height: 100%;
@@ -968,6 +969,8 @@ button.jeopardy-tile:focus-visible {
 }
 
 .jeopardy-buzz-button {
+  position: relative;
+  isolation: isolate;
   display: grid;
   width: clamp(5.5rem, 15vmin, 8rem);
   aspect-ratio: 1;
@@ -983,11 +986,109 @@ button.jeopardy-tile:focus-visible {
   font-weight: 950;
   line-height: 0.92;
   cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.jeopardy-buzz-button.is-waiting {
+  border-color: #a6a6a6;
+  color: #f5f5f5;
+  background: linear-gradient(145deg, #8a8a8a, #4d4d4d);
+  box-shadow:
+    inset 0 0.22rem 0.66rem rgba(255, 255, 255, 0.16),
+    0 0.55rem 1.25rem rgba(0, 0, 0, 0.34);
+}
+
+.jeopardy-buzz-button.is-live {
+  border-color: #ffe45c;
+  background: #c90012;
+  box-shadow:
+    inset 0 0.25rem 0.7rem rgba(255, 255, 255, 0.25),
+    0 0 1.1rem rgba(255, 228, 92, 0.5),
+    0 0.85rem 1.8rem rgba(0, 0, 0, 0.38);
+  animation: jeopardy-buzz-live-pop 220ms ease-out;
 }
 
 .jeopardy-buzz-button.is-too-early {
-  background: #6a6a6a;
+  border-color: #ff3b3b;
+  color: #ffffff;
+  background: #262626;
+  box-shadow:
+    0 0 0 0.64rem rgba(255, 59, 59, 0.32),
+    0 0 2rem rgba(255, 59, 59, 0.62),
+    inset 0 0.2rem 0.7rem rgba(255, 255, 255, 0.13);
   cursor: default;
+  animation: jeopardy-too-early-shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+.jeopardy-buzz-label {
+  position: relative;
+  z-index: 2;
+}
+
+.jeopardy-buzz-timer-ring {
+  position: absolute;
+  inset: -0.68rem;
+  z-index: 1;
+  width: calc(100% + 1.36rem);
+  height: calc(100% + 1.36rem);
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+
+.jeopardy-buzz-timer-track,
+.jeopardy-buzz-timer-progress {
+  fill: none;
+  stroke-width: 6;
+}
+
+.jeopardy-buzz-timer-track {
+  stroke: rgba(255, 255, 255, 0.22);
+}
+
+.jeopardy-buzz-timer-progress {
+  stroke: #ffe45c;
+  stroke-dasharray: 276.46;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 0.28rem rgba(255, 228, 92, 0.82));
+}
+
+.jeopardy-buzz-button.is-live .jeopardy-buzz-timer-ring {
+  opacity: 1;
+}
+
+.jeopardy-buzz-button.is-live .jeopardy-buzz-timer-progress {
+  animation: jeopardy-buzz-ring-countdown var(--jeopardy-buzz-window, 1500ms) linear forwards;
+}
+
+.jeopardy-too-early-callout {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 6;
+  padding: clamp(0.42rem, 1.5vw, 0.78rem) clamp(0.8rem, 3vw, 1.7rem);
+  border: 0.22rem solid #ffffff;
+  border-radius: 0.35rem;
+  color: #0606a8;
+  background: #ffe45c;
+  box-shadow:
+    0 0 0 0.45rem rgba(255, 59, 59, 0.72),
+    0 0.85rem 2rem rgba(0, 0, 0, 0.45);
+  font-size: clamp(1.35rem, 5vw, 3.8rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-transform: uppercase;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: jeopardy-too-early-callout 540ms ease both;
 }
 
 .jeopardy-buzz-button:focus-visible {

@@ -173,6 +173,63 @@
   }
 }
 
+@keyframes jeopardy-buzz-live-pop {
+  0% {
+    transform: scale(0.95);
+  }
+
+  70% {
+    transform: scale(1.06);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes jeopardy-buzz-ring-countdown {
+  100% {
+    stroke-dashoffset: 276.46;
+  }
+}
+
+@keyframes jeopardy-too-early-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  18% {
+    transform: translateX(-0.7rem);
+  }
+
+  36% {
+    transform: translateX(0.7rem);
+  }
+
+  54% {
+    transform: translateX(-0.48rem);
+  }
+
+  72% {
+    transform: translateX(0.48rem);
+  }
+}
+
+@keyframes jeopardy-too-early-callout {
+  0% {
+    transform: translate(-50%, -50%) scale(0.72) rotate(-2deg);
+  }
+
+  38% {
+    transform: translate(-50%, -50%) scale(1.12) rotate(1deg);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
 @keyframes jeopardy-standings-title {
   0% {
     opacity: 0;
