@@ -1028,8 +1028,8 @@ function ForgivenessScene({
       contestantIndex: 0,
       text: "Dan says u r dum",
       speechBubbles: [
-        { contestantIndex: 0, text: "Dan says u r dum" },
-        { contestantIndex: 1, text: "Ha nerd" },
+        { contestantIndex: 0, text: "That was" },
+        { contestantIndex: 1, text: "a trick question" },
       ],
     });
     setPhase("result");
