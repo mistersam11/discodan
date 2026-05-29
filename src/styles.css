@@ -952,6 +952,7 @@ input {
   background-image:
     url("/disco-1280.jpg");
   background-position: var(--danflix-hero-position);
+  background-repeat: no-repeat;
   background-size: var(--danflix-hero-size);
 }
 

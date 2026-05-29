@@ -6100,7 +6100,7 @@ function createFinaleBurnItems(
             : stageKey === "wiki"
               ? createWikiFinaleItems(performanceMode)
               : stageKey === "danflix"
-                ? createDanflixFinaleItems()
+                ? createDanflixFinaleItems(performanceMode)
                 : stageKey === "jeopardy"
                   ? createJeopardyFinaleItems()
                   : createCharityFinaleItems(performanceMode);
@@ -6685,15 +6685,41 @@ function createWikiFinaleItems(performanceMode: PerformanceMode) {
   ];
 }
 
-function createDanflixFinaleItems() {
+function createDanflixFinaleItems(performanceMode: PerformanceMode) {
   const heroLeft = 3;
   const heroTop = 12;
   const heroWidth = 94;
   const heroHeight = 47;
+  const heroColumns = performanceMode === "reduced" ? 10 : 16;
+  const heroRows = performanceMode === "reduced" ? 5 : 8;
   const featureCopyCenterX = 23.5;
   const featureCopyCenterY = 36.5;
   const posterCenterY = 80;
   const posterHeight = "23%";
+  const heroTiles = Array.from({ length: heroColumns * heroRows }, (_, index) => {
+    const column = index % heroColumns;
+    const row = Math.floor(index / heroColumns);
+    const backgroundPositionX = (column / Math.max(1, heroColumns - 1)) * 100;
+    const backgroundPositionY = (row / Math.max(1, heroRows - 1)) * 100;
+
+    return finaleItem(
+      `danflix-hero-backdrop-${row}-${column}`,
+      `${heroLeft + (column + 0.5) * (heroWidth / heroColumns)}%`,
+      `${heroTop + (row + 0.5) * (heroHeight / heroRows)}%`,
+      `calc(${heroWidth / heroColumns}% + 1px)`,
+      `calc(${heroHeight / heroRows}% + 1px)`,
+      <span
+        className="finale-danflix-hero-tile"
+        style={
+          {
+            "--danflix-hero-position": `${backgroundPositionX}% ${backgroundPositionY}%`,
+            "--danflix-hero-size": `${heroColumns * 100}% ${heroRows * 100}%`,
+          } as FinaleBurnStyle
+        }
+      />,
+      createSeamlessAnchoredPieceOptions(48, "finale-danflix-hero-piece"),
+    );
+  });
   const posters = danflixPosters.slice(0, 10).map((poster, index) => {
     const title = poster.words.map((word) => word.text).join(" ");
     const posterCenterX = `${7.5 + index * 9.25}%`;
@@ -6787,20 +6813,7 @@ function createDanflixFinaleItems() {
       step: "0.36rem",
       width: "0.32rem",
     }),
-    finaleItem(
-      "danflix-hero-backdrop",
-      heroLeft + heroWidth / 2,
-      heroTop + heroHeight / 2,
-      `${heroWidth}%`,
-      `${heroHeight}%`,
-      <img
-        className="finale-danflix-hero-image"
-        src="/disco-1280.jpg"
-        alt=""
-        draggable={false}
-      />,
-      createSeamlessAnchoredPieceOptions(96, "finale-danflix-hero-piece"),
-    ),
+    ...heroTiles,
     finaleItem(
       "danflix-feature-copy",
       featureCopyCenterX,
