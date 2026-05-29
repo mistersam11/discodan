@@ -661,6 +661,42 @@
   color: #ff6b6b;
 }
 
+.charity-hint-slot {
+  display: grid;
+  width: min(calc(100vw - 2rem), 38rem);
+  min-height: clamp(2.7rem, 8vh, 4.7rem);
+  place-items: start center;
+}
+
+.charity-hint-button {
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.92rem;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.72);
+  font-size: clamp(0.86rem, 2vw, 1rem);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.charity-hint-button:hover,
+.charity-hint-button:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  outline: 2px solid rgba(255, 255, 255, 0.75);
+  outline-offset: 0.18rem;
+}
+
+.charity-hint-message {
+  width: min(calc(100vw - 2rem), 38rem);
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(0.92rem, 2.35vw, 1.22rem);
+  font-weight: 700;
+  line-height: 1.22;
+  text-align: center;
+  text-shadow: 0 0.14rem 0.28rem rgba(0, 0, 0, 0.86);
+}
+
 .jeopardy-stage-frame {
   position: relative;
   width: min(78rem, calc(100vw - 5rem));

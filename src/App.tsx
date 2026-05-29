@@ -1796,6 +1796,14 @@ const charityMilestones: Record<number, string> = {
   50: "STOP PLEASE WE CAN'T MOVE IT'S SO MUCH GOLD",
 };
 
+const charityHints = [
+  "Poor people lack money",
+  "For every five coins donated, you lose one dollar.",
+  "Each coin is forged with the core of a dying star, weighing in at 1.2 billion pounds each.",
+  "Rock beats scissors. Paper beats rock. Circles beats ice.",
+  "Stop clicking this dang button and give to charity.",
+];
+
 function getCleanupFlamethrowerLandingPosition() {
   if (typeof window === "undefined") {
     return { x: 0, y: 0 };
@@ -1876,6 +1884,8 @@ function CharitySimulatorScene({
   const [balance, setBalance] = useState(initialBalance);
   const [donations, setDonations] = useState(0);
   const [message, setMessage] = useState("");
+  const [hintIndex, setHintIndex] = useState(0);
+  const [hintMessage, setHintMessage] = useState("");
   const [iceHealth, setIceHealth] = useState(0);
   const [hasFrozenButton, setHasFrozenButton] = useState(false);
   const [hasStartedGoldCleanup, setHasStartedGoldCleanup] = useState(false);
@@ -1888,6 +1898,7 @@ function CharitySimulatorScene({
   );
   const physicsApiRef = useRef<CharityPhysicsApi | null>(null);
   const messageTimerRef = useRef<number>(0);
+  const hintTimerRef = useRef<number>(0);
   const cleanupFlamethrowerRef = useRef({
     dragging: false,
     directionX: 0,
@@ -1899,9 +1910,15 @@ function CharitySimulatorScene({
 
   const isButtonFrozen = hasFrozenButton && iceHealth > 0;
   const canStartGoldCleanup = hasFrozenButton && iceHealth <= 0 && !hasStartedGoldCleanup;
+  const canShowHintButton =
+    !hasFrozenButton && !hintMessage && hintIndex < charityHints.length;
+  const shouldShowHintSlot = Boolean(hintMessage) || canShowHintButton;
 
   useEffect(() => {
-    return () => window.clearTimeout(messageTimerRef.current);
+    return () => {
+      window.clearTimeout(messageTimerRef.current);
+      window.clearTimeout(hintTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -2033,6 +2050,23 @@ function CharitySimulatorScene({
     window.clearTimeout(messageTimerRef.current);
     setMessage(nextMessage);
     messageTimerRef.current = window.setTimeout(() => setMessage(""), 2600);
+  };
+
+  const showNextHint = () => {
+    if (!canShowHintButton) {
+      return;
+    }
+
+    const nextHint = charityHints[hintIndex];
+
+    if (!nextHint) {
+      return;
+    }
+
+    window.clearTimeout(hintTimerRef.current);
+    setHintMessage(nextHint);
+    setHintIndex((current) => current + 1);
+    hintTimerRef.current = window.setTimeout(() => setHintMessage(""), 4000);
   };
 
   const handleDonate = () => {
@@ -2174,6 +2208,37 @@ function CharitySimulatorScene({
           <p className={`charity-balance ${balance < 0 ? "is-negative" : ""}`}>
             {formatJeopardyMoney(balance)}
           </p>
+          {shouldShowHintSlot && (
+            <div className="charity-hint-slot">
+              <AnimatePresence mode="wait">
+                {hintMessage ? (
+                  <motion.p
+                    className="charity-hint-message"
+                    key={hintMessage}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.35 }}
+                  >
+                    {hintMessage}
+                  </motion.p>
+                ) : canShowHintButton ? (
+                  <motion.button
+                    className="charity-hint-button"
+                    key="charity-hint-button"
+                    type="button"
+                    onClick={showNextHint}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.28 }}
+                  >
+                    Hint
+                  </motion.button>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       )}
 
@@ -3814,8 +3879,9 @@ function DanflixPlayer({ onNext }: { onNext: () => void }) {
           caption="Dan was born."
           question="Are you still watching?"
           primaryLabel="Yes"
-          secondaryLabel="Not anymore"
+          secondaryLabel="No"
           onPrimary={() => setPhase("resuming")}
+          onSecondary={() => setPhase("resuming")}
         />
       )}
 
@@ -3840,6 +3906,7 @@ function DanflixPlayer({ onNext }: { onNext: () => void }) {
           primaryLabel="Disco"
           secondaryLabel="No Disco"
           onPrimary={() => setPhase("suspended")}
+          onSecondary={() => setPhase("suspended")}
         />
       )}
 
@@ -3923,12 +3990,14 @@ function DanflixPausedStage({
   primaryLabel,
   secondaryLabel,
   onPrimary,
+  onSecondary,
 }: {
   caption: string;
   question: string;
   primaryLabel: string;
   secondaryLabel: string;
   onPrimary: () => void;
+  onSecondary: () => void;
 }) {
   return (
     <>
@@ -3947,7 +4016,7 @@ function DanflixPausedStage({
             <button
               className="danflix-choice-button danflix-choice-button-secondary"
               type="button"
-              onClick={() => {}}
+              onClick={onSecondary}
             >
               {secondaryLabel}
             </button>
