@@ -581,6 +581,19 @@ input {
   line-height: 1;
 }
 
+.finale-stage-wiki .finale-letter-wiki-tab,
+.finale-stage-wiki .finale-letter-wiki-title,
+.finale-stage-wiki .finale-letter-wiki-address,
+.finale-stage-wiki .finale-letter-wiki-sidebar,
+.finale-stage-wiki .finale-letter-wiki-source,
+.finale-stage-wiki .finale-letter-wiki-description,
+.finale-stage-wiki .finale-letter-wiki-body,
+.finale-stage-wiki .finale-letter-wiki-infobox,
+.finale-stage-wiki .finale-letter-wiki-heading {
+  color: #ffffff;
+  mix-blend-mode: difference;
+}
+
 .finale-letter-danflix-logo {
   color: #e50914;
   font-family: Arial, Helvetica, sans-serif;
